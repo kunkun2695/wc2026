@@ -39,7 +39,7 @@ app.use('/api/notifications', notificationsRoutes);
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
-app.get('*', (req, res) => {
+app.get('(.*)', (req, res) => {
   if (req.path.startsWith('/api')) return;
   res.sendFile(path.join(distPath, 'index.html'));
 });
