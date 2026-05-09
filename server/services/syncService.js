@@ -1,5 +1,6 @@
 const axios = require('axios');
 const db = require('../config/db');
+const { sendPushNotification } = require('../routes/notifications');
 
 const FOOTBALL_DATA_API_KEY = '545cbd97d6964d96bdc65580d348674b';
 
@@ -16,6 +17,13 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
       points = 3;
     }
     await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, p.id]);
+    
+    // Gửi Push Notification thông báo kết quả và điểm
+    const matchInfo = await db.query('SELECT team1_name, team2_name FROM matches WHERE id = $1', [matchId]);
+    const matchTitle = `${matchInfo.rows[0].team1_name} ${hScore}-${aScore} ${matchInfo.rows[0].team2_name}`;
+    const message = `Trận đấu đã kết thúc! Tỉ số: ${matchTitle}. Bạn nhận được ${points} điểm dự đoán.`;
+    
+    sendPushNotification(p.user_id, '🏆 Kết quả trận đấu!', message, `/match/${matchId}`);
   }
 };
 

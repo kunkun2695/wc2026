@@ -2,8 +2,16 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const jwt = require('jsonwebtoken');
+const webpush = require('web-push');
 
 const SECRET_KEY = 'worldcup2026-secret-key';
+
+// Cấu hình Web Push
+webpush.setVapidDetails(
+  'mailto:hajong953@gmail.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 // Middleware xác thực
 const authenticateUser = (req, res, next) => {
@@ -62,15 +70,59 @@ router.put('/:id/read', authenticateUser, async (req, res) => {
   }
 });
 
-// Xóa tất cả thông báo
-router.delete('/', authenticateUser, async (req, res) => {
+// Đăng ký nhận thông báo đẩy
+router.post('/subscribe', authenticateUser, async (req, res) => {
   const userId = req.user.id;
+  const subscription = req.body;
+
   try {
-    await db.query('DELETE FROM notifications WHERE user_id = $1', [userId]);
-    res.json({ message: 'Đã xóa tất cả thông báo' });
+    const { endpoint, keys } = subscription;
+    await db.query(`
+      INSERT INTO push_subscriptions (user_id, endpoint, auth, p256dh)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (endpoint) DO UPDATE SET
+        user_id = EXCLUDED.user_id,
+        auth = EXCLUDED.auth,
+        p256dh = EXCLUDED.p256dh
+    `, [userId, endpoint, keys.auth, keys.p256dh]);
+
+    res.status(201).json({ message: 'Đã đăng ký nhận thông báo đẩy' });
   } catch (error) {
-    res.status(500).json({ error: 'Lỗi xóa thông báo: ' + error.message });
+    res.status(500).json({ error: 'Lỗi đăng ký push: ' + error.message });
   }
 });
 
-module.exports = router;
+// Hàm hỗ trợ gửi thông báo đẩy
+const sendPushNotification = async (userId, title, body, url = '/') => {
+  try {
+    const result = await db.query('SELECT * FROM push_subscriptions WHERE user_id = $1', [userId]);
+    const subscriptions = result.rows;
+
+    const payload = JSON.stringify({ title, body, url });
+
+    const sendPromises = subscriptions.map(sub => {
+      const pushConfig = {
+        endpoint: sub.endpoint,
+        keys: {
+          auth: sub.auth,
+          p256dh: sub.p256dh
+        }
+      };
+      return webpush.sendNotification(pushConfig, payload).catch(err => {
+        if (err.statusCode === 404 || err.statusCode === 410) {
+          // Xóa subscription hết hạn
+          return db.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [sub.endpoint]);
+        }
+      });
+    });
+
+    await Promise.all(sendPromises);
+  } catch (error) {
+    console.error('Send Push Error:', error);
+  }
+};
+
+module.exports = {
+  router,
+  sendPushNotification
+};

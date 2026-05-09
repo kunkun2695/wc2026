@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const { sendPushNotification } = require('./notifications');
 const jwt = require('jsonwebtoken');
 
 const SECRET_KEY = 'worldcup2026-secret-key';
@@ -87,10 +88,14 @@ router.post('/', authenticateUser, async (req, res) => {
       const matchTitle = matchInfo.rows[0] ? `${matchInfo.rows[0].team1_name} vs ${matchInfo.rows[0].team2_name}` : 'trận đấu';
 
       for (const targetUserId of userIdsToNotify) {
+        const message = `${senderName} vừa gáy ở trận ${matchTitle}: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`;
         await db.query(
           'INSERT INTO notifications (user_id, match_id, sender_id, content) VALUES ($1, $2, $3, $4)',
-          [targetUserId, match_id, userId, `${senderName} vừa gáy ở trận ${matchTitle}: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`]
+          [targetUserId, match_id, userId, message]
         );
+
+        // Gửi Push Notification
+        sendPushNotification(targetUserId, '🔥 Có người gáy mới!', message, `/match/${match_id}`);
       }
     } catch (notifyErr) {
       console.error('[NOTIFY ERROR]', notifyErr.message);

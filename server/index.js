@@ -1,7 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const cron = require('node-cron');
+
+// Nạp cấu hình ENV ngay đầu tiên
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
 const { syncMatches } = require('./services/syncService');
 
 // Modules
@@ -10,9 +15,7 @@ const matchesRoutes = require('./routes/matches');
 const usersRoutes = require('./routes/users');
 const predictionsRoutes = require('./routes/predictions');
 const commentsRoutes = require('./routes/comments');
-const notificationsRoutes = require('./routes/notifications');
-
-dotenv.config();
+const { router: notificationsRoutes } = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 5005;
@@ -24,8 +27,6 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '50mb' }));
-
-const path = require('path');
 
 // Routes
 app.use('/api/teams', teamsRoutes);

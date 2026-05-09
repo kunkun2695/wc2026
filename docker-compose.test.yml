@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  app-test:
+    build:
+      context: .
+      args:
+        VITE_API_URL: https://test.estrip.fun
+        VITE_VAPID_PUBLIC_KEY: BE_cpojus2_nYd4aTJdzHTL-b9f-Csp5RTBez_2cmyB96lkrJN3AW-GBuDNOr7L9sTug9kmNmZud0Y6e90TbUj0
+    container_name: wc2026-test-app
+    ports:
+      - "5006:5006"
+    env_file:
+      - .env.test
+    depends_on:
+      - db-test
+    networks:
+      - wc-network-test
+
+  db-test:
+    image: postgres:15-alpine
+    container_name: wc2026-test-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: worldcup2026_test
+    ports:
+      - "5434:5432"
+    volumes:
+      - wc-test-db-data:/var/lib/postgresql/data
+    networks:
+      - wc-network-test
+
+networks:
+  wc-network-test:
+    driver: bridge
+
+volumes:
+  wc-test-db-data:

@@ -2,7 +2,11 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_API_URL: https://estrip.fun
+        VITE_VAPID_PUBLIC_KEY: BE_cpojus2_nYd4aTJdzHTL-b9f-Csp5RTBez_2cmyB96lkrJN3AW-GBuDNOr7L9sTug9kmNmZud0Y6e90TbUj0
     ports:
       - "5005:5005"
     environment:

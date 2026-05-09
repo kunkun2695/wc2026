@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, Edit3, ArrowRight, Trophy, Sparkles } from 'lucide-react';
 import { mockAuth } from '../data/mockAuth';
 import API_URL from '../config';
+import { subscribeToPush } from '../utils/pushNotifications';
 
 const AuthView = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -29,6 +30,9 @@ const AuthView = ({ onLogin }) => {
       mockAuth.setToken(data.token);
       mockAuth.setUser(data.user);
       onLogin(data.user);
+      
+      // Đăng ký nhận thông báo đẩy
+      subscribeToPush();
     } catch (err) {
       setError(err.message);
     } finally {
