@@ -1,0 +1,313 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Trophy, Calendar, MapPin, Users, Zap, Check, Send } from 'lucide-react';
+import CommentSection from '../components/CommentSection';
+
+const FlagIcon = ({ flag }) => {
+  const isUrl = flag?.startsWith('http') || flag?.includes('.');
+  if (isUrl) {
+    return <img src={flag} alt="flag" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
+  }
+  return <span>{flag}</span>;
+};
+
+const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePrediction, onRefreshMatches }) => {
+  const match = matches.find(m => m.id === matchId);
+  const userPrediction = predictions.find(p => p.match_id === matchId);
+  
+  const [selectedChoice, setSelectedChoice] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (userPrediction) {
+      if (userPrediction.home_score > userPrediction.away_score) setSelectedChoice('1');
+      else if (userPrediction.home_score < userPrediction.away_score) setSelectedChoice('2');
+      else setSelectedChoice('X');
+    }
+  }, [userPrediction]);
+
+  if (!match) return <div className="p-10 text-center">Không tìm thấy trận đấu</div>;
+
+  const t1 = { name: match.team1_name || 'Team 1', flag: match.team1_flag || '⚽', score: match.team1_score ?? 0 };
+  const t2 = { name: match.team2_name || 'Team 2', flag: match.team2_flag || '⚽', score: match.team2_score ?? 0 };
+
+  const handleVote = async () => {
+    if (!selectedChoice || isSaving) return;
+    setIsSaving(true);
+    try {
+      const [h, a] = selectedChoice === '1' ? [1, 0] : selectedChoice === '2' ? [0, 1] : [1, 1];
+      await onSavePrediction(match.id, h, a);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="match-detail-page">
+      <header className="detail-header">
+        <button onClick={onBack} className="back-btn"><ArrowLeft size={24} /></button>
+        <h2 className="font-outfit font-bold text-lg">Chi tiết trận đấu</h2>
+        <div style={{ width: 24 }}></div>
+      </header>
+
+      <div className="detail-scroll-container">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }} 
+          animate={{ opacity: 1, scale: 1 }}
+          className="score-hero"
+        >
+          <div className="hero-team">
+            <div className="hero-flag-container">
+              <FlagIcon flag={t1.flag} />
+            </div>
+            <span className="hero-team-name">{t1.name}</span>
+          </div>
+
+          <div className="hero-score">
+            <div className="score-main">
+              {match.status === 'FT' || match.status === 'LIVE' ? (
+                <span>{t1.score} - {t2.score}</span>
+              ) : (
+                <span>VS</span>
+              )}
+            </div>
+            <div className={`match-status-badge ${match.status === 'LIVE' ? 'is-live' : ''}`}>
+              {match.status === 'LIVE' && <span className="live-dot"></span>}
+              {match.status}
+            </div>
+          </div>
+
+          <div className="hero-team">
+            <div className="hero-flag-container">
+              <FlagIcon flag={t2.flag} />
+            </div>
+            <span className="hero-team-name">{t2.name}</span>
+          </div>
+        </motion.div>
+
+        <div className="detail-sections-container">
+          {/* Voting Section */}
+          <div className="voting-section card-box">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="section-title mb-0"><Trophy size={18} /> Bình chọn thắng thua</h3>
+              {userPrediction && <span className="voted-tag"><Check size={12} /> Đã chốt</span>}
+            </div>
+            
+            <div className="voting-options">
+              <button 
+                onClick={() => setSelectedChoice('1')}
+                className={`vote-opt ${selectedChoice === '1' ? 'active' : ''}`}
+              >
+                <div className="opt-flag"><FlagIcon flag={t1.flag} /></div>
+                <span className="opt-name">{t1.name}</span>
+              </button>
+              
+              <button 
+                onClick={() => setSelectedChoice('X')}
+                className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''}`}
+              >
+                <div className="opt-flag draw">HÒA</div>
+                <span className="opt-name">Bất phân thắng bại</span>
+              </button>
+              
+              <button 
+                onClick={() => setSelectedChoice('2')}
+                className={`vote-opt ${selectedChoice === '2' ? 'active' : ''}`}
+              >
+                <div className="opt-flag"><FlagIcon flag={t2.flag} /></div>
+                <span className="opt-name">{t2.name}</span>
+              </button>
+            </div>
+
+            <button 
+              className={`confirm-vote-btn ${!selectedChoice || userPrediction ? 'disabled' : ''}`}
+              disabled={!selectedChoice || !!userPrediction || isSaving}
+              onClick={handleVote}
+            >
+              {isSaving ? 'Đang gửi...' : userPrediction ? 'Lựa chọn của bạn' : 'CHỐT KÈO NGAY'}
+              {!isSaving && !userPrediction && <Send size={18} />}
+            </button>
+          </div>
+
+          <div className="info-grid">
+            <div className="info-item">
+              <Calendar size={18} className="text-cyan-400" />
+              <div className="info-text">
+                <span className="info-label">Thời gian</span>
+                <span className="info-value">{match.match_time || 'Chưa cập nhật'}</span>
+              </div>
+            </div>
+            <div className="info-item">
+              <Users size={18} className="text-purple-400" />
+              <div className="info-text">
+                <span className="info-label">Bình chọn</span>
+                <span className="info-value">{match.total_votes || 0} phiếu</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="stats-section card-box">
+            <h3 className="section-title"><Zap size={18} /> Tỉ lệ bình chọn</h3>
+            <div className="stats-bars">
+              <div className="stat-bar-item">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-bold text-slate-300">{t1.name}</span>
+                  <span className="text-sm font-black text-cyan-400">{Math.round((match.home_votes / (match.total_votes || 1)) * 100)}%</span>
+                </div>
+                <div className="bar-bg"><div className="bar-fill home" style={{ width: `${(match.home_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
+              </div>
+              <div className="stat-bar-item">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-bold text-slate-300">Hòa</span>
+                  <span className="text-sm font-black text-yellow-400">{Math.round((match.draw_votes / (match.total_votes || 1)) * 100)}%</span>
+                </div>
+                <div className="bar-bg"><div className="bar-fill draw" style={{ width: `${(match.draw_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
+              </div>
+              <div className="stat-bar-item">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-bold text-slate-300">{t2.name}</span>
+                  <span className="text-sm font-black text-emerald-400">{Math.round((match.away_votes / (match.total_votes || 1)) * 100)}%</span>
+                </div>
+                <div className="bar-bg"><div className="bar-fill away" style={{ width: `${(match.away_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="detail-comments-section card-box">
+            <h3 className="section-title">Phòng Gáy</h3>
+            <div className="detail-comment-wrapper">
+              <CommentSection 
+                matchId={matchId} 
+                matchTitle={`${t1.name} vs ${t2.name}`} 
+                onCommentChange={onRefreshMatches}
+                isInline={true}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .match-detail-page {
+          background: #020617;
+          height: 100vh;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 5000;
+        }
+        .detail-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 15px 20px;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          background: rgba(15, 23, 42, 0.9);
+          backdrop-filter: blur(10px);
+          flex-shrink: 0;
+          padding-top: calc(15px + env(safe-area-inset-top, 0px));
+        }
+        .back-btn { background: none; border: none; color: white; cursor: pointer; }
+        .detail-scroll-container {
+          flex: 1;
+          overflow-y: auto;
+          padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        .score-hero {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 30px 20px;
+          background: linear-gradient(180deg, rgba(58, 134, 255, 0.15) 0%, transparent 100%);
+          margin-bottom: 10px;
+        }
+        .hero-team {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          width: 30%;
+        }
+        .hero-flag-container {
+          width: 60px;
+          height: 60px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2.5rem;
+          background: rgba(255,255,255,0.05);
+          border-radius: 50%;
+          padding: 10px;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .hero-team-name { font-weight: 800; font-size: 0.85rem; text-align: center; color: white; }
+        .hero-score {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          width: 40%;
+        }
+        .score-main { font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; color: white; }
+        .match-status-badge {
+          background: rgba(255,255,255,0.1);
+          color: white;
+          font-size: 0.65rem;
+          font-weight: 900;
+          padding: 5px 12px;
+          border-radius: 20px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .match-status-badge.is-live { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .live-dot { width: 6px; height: 6px; background: #ef4444; border-radius: 50%; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        .detail-sections-container { padding: 0 16px 20px; display: flex; flex-direction: column; gap: 16px; }
+        .card-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 20px; }
+        
+        /* Voting Styles */
+        .voted-tag { background: rgba(0, 255, 100, 0.1); color: #00ff64; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 10px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(0, 255, 100, 0.2); }
+        .voting-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .vote-opt { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 15px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s; }
+        .vote-opt:hover { background: rgba(255,255,255,0.06); }
+        .vote-opt.active { background: rgba(58, 134, 255, 0.1); border-color: #3a86ff; box-shadow: 0 0 20px rgba(58, 134, 255, 0.2); }
+        .opt-flag { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: rgba(255,255,255,0.05); }
+        .opt-flag.draw { font-size: 0.6rem; font-weight: 900; color: #94a3b8; }
+        .vote-opt.active .opt-flag.draw { color: #3a86ff; }
+        .opt-name { font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-align: center; }
+        .vote-opt.active .opt-name { color: white; }
+        .confirm-vote-btn { width: 100%; padding: 16px; border-radius: 16px; border: none; background: linear-gradient(135deg, #00d2ff 0%, #3a8dff 100%); color: #020617; font-weight: 900; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.3s; }
+        .confirm-vote-btn.disabled { background: rgba(255,255,255,0.05); color: #475569; cursor: not-allowed; }
+        .confirm-vote-btn:not(.disabled):hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(58, 134, 255, 0.3); }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .info-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; display: flex; align-items: center; gap: 12px; }
+        .info-text { display: flex; flex-direction: column; }
+        .info-label { font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; }
+        .info-value { font-size: 0.8rem; font-weight: 800; color: white; }
+        
+        .stats-bars { display: flex; flex-direction: column; gap: 16px; }
+        .bar-bg { height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 5px; transition: width 1s ease-out; }
+        .bar-fill.home { background: linear-gradient(90deg, #00d2ff, #3a8dff); }
+        .bar-fill.draw { background: linear-gradient(90deg, #ffd200, #f7971e); }
+        .bar-fill.away { background: linear-gradient(90deg, #00ff64, #00ab4e); }
+        
+        .detail-comment-wrapper {
+          height: 400px;
+          margin-top: 10px;
+          border-radius: 16px;
+          overflow: hidden;
+          background: rgba(0,0,0,0.2);
+        }
+      ` }} />
+    </div>
+  );
+};
+
+export default MatchDetailView;
