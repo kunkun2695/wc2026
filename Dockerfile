@@ -1,5 +1,5 @@
 # Stage 1: Build Frontend
-FROM node:20-slim AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 COPY package*.json ./
@@ -13,7 +13,7 @@ RUN npm run build
 
 
 # Stage 2: Build Backend & Final Image
-FROM node:20-slim
+FROM node:20-alpine
 
 WORKDIR /app
 
