@@ -39,8 +39,11 @@ app.use('/api/notifications', notificationsRoutes);
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
-app.get('(.*)', (req, res) => {
-  if (req.path.startsWith('/api')) return;
+// Catch-all route for React SPA
+app.use((req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
