@@ -43,7 +43,7 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
 
         <div className="stats-and-tabs">
           <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-            <h2 className="font-outfit" style={{ fontSize: '1.6rem', fontWeight: 900, marginBottom: '5px', letter-spacing: '-0.5px' }}>
+            <h2 className="font-outfit" style={{ fontSize: '1.6rem', fontWeight: 900, marginBottom: '5px', letterSpacing: '-0.5px' }}>
               VÒNG BẢNG 2026
             </h2>
             <div className="prediction-counter">
