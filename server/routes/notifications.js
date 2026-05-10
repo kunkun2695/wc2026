@@ -143,8 +143,8 @@ router.post('/broadcast', authenticateUser, async (req, res) => {
     // 2. Tạo thông báo trong DB cho từng người (dùng Batch hoặc vòng lặp)
     const insertPromises = users.map(user => {
       return db.query(`
-        INSERT INTO notifications (user_id, sender_id, type, title, message, url, is_read)
-        VALUES ($1, $2, $3, $4, $5, $6, FALSE)
+        INSERT INTO notifications (user_id, sender_id, type, title, message, content, url, is_read)
+        VALUES ($1, $2, $3, $4, $5, $5, $6, FALSE)
       `, [user.id, senderId, 'announcement', title, body, url]);
     });
     
