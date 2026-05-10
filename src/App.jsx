@@ -314,7 +314,7 @@ const App = () => {
             </button>
             <button onClick={() => setActiveTab('leaderboard')} className={`nav-item ${activeTab === 'leaderboard' ? 'active' : ''}`}>
               <div className="active-indicator" />
-              <Star size={18} className="nav-icon" /> <span>Bảng xếp hạng</span>
+              <Trophy size={18} className="nav-icon" /> <span>Bảng xếp hạng</span>
             </button>
             <button onClick={() => setActiveTab('social')} className={`nav-item ${activeTab === 'social' ? 'active' : ''}`}>
               <div className="active-indicator" />

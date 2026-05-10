@@ -115,5 +115,25 @@ Tài liệu này lưu lại các tính năng đã hoàn thiện và cấu trúc 
 - **Phân tích thông minh**: AI đóng vai chuyên gia World Cup, có khả năng phân tích phong độ Brazil, dự đoán nhà vô địch và tra cứu lịch sử bóng đá.
 - **Kiến trúc sẵn sàng**: Cấu trúc backend đã được tối ưu để bạn có thể cắm trực tiếp **Gemini API** hoặc **OpenAI API** vào ngay trong buổi tối.
 
+### 11. Hệ Thống Quản Trị & Cấu Hình AI Động (10/05/2026 - Tối)
+- **Admin Config Dashboard**: Xây dựng giao diện quản trị chuyên dụng cho việc thiết lập hệ thống AI. Cho phép lưu trữ và cập nhật API Key trực tiếp từ trình duyệt mà không cần chỉnh sửa file `.env`.
+- **Database Persistence**: Tích hợp bảng `system_config` trong Database để lưu trữ các cài đặt hệ thống. Tự động nạp cấu hình vào bộ nhớ (Memory) ngay khi Server khởi động (Cold Start Recovery).
+- **Security Logic**: Mã hóa ẩn Key trên giao diện và bảo vệ API Config bằng Middleware xác thực quyền Admin (`isAdmin`).
+
+### 12. Chuyển Đổi Sang Google Gemini AI (Hoàn Toàn Miễn Phí)
+- **Migration Engine**: Chuyển đổi toàn bộ "bộ não" của trợ lý Bench Guru từ OpenAI (trả phí) sang **Google Gemini 1.5 Flash** (miễn phí). Giải quyết triệt để lỗi `429 Quota Exceeded`.
+- **Hybrid AI Support**: Backend thông minh tự động nhận diện loại Key (Gemini hoặc OpenAI) để điều phối yêu cầu, đảm bảo tính linh hoạt tối đa cho người vận hành.
+- **Diagnostics**: Nâng cấp hệ thống báo lỗi chi tiết từ Server về Chat View, giúp Admin dễ dàng nhận biết tình trạng của API Key (hết tiền, sai key, v.v.).
+
+### 13. Đại Tu Giao Diện Di Động & Sửa Lỗi Critical (10/05/2026 - Đêm)
+- **Mobile Navigation 2.0**:
+    - **AI Tab Integration**: Thêm nút "Trợ lý AI" (Sparkles icon) vào thanh điều hướng dưới (Bottom Nav) cho điện thoại.
+    - **Header Cleanup**: Sắp xếp lại Thông báo, Cài đặt và Đăng xuất nằm ngang hàng, gọn gàng trên mọi dòng điện thoại (iOS/Android).
+    - **Hierarchy**: Chuyển nút Cài đặt lên Header để nhường không gian cho các tính năng tương tác chính ở Bottom Nav.
+- **Critical Fixes (Sửa lỗi nghiêm trọng)**:
+    - **Social View Crash**: Khắc phục lỗi "Màn hình đen" ở mục Cộng đồng do truy cập biến `currentUser` chưa xác định.
+    - **NaN% Logic**: Sửa lỗi hiển thị `NaN%` trên thẻ trận đấu khi chưa có người bình chọn bằng cách gia cố logic toán học và xử lý giá trị `null`.
+    - **Icon Sync**: Đồng bộ biểu tượng Cúp (Trophy) cho mục Xếp hạng trên toàn hệ thống.
+
 ---
-*Cập nhật lần cuối: 10/05/2026 - 15:10*
+*Cập nhật lần cuối: 10/05/2026 - 15:52*

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, X, RefreshCw, Megaphone, Send } from 'lucide-react';
+import { Shield, X, RefreshCw, Megaphone, Send, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MatchCard from '../components/MatchCard';
 
