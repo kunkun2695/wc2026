@@ -24,6 +24,7 @@ const ChatView = ({ user, onToggleHeader }) => {
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
   const [isBroadcastMode, setIsBroadcastMode] = useState(false);
+  const [viewingImage, setViewingImage] = useState(null);
   
   const chatEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -242,7 +243,16 @@ const ChatView = ({ user, onToggleHeader }) => {
                       {!isMe && selectedChat.type === 'public' && <div className="msg-author">{m.name || m.username}</div>}
                       <div className="msg-bubble">
                         {m.content && <div className="msg-text">{m.content}</div>}
-                        {m.image_url && <div className="msg-image"><img src={m.image_url} alt="chat-img" onClick={() => window.open(m.image_url)} /></div>}
+                        {m.image_url && (
+                          <div className="msg-image">
+                            <img 
+                              src={m.image_url} 
+                              alt="chat-img" 
+                              onClick={() => setViewingImage(m.image_url)} 
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
                         <div className="msg-time">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                       </div>
                     </div>
@@ -251,6 +261,35 @@ const ChatView = ({ user, onToggleHeader }) => {
               })}
               <div ref={chatEndRef} />
             </div>
+
+            {/* Image Viewer Modal */}
+            <AnimatePresence>
+              {viewingImage && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="image-viewer-overlay"
+                  onClick={() => setViewingImage(null)}
+                >
+                  <motion.button 
+                    className="close-viewer"
+                    onClick={() => setViewingImage(null)}
+                  >
+                    <X size={24} />
+                  </motion.button>
+                  <motion.img 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    src={viewingImage} 
+                    alt="Full view" 
+                    className="viewer-img"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div className="chat-input-wrapper">
               {image && <div className="chat-image-preview"><img src={image} alt="preview" /><button onClick={() => setImage(null)}><X size={14} /></button></div>}
               <div className="chat-input-bar">
@@ -365,7 +404,14 @@ const ChatView = ({ user, onToggleHeader }) => {
         .message-wrapper.others .msg-bubble { background: rgba(255,255,255,0.05); color: #cbd5e1; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
         .msg-author { font-size: 0.7rem; color: #00d2ff; font-weight: 900; margin-bottom: 4px; }
         .msg-text { font-size: 0.95rem; line-height: 1.5; word-break: break-word; }
+        .msg-image { margin-top: 8px; border-radius: 12px; overflow: hidden; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); line-height: 0; }
+        .msg-image img { width: 100%; max-width: 100%; height: auto; object-fit: contain; display: block; }
         .msg-time { font-size: 0.65rem; opacity: 0.5; margin-top: 5px; text-align: right; }
+
+        /* Image Viewer */
+        .image-viewer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .viewer-img { max-width: 95%; max-height: 90vh; object-fit: contain; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .close-viewer { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); border: none; color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .chat-input-wrapper { padding: 15px 20px; background: #0a0e17; border-top: 1px solid rgba(255,255,255,0.05); }
         .chat-input-bar { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; display: flex; align-items: center; padding: 6px 10px 6px 15px; gap: 12px; backdrop-filter: blur(10px); }
         .input-tools-horizontal { display: flex; align-items: center; gap: 8px; border-right: 1px solid rgba(255,255,255,0.05); padding-right: 12px; }
@@ -416,6 +462,12 @@ const ChatView = ({ user, onToggleHeader }) => {
           .in-list .chat-main { display: none; }
 
           .mobile-chat-tabs { display: flex; }
+          .messages-container { padding: 15px 10px; }
+          .message-wrapper { max-width: 92%; }
+          .msg-bubble { padding: 10px 14px; }
+          .chat-input-wrapper { padding: 10px; }
+          .input-tools-horizontal { padding-right: 8px; gap: 4px; }
+          .chat-input-bar { padding-left: 10px; }
           .mobile-only { display: block !important; }
         }
         .mobile-only { display: none; }
