@@ -122,6 +122,45 @@ const sendPushNotification = async (userId, title, body, url = '/') => {
   }
 };
 
+// Gửi thông báo cho TẤT CẢ mọi người (Chỉ dành cho Admin)
+router.post('/broadcast', authenticateUser, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Chỉ Admin mới có quyền gửi thông báo toàn hệ thống' });
+  }
+
+  const { title, body, url = '/' } = req.body;
+  const senderId = req.user.id;
+
+  if (!title || !body) {
+    return res.status(400).json({ error: 'Thiếu tiêu đề hoặc nội dung thông báo' });
+  }
+
+  try {
+    // 1. Lấy tất cả người dùng
+    const usersResult = await db.query('SELECT id FROM users');
+    const users = usersResult.rows;
+
+    // 2. Tạo thông báo trong DB cho từng người (dùng Batch hoặc vòng lặp)
+    const insertPromises = users.map(user => {
+      return db.query(`
+        INSERT INTO notifications (user_id, sender_id, type, title, message, url, is_read)
+        VALUES ($1, $2, $3, $4, $5, $6, FALSE)
+      `, [user.id, senderId, 'announcement', title, body, url]);
+    });
+    
+    await Promise.all(insertPromises);
+
+    // 3. Gửi Push Notification (không cần đợi xong để phản hồi nhanh)
+    users.forEach(user => {
+      sendPushNotification(user.id, title, body, url);
+    });
+
+    res.json({ message: `Đã gửi thông báo thành công tới ${users.length} người dùng` });
+  } catch (error) {
+    res.status(500).json({ error: 'Lỗi gửi thông báo toàn hệ thống: ' + error.message });
+  }
+});
+
 module.exports = {
   router,
   sendPushNotification

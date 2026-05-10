@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Trophy, Search, Edit3, Settings, 
-  Play, Star, LogOut, Shield, History, Bell
+  Play, Star, LogOut, Shield, History, Bell, MessageSquare
 } from 'lucide-react';
 import NotificationsDrawer from './components/NotificationsDrawer';
 import HomeView from './views/HomeView';
@@ -14,6 +14,7 @@ import LeaderboardView from './views/LeaderboardView';
 import SettingsView from './views/SettingsView';
 import HistoryView from './views/HistoryView';
 import MatchDetailView from './views/MatchDetailView';
+import ChatView from './views/ChatView';
 import CommentSection from './components/CommentSection';
 import { mockAuth } from './data/mockAuth';
 import API_URL from './config';
@@ -32,6 +33,7 @@ const App = () => {
   const [lastNotifId, setLastNotifId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [commentMatch, setCommentMatch] = useState(null);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -44,15 +46,29 @@ const App = () => {
       }
       await fetchData();
       fetchNotifications();
+      fetchUnreadChatCount();
     };
     checkSession();
 
     // Auto-fetch notifications every 30 seconds
     const interval = setInterval(() => {
-      if (mockAuth.getCurrentUser()) fetchNotifications();
+      if (mockAuth.getCurrentUser()) {
+        fetchNotifications();
+        fetchUnreadChatCount();
+      }
     }, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchUnreadChatCount = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/dm/unread-count`, {
+        headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
+      });
+      const data = await res.json();
+      setUnreadChatCount(data.count || 0);
+    } catch (err) {}
+  };
 
   const fetchData = async () => {
     try {
@@ -292,6 +308,10 @@ const App = () => {
           <button onClick={() => setActiveTab('history')} className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}>
             <History size={18} /> Lịch sử dự đoán
           </button>
+          <button onClick={() => setActiveTab('chat')} className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}>
+            <MessageSquare size={18} /> Phòng Chat
+            {unreadChatCount > 0 && <span className="notif-count-badge">{unreadChatCount}</span>}
+          </button>
           <button onClick={() => setActiveTab('settings')} className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}>
             <Settings size={18} /> Cài đặt hồ sơ
           </button>
@@ -349,6 +369,11 @@ const App = () => {
               <SettingsView user={user} onUpdateUser={handleUpdateUser} />
             </motion.div>
           )}
+          {activeTab === 'chat' && (
+            <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <ChatView />
+            </motion.div>
+          )}
           {activeTab === 'admin_matches' && (
             <motion.div key="am" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <AdminView 
@@ -392,6 +417,11 @@ const App = () => {
           <button onClick={() => setActiveTab('history')} className={`nav-item-bet ${activeTab === 'history' ? 'active' : ''}`}>
             <History size={20} />
             <span>Lịch sử</span>
+          </button>
+          <button onClick={() => setActiveTab('chat')} className={`nav-item-bet ${activeTab === 'chat' ? 'active' : ''}`} style={{ position: 'relative' }}>
+            <MessageSquare size={20} />
+            <span>Chat</span>
+            {unreadChatCount > 0 && <span className="notif-badge-mini" style={{ top: '5px', right: '15px' }}></span>}
           </button>
           <button onClick={() => setActiveTab('settings')} className={`nav-item-bet ${activeTab === 'settings' ? 'active' : ''}`}>
             <Settings size={20} />
