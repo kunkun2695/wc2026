@@ -8,6 +8,7 @@ import BracketView from './views/BracketView';
 import NotificationsDrawer from './components/NotificationsDrawer';
 import HomeView from './views/HomeView';
 import AdminView from './views/AdminView';
+import MatchManagementView from './views/MatchManagementView';
 import AuthView from './views/AuthView';
 import TeamsView from './views/TeamsView';
 import StandingsView from './views/StandingsView';
@@ -25,7 +26,7 @@ import API_URL from './config';
 import { subscribeToPush } from './utils/pushNotifications';
 
 const App = () => {
-  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, chat, history, settings, admin_matches, admin_teams, ai, bracket
+  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, chat, history, settings, admin_matches, admin_teams, admin_system, ai, bracket
   const [user, setUser] = useState(null);
   const [teams, setTeams] = useState([]);
   const [matches, setMatches] = useState([]);
@@ -378,11 +379,15 @@ const App = () => {
               <div className="nav-label">QUẢN TRỊ VIÊN</div>
               <button onClick={() => setActiveTab('admin_matches')} className={`nav-item ${activeTab === 'admin_matches' ? 'active' : ''}`}>
                 <div className="active-indicator" />
-                <Edit3 size={18} className="nav-icon" /> <span>Quản lý trận đấu</span>
+                <Play size={18} className="nav-icon" /> <span>Quản lý trận đấu</span>
               </button>
               <button onClick={() => setActiveTab('admin_teams')} className={`nav-item ${activeTab === 'admin_teams' ? 'active' : ''}`}>
                 <div className="active-indicator" />
                 <Shield size={18} className="nav-icon" /> <span>Quản lý đội bóng</span>
+              </button>
+              <button onClick={() => setActiveTab('admin_system')} className={`nav-item ${activeTab === 'admin_system' ? 'active' : ''}`}>
+                <div className="active-indicator" />
+                <Settings size={18} className="nav-icon" /> <span>Cài đặt hệ thống</span>
               </button>
             </div>
           )}
@@ -457,11 +462,16 @@ const App = () => {
           )}
           {activeTab === 'admin_matches' && (
             <motion.div key="am" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <AdminView 
+              <MatchManagementView 
                 matches={matches} 
                 onUpdateScore={updateMatchScore} 
                 onSync={syncMatches}
               />
+            </motion.div>
+          )}
+          {activeTab === 'admin_system' && (
+            <motion.div key="as" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <AdminView />
             </motion.div>
           )}
           {activeTab === 'admin_teams' && (

@@ -1,83 +1,10 @@
 import React, { useState } from 'react';
-import { Shield, X, RefreshCw, Megaphone, Send, Sparkles, Trash2, AlertTriangle } from 'lucide-react';
+import { Shield, RefreshCw, Megaphone, Send, Sparkles, Trash2, AlertTriangle, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import MatchCard from '../components/MatchCard';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const FlagDisplay = ({ flag }) => {
-  const isUrl = flag?.startsWith('http') || flag?.includes('.');
-  if (isUrl) {
-    return <img src={flag} alt="flag" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
-  }
-  return <span style={{ fontSize: '2.5rem' }}>{flag || '⚽'}</span>;
-};
-
-const MatchEditorModal = ({ match, onClose, onSave }) => {
-  const [s1, setS1] = useState(match.team1_score || 0);
-  const [s2, setS2] = useState(match.team2_score || 0);
-  const [status, setStatus] = useState(match.status || 'UPCOMING');
-  const [time, setTime] = useState(match.match_time || '');
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }} onClick={onClose}></div>
-      <div style={{ position: 'relative', width: '100%', maxWidth: '500px', background: '#1a1f2e', borderRadius: '24px', padding: '30px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>CẬP NHẬT TỈ SỐ</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}><X size={24} /></button>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
-          <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-            <div style={{ width: '60px', height: '40px', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              <FlagDisplay flag={match.team1_flag} />
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '10px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{match.team1_name}</div>
-            <input type="number" value={s1} onChange={e => setS1(parseInt(e.target.value) || 0)} style={{ width: '60px', padding: '12px', textAlign: 'center', borderRadius: '12px', border: 'none', background: '#000', color: '#00d2ff', fontWeight: 900, fontSize: '1.2rem' }} />
-          </div>
-          
-          <div style={{ fontWeight: 900, color: 'rgba(255,255,255,0.1)', fontSize: '0.8rem' }}>VS</div>
-          
-          <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-            <div style={{ width: '60px', height: '40px', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              <FlagDisplay flag={match.team2_flag} />
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '10px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{match.team2_name}</div>
-            <input type="number" value={s2} onChange={e => setS2(parseInt(e.target.value) || 0)} style={{ width: '60px', padding: '12px', textAlign: 'center', borderRadius: '12px', border: 'none', background: '#000', color: '#00d2ff', fontWeight: 900, fontSize: '1.2rem' }} />
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
-          <div>
-            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>TRẠNG THÁI</label>
-            <select value={status} onChange={e => setStatus(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }}>
-              <option value="UPCOMING">Sắp diễn ra</option>
-              <option value="LIVE">Trực tiếp</option>
-              <option value="FINISHED">Kết thúc</option>
-              <option value="FT">Kết thúc (FT)</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>THỜI GIAN</label>
-            <input type="text" value={time} onChange={e => setTime(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} />
-          </div>
-        </div>
-
-        <button 
-          onClick={() => onSave(match.id, { team1_score: s1, team2_score: s2, status, match_time: time })}
-          style={{ width: '100%', padding: '18px', borderRadius: '16px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.9rem', letterSpacing: '1px', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(0,210,255,0.3)' }}
-        >
-          LƯU KẾT QUẢ
-        </button>
-      </div>
-    </div>
-  );
-};
-
-const AdminView = ({ matches, onUpdateScore, onSync }) => {
-  const [editingMatch, setEditingMatch] = useState(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+const AdminView = () => {
   const [notifTitle, setNotifTitle] = useState('');
   const [notifBody, setNotifBody] = useState('');
   const [notifLoading, setNotifLoading] = useState(false);
@@ -87,6 +14,12 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
   const [aiKey, setAiKey] = useState('');
   const [configLoading, setConfigLoading] = useState(false);
   const [configMsg, setConfigMsg] = useState('');
+
+  // Reset System States
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetConfirmCode, setResetConfirmCode] = useState('');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetMsg, setResetMsg] = useState('');
 
   // Fetch AI Config on Load
   React.useEffect(() => {
@@ -153,17 +86,6 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
     }
   };
 
-  const handleSync = async () => {
-    setIsSyncing(true);
-    await onSync();
-    setIsSyncing(false);
-  };
-
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetConfirmCode, setResetConfirmCode] = useState('');
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [resetMsg, setResetMsg] = useState('');
-
   const handleResetSystem = async () => {
     if (resetConfirmCode !== 'RESET_WC2026_FINAL') {
       alert('Mã xác nhận không đúng!');
@@ -189,7 +111,7 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
         setResetMsg('✅ ' + data.message);
         setShowResetConfirm(false);
         setResetConfirmCode('');
-        setTimeout(() => window.location.reload(), 2000); // Reload to refresh all data
+        setTimeout(() => window.location.reload(), 2000); 
       } else {
         setResetMsg('❌ ' + data.error);
       }
@@ -200,57 +122,23 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
     }
   };
 
-  const stats = {
-    total: matches.length,
-    live: matches.filter(m => m.status === 'LIVE').length,
-    finished: matches.filter(m => m.status === 'FINISHED' || m.status === 'FT').length,
-    upcoming: matches.filter(m => m.status === 'UPCOMING').length
-  };
-
   return (
-    <div style={{ padding: '100px 20px 20px' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#00d2ff', marginBottom: '10px' }}>
-              <Shield size={16} />
-              <span style={{ fontSize: '0.7rem', fontWeight: 900, letterSpacing: '2px' }}>HỆ THỐNG QUẢN TRỊ</span>
-            </div>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>TRẬN ĐẤU</h1>
+    <div style={{ padding: '100px 20px 150px' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <header style={{ marginBottom: '40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#00d2ff', marginBottom: '10px' }}>
+            <Settings size={16} />
+            <span style={{ fontSize: '0.7rem', fontWeight: 900, letterSpacing: '2px' }}>QUẢN TRỊ VIÊN</span>
           </div>
-          <button 
-            onClick={handleSync} 
-            disabled={isSyncing}
-            style={{ padding: '10px 20px', borderRadius: '10px', background: 'rgba(0,210,255,0.1)', color: '#00d2ff', border: '1px solid #00d2ff', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
-            {isSyncing ? 'ĐANG ĐỒNG BỘ...' : 'ĐỒNG BỘ API'}
-          </button>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>CÀI ĐẶT HỆ THỐNG</h1>
+          <p style={{ color: '#64748b', marginTop: '15px' }}>Quản lý các thông số vận hành của toàn bộ ứng dụng World Cup.</p>
         </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '40px' }}>
-          <div style={{ background: '#1a1f2e', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #00d2ff' }}>
-            <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900 }}>TỔNG TRẬN</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'white' }}>{stats.total}</div>
-          </div>
-          <div style={{ background: '#1a1f2e', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #00ff64' }}>
-            <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900 }}>TRỰC TIẾP</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#00ff64' }}>{stats.live}</div>
-          </div>
-          <div style={{ background: '#1a1f2e', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #ffd200' }}>
-            <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900 }}>ĐÃ XONG</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#ffd200' }}>{stats.finished}</div>
-          </div>
-          <div style={{ background: '#1a1f2e', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #444' }}>
-            <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900 }}>SẮP TỚI</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#444' }}>{stats.upcoming}</div>
-          </div>
-        </div>
-
-        <section style={{ background: '#1a1f2e', padding: '30px', borderRadius: '24px', marginBottom: '40px' }}>
+        {/* 1. Broadcast Notification */}
+        <section style={{ background: '#1a1f2e', padding: '30px', borderRadius: '24px', marginBottom: '30px', border: '1px solid rgba(255,255,255,0.03)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
             <Megaphone size={20} color="#00d2ff" />
-            <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'white' }}>GỬI THÔNG BÁO TOÀN QUỐC</h3>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white', margin: 0 }}>GỬI THÔNG BÁO TOÀN HỆ THỐNG</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <input 
@@ -258,83 +146,70 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
               placeholder="Tiêu đề thông báo..." 
               value={notifTitle}
               onChange={e => setNotifTitle(e.target.value)}
-              style={{ width: '100%', padding: '15px', borderRadius: '12px', background: '#000', border: '1px solid #222', color: 'white' }}
+              style={{ width: '100%', padding: '15px', borderRadius: '12px', background: '#000', border: '1px solid #222', color: 'white', fontWeight: 600 }}
             />
             <textarea 
-              placeholder="Nội dung chi tiết..." 
+              placeholder="Nội dung chi tiết gửi đến hàng nghìn người dùng..." 
               value={notifBody}
               onChange={e => setNotifBody(e.target.value)}
-              style={{ width: '100%', padding: '15px', borderRadius: '12px', background: '#000', border: '1px solid #222', color: 'white', minHeight: '100px' }}
+              style={{ width: '100%', padding: '15px', borderRadius: '12px', background: '#000', border: '1px solid #222', color: 'white', minHeight: '100px', fontWeight: 500 }}
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.7rem', color: '#444' }}>* Gửi đến tất cả mọi người qua App & Push.</span>
+              <span style={{ fontSize: '0.7rem', color: '#475569' }}>* Tin nhắn sẽ xuất hiện trong trung tâm thông báo.</span>
               <button 
                 onClick={handleBroadcast}
                 disabled={notifLoading || !notifTitle || !notifBody}
-                style={{ padding: '12px 30px', borderRadius: '12px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                style={{ padding: '12px 30px', borderRadius: '12px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: '0.2s' }}
               >
                 {notifLoading ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
-                GỬI NGAY
+                PHÁT LOA NGAY
               </button>
             </div>
-            {notifMsg && <div style={{ fontSize: '0.8rem', fontWeight: 700, color: notifMsg.includes('✅') ? '#00ff64' : '#ff4d4d' }}>{notifMsg}</div>}
+            {notifMsg && <div style={{ fontSize: '0.8rem', fontWeight: 700, color: notifMsg.includes('✅') ? '#00ff64' : '#ff4d4d', background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '8px' }}>{notifMsg}</div>}
           </div>
         </section>
 
-        <section style={{ background: '#1a1f2e', padding: '30px', borderRadius: '24px', marginBottom: '40px', border: '1px solid rgba(0,210,255,0.1)' }}>
+        {/* 2. AI CONFIG */}
+        <section style={{ background: '#1a1f2e', padding: '30px', borderRadius: '24px', marginBottom: '30px', border: '1px solid rgba(0,210,255,0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
             <Sparkles size={20} color="#00d2ff" />
-            <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'white' }}>CÀI ĐẶT HỆ THỐNG AI (GEMINI / OPENAI)</h3>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white', margin: 0 }}>CẤU HÌNH TRỢ LÝ AI (GEMINI / OPENAI)</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
-              Hệ thống hiện ưu tiên sử dụng <strong>Google Gemini (Miễn phí)</strong>. 
-              Bạn có thể lấy Key miễn phí tại: <a href="https://aistudio.google.com/app/apikey" target="_blank" style={{ color: '#00d2ff', textDecoration: 'underline' }}>Google AI Studio</a>.
+            <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+              Thay đổi API Key để Bench Guru có thể hoạt động liên tục. Hệ thống sẽ tự động nhận diện Key và chuyển đổi luồng xử lý.
             </p>
-            <div>
-              <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>API KEY (GEMINI HOẶC OPENAI)</label>
-              <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ background: '#000', padding: '20px', borderRadius: '16px', border: '1px solid #222' }}>
+              <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '10px', letterSpacing: '1px' }}>AI API KEY</label>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <input 
                   type="password" 
-                  placeholder="Dán API Key của bạn vào đây..." 
+                  placeholder="Nhập API Key mới..." 
                   value={aiKey}
                   onChange={e => setAiKey(e.target.value)}
-                  style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#000', border: '1px solid #222', color: '#00d2ff', fontFamily: 'monospace' }}
+                  style={{ flex: 1, minWidth: '200px', padding: '15px', borderRadius: '12px', background: '#0f172a', border: '1px solid #1e293b', color: '#00d2ff', fontFamily: 'monospace' }}
                 />
                 <button 
                   onClick={handleSaveAiKey}
                   disabled={configLoading}
-                  style={{ padding: '0 25px', borderRadius: '12px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer' }}
+                  style={{ padding: '0 25px', borderRadius: '12px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', transition: '0.2s' }}
                 >
-                  {configLoading ? <RefreshCw size={18} className="animate-spin" /> : 'LƯU CẤU HÌNH AI'}
+                  {configLoading ? <RefreshCw size={18} className="animate-spin" /> : 'LƯU KEY'}
                 </button>
               </div>
-              <p style={{ fontSize: '0.65rem', color: '#555', marginTop: '8px' }}>* Key này dùng cho chuyên gia phân tích Bench Guru. Sau khi lưu sẽ có tác dụng ngay.</p>
             </div>
             {configMsg && <div style={{ fontSize: '0.8rem', fontWeight: 700, color: configMsg.includes('✅') ? '#00ff64' : '#ff4d4d' }}>{configMsg}</div>}
           </div>
         </section>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '60px' }}>
-          {matches.map(m => (
-            <MatchCard key={m.id} match={m} isAdmin={true} onEdit={setEditingMatch} />
-          ))}
-        </div>
-
-        {/* DANGER ZONE - Reset System */}
-        <section style={{ 
-          background: 'rgba(239, 68, 68, 0.05)', 
-          padding: '30px', 
-          borderRadius: '24px', 
-          border: '1px solid rgba(239, 68, 68, 0.2)',
-          marginTop: '60px' 
-        }}>
+        {/* 3. DANGER ZONE */}
+        <section style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
             <AlertTriangle size={20} color="#ef4444" />
-            <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#ef4444' }}>DANGER ZONE (VÙNG NGUY HIỂM)</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#ef4444', margin: 0 }}>VÙNG NGUY HIỂM (SYSTEM RESET)</h3>
           </div>
-          <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '20px' }}>
-            Hành động này sẽ <strong>XÓA VĨNH VIỄN</strong> toàn bộ bài đăng cộng đồng, tất cả tin nhắn chat, tin nhắn riêng, các kèo dự đoán và reset điểm người dùng về 0. Hãy cực kỳ cẩn thận.
+          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '20px', lineHeight: 1.5 }}>
+            Xóa toàn bộ bài viết, tin nhắn và lịch sử dự đoán để bắt đầu một mùa giải mới. Dữ liệu sau khi xóa sẽ <strong>KHÔNG THỂ KHÔI PHỤC</strong>.
           </p>
           
           {!showResetConfirm ? (
@@ -343,46 +218,40 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
               style={{ padding: '12px 25px', borderRadius: '12px', background: '#ef4444', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <Trash2 size={18} />
-              RESET TOÀN BỘ HỆ THỐNG
+              DỌN DẸP TOÀN BỘ DỮ LIỆU
             </button>
           ) : (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '16px' }}>
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'white', marginBottom: '10px' }}>
-                Để xác nhận, vui lòng nhập mã: <code style={{ background: '#000', padding: '2px 6px', color: '#00d2ff' }}>RESET_WC2026_FINAL</code>
+            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '16px' }}>
+              <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'white', marginBottom: '12px' }}>
+                Xác nhận mã bảo mật: <code style={{ background: '#000', padding: '4px 8px', color: '#00d2ff', borderRadius: '4px' }}>RESET_WC2026_FINAL</code>
               </p>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <input 
                   type="text" 
                   value={resetConfirmCode}
                   onChange={e => setResetConfirmCode(e.target.value)}
                   placeholder="Nhập mã xác nhận..."
-                  style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#000', border: '1px solid #ef4444', color: 'white' }}
+                  style={{ flex: 1, minWidth: '150px', padding: '12px', borderRadius: '10px', background: '#000', border: '1px solid #ef4444', color: 'white' }}
                 />
                 <button 
                   onClick={handleResetSystem}
                   disabled={resetLoading}
-                  style={{ padding: '0 25px', borderRadius: '10px', background: '#ef4444', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer' }}
+                  style={{ padding: '0 25px', height: '45px', borderRadius: '10px', background: '#ef4444', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer' }}
                 >
-                  {resetLoading ? 'ĐANG RESET...' : 'XÁC NHẬN XÓA'}
+                  {resetLoading ? 'ĐANG XÓA...' : 'XÁC NHẬN'}
                 </button>
                 <button 
                   onClick={() => setShowResetConfirm(false)}
-                  style={{ padding: '0 20px', borderRadius: '10px', background: '#334155', color: 'white', fontWeight: 700, border: 'none', cursor: 'pointer' }}
+                  style={{ padding: '0 20px', height: '45px', borderRadius: '10px', background: '#334155', color: 'white', fontWeight: 700, border: 'none', cursor: 'pointer' }}
                 >
                   HỦY
                 </button>
               </div>
               {resetMsg && <div style={{ marginTop: '10px', fontSize: '0.8rem', fontWeight: 700, color: resetMsg.includes('✅') ? '#00ff64' : '#ff4d4d' }}>{resetMsg}</div>}
-            </motion.div>
+            </div>
           )}
         </section>
       </div>
-
-      <AnimatePresence>
-        {editingMatch && (
-          <MatchEditorModal match={editingMatch} onClose={() => setEditingMatch(null)} onSave={(id, data) => { onUpdateScore(id, data); setEditingMatch(null); }} />
-        )}
-      </AnimatePresence>
     </div>
   );
 };
