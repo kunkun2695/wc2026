@@ -444,12 +444,12 @@ const App = () => {
             </motion.div>
           )}
           {activeTab === 'chat' && (
-            <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <ChatView user={user} onToggleHeader={setHideHeader} />
             </motion.div>
           )}
           {activeTab === 'ai' && (
-            <motion.div key="ai" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key="ai" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <AiAssistantView />
             </motion.div>
           )}
@@ -648,7 +648,10 @@ const App = () => {
           min-width: 0; 
           position: relative; 
           height: 100vh;
-          overflow: ${activeTab === 'chat' ? 'hidden' : 'auto'};
+          height: 100dvh;
+          overflow: ${activeTab === 'chat' || activeTab === 'ai' ? 'hidden' : 'auto'};
+          display: flex;
+          flex-direction: column;
         }
 
         .mobile-header { display: none; }
@@ -660,7 +663,10 @@ const App = () => {
             padding-top: ${hideHeader ? 'env(safe-area-inset-top, 20px)' : 'calc(60px + env(safe-area-inset-top, 0px))'}; 
             padding-bottom: 80px; 
             height: 100vh;
-            overflow: ${activeTab === 'chat' ? 'hidden' : 'auto'};
+            height: 100dvh;
+            overflow: ${activeTab === 'chat' || activeTab === 'ai' ? 'hidden' : 'auto'};
+            display: flex;
+            flex-direction: column;
           }
           .mobile-header {
             display: block; position: fixed; top: 0; left: 0; right: 0;
