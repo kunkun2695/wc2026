@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticateUser } = require('../middleware/auth');
 const OpenAI = require('openai');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const db = require('../config/db');
 
 router.post('/chat', authenticateUser, async (req, res) => {
   const { message } = req.body;
@@ -19,8 +20,35 @@ router.post('/chat', authenticateUser, async (req, res) => {
   if (!apiKey) {
     return res.json({ reply: "Chào bạn! Tôi là Bench Guru. Hiện tại tôi đang chạy ở chế độ offline (Thiếu API Key). Hãy nhắc Admin cấu hình Gemini API Key nhé!" });
   }
+
+  // LẤY DỮ LIỆU NGƯỜI DÙNG ĐỂ LÀM BỐI CẢNH (CONTEXT)
+  let userContext = "";
+  try {
+    const userResult = await db.query('SELECT username, points FROM users WHERE id = $1', [req.user.id]);
+    const userData = userResult.rows[0];
+    
+    const predResult = await db.query(`
+      SELECT 
+        COUNT(*) as total,
+        COUNT(CASE WHEN p.prediction = (CASE WHEN m.team1_score > m.team2_score THEN '1' WHEN m.team1_score < m.team2_score THEN '2' ELSE 'X' END) AND m.status = 'FT' THEN 1 END) as won,
+        COUNT(CASE WHEN p.prediction != (CASE WHEN m.team1_score > m.team2_score THEN '1' WHEN m.team1_score < m.team2_score THEN '2' ELSE 'X' END) AND m.status = 'FT' THEN 1 END) as lost
+      FROM predictions p
+      JOIN matches m ON p.match_id = m.id
+      WHERE p.user_id = $1
+    `, [req.user.id]);
+    const stats = predResult.rows[0];
+
+    userContext = `\n\n[BỐI CẢNH NGƯỜI DÙNG]: 
+    - Tên: ${userData.username}
+    - Điểm hiện tại: ${userData.points}
+    - Thống kê dự đoán: Tổng ${stats.total} trận, Thắng ${stats.won} trận, Thua ${stats.lost} trận.
+    Hãy sử dụng dữ liệu này nếu người dùng hỏi về bản thân họ. Trả lời thân thiện, hài hước như một chuyên gia bóng đá.`;
+  } catch (err) {
+    console.error('Lỗi lấy bối cảnh người dùng:', err);
+  }
   
   apiKey = apiKey.trim();
+  const fullMessage = message + userContext;
 
   // 1. Xử lý OpenAI
   if (apiKey.startsWith('sk-')) {
@@ -50,7 +78,7 @@ router.post('/chat', authenticateUser, async (req, res) => {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(message);
+      const result = await model.generateContent(fullMessage);
       const response = await result.response;
       const text = response.text();
       
@@ -103,7 +131,22 @@ router.post('/stream', authenticateUser, async (req, res) => {
     // Sử dụng model mạnh nhất và nhanh nhất hiện có trong năm 2026
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const result = await model.generateContentStream(message);
+    // Lấy context cho stream tương tự chat thường
+    let userContext = "";
+    try {
+      const userResult = await db.query('SELECT username, points FROM users WHERE id = $1', [req.user.id]);
+      const userData = userResult.rows[0];
+      const predResult = await db.query(`
+        SELECT COUNT(*) as total,
+        COUNT(CASE WHEN p.prediction = (CASE WHEN m.team1_score > m.team2_score THEN '1' WHEN m.team1_score < m.team2_score THEN '2' ELSE 'X' END) AND m.status = 'FT' THEN 1 END) as won,
+        COUNT(CASE WHEN p.prediction != (CASE WHEN m.team1_score > m.team2_score THEN '1' WHEN m.team1_score < m.team2_score THEN '2' ELSE 'X' END) AND m.status = 'FT' THEN 1 END) as lost
+        FROM predictions p JOIN matches m ON p.match_id = m.id WHERE p.user_id = $1
+      `, [req.user.id]);
+      const stats = predResult.rows[0];
+      userContext = `\n\n[Dữ liệu người dùng: Tên ${userData.username}, Điểm ${userData.points}, Thắng ${stats.won}, Thua ${stats.lost}]. Hãy trả lời dựa trên thông tin này nếu cần.`;
+    } catch (e) {}
+
+    const result = await model.generateContentStream(message + userContext);
 
     for await (const chunk of result.stream) {
       const chunkText = chunk.text();
