@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Trophy, Search, Edit3, Settings, 
-  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles
+  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles, GitBranch
 } from 'lucide-react';
+import BracketView from './views/BracketView';
 import NotificationsDrawer from './components/NotificationsDrawer';
 import HomeView from './views/HomeView';
 import AdminView from './views/AdminView';
@@ -23,7 +24,7 @@ import API_URL from './config';
 import { subscribeToPush } from './utils/pushNotifications';
 
 const App = () => {
-  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, chat, history, settings, admin_matches, admin_teams, ai
+  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, chat, history, settings, admin_matches, admin_teams, ai, bracket
   const [user, setUser] = useState(null);
   const [teams, setTeams] = useState([]);
   const [matches, setMatches] = useState([]);
@@ -332,6 +333,10 @@ const App = () => {
               <div className="active-indicator" />
               <Users size={18} className="nav-icon" /> <span>Cộng đồng</span>
             </button>
+            <button onClick={() => setActiveTab('bracket')} className={`nav-item ${activeTab === 'bracket' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <GitBranch size={18} className="nav-icon" /> <span>Nhánh đấu WC</span>
+            </button>
             <button onClick={() => setActiveTab('chat')} className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}>
               <div className="active-indicator" />
               <div className="icon-badge-wrapper">
@@ -444,6 +449,11 @@ const App = () => {
               <SocialView onOpenComments={handleOpenComments} />
             </motion.div>
           )}
+          {activeTab === 'bracket' && (
+            <motion.div key="bracket" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <BracketView matches={matches} />
+            </motion.div>
+          )}
           {activeTab === 'admin_matches' && (
             <motion.div key="am" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <AdminView 
@@ -490,6 +500,10 @@ const App = () => {
           <button onClick={() => setActiveTab('social')} className={`nav-item-bet ${activeTab === 'social' ? 'active' : ''}`}>
             <Users size={20} />
             <span>Cộng đồng</span>
+          </button>
+          <button onClick={() => setActiveTab('bracket')} className={`nav-item-bet ${activeTab === 'bracket' ? 'active' : ''}`}>
+            <GitBranch size={20} />
+            <span>Nhánh đấu</span>
           </button>
           <button onClick={() => setActiveTab('chat')} className={`nav-item-bet ${activeTab === 'chat' ? 'active' : ''}`} style={{ position: 'relative' }}>
             <MessageSquare size={20} />
