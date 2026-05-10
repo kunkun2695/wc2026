@@ -7,8 +7,10 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Khởi tạo hàm lấy Client AI một cách an toàn
 const getAIClient = () => {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
+  let apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
   if (!apiKey || apiKey === 'sk-xxxx') return { type: 'none' };
+  
+  apiKey = apiKey.trim(); // Tự động xóa khoảng trắng thừa
   
   // Nếu là key của Google (thường không bắt đầu bằng sk-)
   if (!apiKey.startsWith('sk-')) {

@@ -23,14 +23,16 @@ router.post('/ai', authenticateUser, async (req, res) => {
     await db.query(`CREATE TABLE IF NOT EXISTS system_config (key TEXT PRIMARY KEY, value TEXT)`);
     
     // Lưu hoặc cập nhật
+    const trimmedKey = apiKey.trim();
     await db.query(`
       INSERT INTO system_config (key, value) 
       VALUES ('OPENAI_API_KEY', $1) 
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-    `, [apiKey]);
+    `, [trimmedKey]);
     
-    // Cập nhật luôn vào process.env để có hiệu lực ngay lập tức mà không cần restart server
-    process.env.OPENAI_API_KEY = apiKey;
+    // Cập nhật luôn vào process.env để có hiệu lực ngay lập tức
+    process.env.OPENAI_API_KEY = trimmedKey;
+    process.env.GEMINI_API_KEY = trimmedKey;
     
     res.json({ message: 'Cập nhật API Key thành công!' });
   } catch (err) {

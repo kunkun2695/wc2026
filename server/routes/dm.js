@@ -90,7 +90,7 @@ router.post('/send', authenticateUser, async (req, res) => {
 
     res.json(newMessage);
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi gửi tin nhắn' });
+    res.status(500).json({ error: 'Lỗi gửi tin nhắn: ' + (err.message || 'Lỗi không xác định') });
   }
 });
 

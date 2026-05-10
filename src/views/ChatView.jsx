@@ -97,8 +97,13 @@ const ChatView = ({ user }) => {
         setShowEmojis(false);
         if (activeMode === 'public') fetchPublicMessages();
         else fetchDmHistory(selectedUser.id);
+      } else {
+        const errorData = await res.json();
+        alert('Lỗi gửi tin nhắn: ' + (errorData.error || 'Vui lòng thử lại'));
       }
-    } catch (err) {}
+    } catch (err) {
+      alert('Lỗi kết nối server: ' + err.message);
+    }
   };
 
   return (

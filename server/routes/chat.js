@@ -52,7 +52,7 @@ router.post('/', authenticateUser, async (req, res) => {
 
     res.status(201).json(fullMessage.rows[0]);
   } catch (error) {
-    res.status(500).json({ error: 'Lỗi gửi tin nhắn: ' + error.message });
+    res.status(500).json({ error: 'Lỗi gửi tin nhắn: ' + (error.message || 'Lỗi không xác định') });
   }
 });
 
