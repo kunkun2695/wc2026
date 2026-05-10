@@ -172,11 +172,35 @@ const ChatView = ({ user }) => {
   };
 
   return (
-    <div className="chat-view-container">
+    <div className={`chat-view-container ${selectedChat ? 'in-chat' : 'in-list'}`}>
       {/* Sidebar - Unified List */}
       <div className="chat-sidebar">
         <div className="sidebar-header-unified">
-          <h2 className="font-outfit">Tin nhắn</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-outfit m-0">Tin nhắn</h2>
+          </div>
+          
+          {/* Mobile Tab Switcher */}
+          <div className="mobile-chat-tabs">
+            <button 
+              className={selectedChat?.id === 'public' ? 'active' : ''} 
+              onClick={() => setSelectedChat({ id: 'public', type: 'public', name: 'Cộng đồng' })}
+            >
+              <Globe size={16} /> Cộng đồng
+            </button>
+            <button 
+              className={selectedChat?.id !== 'public' && selectedChat ? 'active' : ''}
+              onClick={() => {
+                if (dmUsers.length > 0) {
+                   const u = dmUsers[0];
+                   setSelectedChat({ id: u.id, type: 'dm', name: u.name || u.username, avatar: u.avatar });
+                }
+              }}
+            >
+              <Users size={16} /> Cá nhân
+            </button>
+          </div>
+
           <div className="search-box-chat">
             <Search size={14} />
             <input type="text" placeholder="Tìm kiếm bạn bè..." />
@@ -186,7 +210,7 @@ const ChatView = ({ user }) => {
         <div className="user-list">
           {/* Public Group Item */}
           <div 
-            className={`user-item group-item ${selectedChat.id === 'public' ? 'active' : ''}`}
+            className={`user-item group-item ${selectedChat?.id === 'public' ? 'active' : ''}`}
             onClick={() => setSelectedChat({ id: 'public', type: 'public', name: 'Cộng đồng' })}
           >
             <div className="group-avatar-stack">
@@ -198,12 +222,12 @@ const ChatView = ({ user }) => {
             </div>
           </div>
 
-          <div className="list-divider">BẠN BÈ</div>
+          <div className="list-divider">TIN NHẮN RIÊNG</div>
 
-          {dmUsers.map(u => (
+          {dmUsers.length > 0 ? dmUsers.map(u => (
             <div 
               key={u.id} 
-              className={`user-item ${selectedChat.id === u.id ? 'active' : ''}`}
+              className={`user-item ${selectedChat?.id === u.id ? 'active' : ''}`}
               onClick={() => setSelectedChat({ id: u.id, type: 'dm', name: u.name || u.username, avatar: u.avatar })}
             >
               <UserAvatar src={u.avatar} size={44} className="user-item-avatar" />
@@ -212,127 +236,141 @@ const ChatView = ({ user }) => {
                 <div className="user-role">{u.role}</div>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="p-4 text-center text-xs text-slate-500">Chưa có cuộc hội thoại nào.</div>
+          )}
         </div>
       </div>
 
       {/* Main Chat Area */}
       <div className={`chat-main ${selectedChat ? 'show' : ''}`}>
-        <div className="chat-header">
-          <button className="back-btn mobile-only" onClick={() => setSelectedChat(null)}><ChevronLeft /></button>
-          <div className="header-info">
-            <div className="flex items-center gap-3">
-              {selectedChat.type === 'dm' ? (
-                <UserAvatar src={selectedChat.avatar} size={36} />
-              ) : (
-                <div className="header-icon-circle"><Globe size={18} /></div>
-              )}
-              <div>
-                <h3>{selectedChat.name}</h3>
-                <p className="status-online">{selectedChat.type === 'public' ? 'Hàng nghìn người đang gáy' : 'Đang hoạt động'}</p>
-              </div>
-            </div>
-          </div>
-          <div className="header-actions">
-            <button className="icon-btn"><Search size={18} /></button>
-            <button className="icon-btn"><MoreVertical size={18} /></button>
-          </div>
-        </div>
-
-        <div className="messages-container" ref={scrollContainerRef} onScroll={handleScroll}>
-          {loadingMore && (
-            <div className="load-more-indicator">
-              <div className="spinner-mini" /> Đang tải tin cũ...
-            </div>
-          )}
-          
-          {loading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="spinner-chat" />
-            </div>
-          ) : (
-            messages.map((m, i) => {
-              const isMe = (m.user_id == currentUser.id) || (m.sender_id == currentUser.id);
-              return (
-                <div key={m.id || i} className={`message-wrapper ${isMe ? 'me' : 'others'}`}>
-                  {!isMe && selectedChat.type === 'public' && (
-                    <UserAvatar src={m.avatar} size={32} className="msg-avatar" />
+        {selectedChat ? (
+          <>
+            <div className="chat-header">
+              <button className="back-btn mobile-only" onClick={() => setSelectedChat(null)}>
+                <ChevronLeft size={24} />
+              </button>
+              <div className="header-info">
+                <div className="flex items-center gap-3">
+                  {selectedChat.type === 'dm' ? (
+                    <UserAvatar src={selectedChat.avatar} size={36} />
+                  ) : (
+                    <div className="header-icon-circle"><Globe size={18} /></div>
                   )}
-                  <div className="message-content">
-                    {!isMe && selectedChat.type === 'public' && <div className="msg-author">{m.name || m.username}</div>}
-                    <div className="msg-bubble">
-                      {m.content && <div className="msg-text">{m.content}</div>}
-                      {m.image_url && (
-                        <div className="msg-image">
-                          <img src={m.image_url} alt="chat-img" onClick={() => window.open(m.image_url)} />
-                        </div>
-                      )}
-                      <div className="msg-time">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                    </div>
+                  <div>
+                    <h3 className="m-0 text-sm md:text-base">{selectedChat.name}</h3>
+                    <p className="status-online m-0 text-xs">{selectedChat.type === 'public' ? 'Phòng chat chung' : 'Đang trực tuyến'}</p>
                   </div>
                 </div>
-              );
-            })
-          )}
-          <div ref={chatEndRef} />
-        </div>
-
-        {/* Input Area */}
-        <div className="chat-input-wrapper">
-          {image && (
-            <div className="chat-image-preview">
-              <img src={image} alt="preview" />
-              <button onClick={() => setImage(null)}><X size={14} /></button>
-            </div>
-          )}
-          
-            <div className="chat-input-bar">
-              <div className="input-tools-horizontal">
-                <label htmlFor="chat-image-upload" className="tool-icon-btn">
-                  <ImageIcon size={20} />
-                  <input 
-                    id="chat-image-upload"
-                    type="file" 
-                    hidden 
-                    accept="image/*" 
-                    onChange={handleImageChange} 
-                  />
-                </label>
-                <div className="emoji-wrapper">
-                  <button className="tool-icon-btn" onClick={() => setShowEmojis(!showEmojis)}><Smile size={20} /></button>
-                  <AnimatePresence>
-                    {showEmojis && (
-                      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="emoji-picker-mini">
-                        {EMOJIS.map(e => <button key={e} onClick={() => setContent(c => c + e)}>{e}</button>)}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-                {selectedChat.id === 'public' && currentUser.role === 'admin' && (
-                  <button 
-                    className={`tool-icon-btn broadcast-toggle ${isBroadcastMode ? 'active' : ''}`}
-                    onClick={() => setIsBroadcastMode(!isBroadcastMode)}
-                    title="Gửi thông báo Push đến tất cả"
-                  >
-                    <Megaphone size={18} />
-                  </button>
-                )}
               </div>
-              
-              <input 
-                type="text" 
-                className="chat-input-field"
-                placeholder="Nhập tin nhắn..." 
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-              />
-              
-              <button className="send-btn" onClick={sendMessage} disabled={!content.trim() && !image}>
-                <Send size={20} />
-              </button>
+              <div className="header-actions">
+                <button className="icon-btn"><Search size={18} /></button>
+                <button className="icon-btn"><MoreVertical size={18} /></button>
+              </div>
             </div>
-        </div>
+
+            <div className="messages-container" ref={scrollContainerRef} onScroll={handleScroll}>
+              {loadingMore && (
+                <div className="load-more-indicator">
+                  <div className="spinner-mini" /> Đang tải tin cũ...
+                </div>
+              )}
+              
+              {loading ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="spinner-chat" />
+                </div>
+              ) : (
+                messages.map((m, i) => {
+                  const isMe = (m.user_id == currentUser.id) || (m.sender_id == currentUser.id);
+                  return (
+                    <div key={m.id || i} className={`message-wrapper ${isMe ? 'me' : 'others'}`}>
+                      {!isMe && selectedChat.type === 'public' && (
+                        <UserAvatar src={m.avatar} size={32} className="msg-avatar" />
+                      )}
+                      <div className="message-content">
+                        {!isMe && selectedChat.type === 'public' && <div className="msg-author">{m.name || m.username}</div>}
+                        <div className="msg-bubble">
+                          {m.content && <div className="msg-text">{m.content}</div>}
+                          {m.image_url && (
+                            <div className="msg-image">
+                              <img src={m.image_url} alt="chat-img" onClick={() => window.open(m.image_url)} />
+                            </div>
+                          )}
+                          <div className="msg-time">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input Area */}
+            <div className="chat-input-wrapper">
+              {image && (
+                <div className="chat-image-preview">
+                  <img src={image} alt="preview" />
+                  <button onClick={() => setImage(null)}><X size={14} /></button>
+                </div>
+              )}
+              
+              <div className="chat-input-bar">
+                <div className="input-tools-horizontal">
+                  <label htmlFor="chat-image-upload" className="tool-icon-btn">
+                    <ImageIcon size={20} />
+                    <input 
+                      id="chat-image-upload"
+                      type="file" 
+                      hidden 
+                      accept="image/*" 
+                      onChange={handleImageChange} 
+                    />
+                  </label>
+                  <div className="emoji-wrapper">
+                    <button className="tool-icon-btn" onClick={() => setShowEmojis(!showEmojis)}><Smile size={20} /></button>
+                    <AnimatePresence>
+                      {showEmojis && (
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="emoji-picker-mini">
+                          {EMOJIS.map(e => <button key={e} onClick={() => setContent(c => c + e)}>{e}</button>)}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  {selectedChat.id === 'public' && currentUser.role === 'admin' && (
+                    <button 
+                      className={`tool-icon-btn broadcast-toggle ${isBroadcastMode ? 'active' : ''}`}
+                      onClick={() => setIsBroadcastMode(!isBroadcastMode)}
+                      title="Gửi thông báo Push đến tất cả"
+                    >
+                      <Megaphone size={18} />
+                    </button>
+                  )}
+                </div>
+                
+                <input 
+                  type="text" 
+                  className="chat-input-field"
+                  placeholder="Nhập tin nhắn..." 
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                />
+                
+                <button className="send-btn" onClick={sendMessage} disabled={!content.trim() && !image}>
+                  <Send size={20} />
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center p-10 text-center opacity-30">
+             <MessageSquare size={80} className="mb-4" />
+             <h2 className="font-outfit text-xl m-0">Chọn một cuộc trò chuyện</h2>
+             <p className="text-sm">Hãy chọn một người bạn hoặc phòng cộng đồng để bắt đầu gáy!</p>
+          </div>
+        )}
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
@@ -345,12 +383,17 @@ const ChatView = ({ user }) => {
           flex-direction: column; 
           background: rgba(15, 23, 42, 0.5); 
           backdrop-filter: blur(20px); 
+          flex-shrink: 0;
         }
         
         .sidebar-header-unified { padding: 25px 20px 15px; }
         .sidebar-header-unified h2 { font-size: 1.5rem; font-weight: 900; color: white; margin-bottom: 15px; }
         .search-box-chat { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px 15px; display: flex; align-items: center; gap: 10px; color: #64748b; }
         .search-box-chat input { background: transparent; border: none; color: white; outline: none; font-size: 0.85rem; width: 100%; }
+
+        .mobile-chat-tabs { display: none; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; }
+        .mobile-chat-tabs button { flex: 1; padding: 8px; border: none; background: transparent; color: #64748b; font-size: 0.75rem; font-weight: 800; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
+        .mobile-chat-tabs button.active { background: #00d2ff; color: black; }
 
         .user-list { flex: 1; overflow-y: auto; padding: 10px; }
         .list-divider { font-size: 0.65rem; font-weight: 800; color: #475569; letter-spacing: 1.5px; margin: 20px 10px 10px; }
@@ -364,7 +407,7 @@ const ChatView = ({ user }) => {
         .user-name { font-weight: 800; color: white; font-size: 0.95rem; }
         .user-role { font-size: 0.7rem; color: #475569; text-transform: uppercase; font-weight: 700; }
 
-        .chat-main { flex: 1; display: flex; flex-direction: column; background: #0a0e17; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: #0a0e17; min-width: 0; }
         .chat-header { padding: 15px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; background: rgba(10, 14, 23, 0.8); backdrop-filter: blur(10px); }
         .header-icon-circle { width: 36px; height: 36px; border-radius: 50%; background: rgba(0, 210, 255, 0.1); color: #00d2ff; display: flex; align-items: center; justify-content: center; }
         .status-online { color: #00ff64 !important; }
@@ -373,60 +416,30 @@ const ChatView = ({ user }) => {
         .load-more-indicator { text-align: center; font-size: 0.75rem; color: #475569; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .spinner-mini { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.1); border-top-color: #00d2ff; border-radius: 50%; animation: spin 0.6s linear infinite; }
         
-        .message-wrapper { display: flex; gap: 12px; max-width: 80%; }
+        .message-wrapper { display: flex; gap: 12px; max-width: 85%; }
         .message-wrapper.me { align-self: flex-end; flex-direction: row-reverse; }
         .msg-bubble { padding: 12px 18px; border-radius: 18px; position: relative; }
         .message-wrapper.me .msg-bubble { background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: white; border-bottom-right-radius: 4px; }
         .message-wrapper.others .msg-bubble { background: rgba(255,255,255,0.05); color: #cbd5e1; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
         
         .msg-author { font-size: 0.7rem; color: #00d2ff; font-weight: 900; margin-bottom: 4px; }
-        .msg-text { font-size: 0.95rem; line-height: 1.5; }
+        .msg-text { font-size: 0.95rem; line-height: 1.5; word-break: break-word; }
         .msg-time { font-size: 0.65rem; opacity: 0.5; margin-top: 5px; text-align: right; }
 
         .chat-input-wrapper { padding: 15px 20px; background: #0a0e17; border-top: 1px solid rgba(255,255,255,0.05); }
-        .chat-input-bar { 
-          background: rgba(255,255,255,0.02); 
-          border: 1px solid rgba(255,255,255,0.08); 
-          border-radius: 20px; 
-          display: flex; 
-          align-items: center; 
-          padding: 6px 10px 6px 15px; 
-          gap: 12px;
-          backdrop-filter: blur(10px);
-        }
+        .chat-input-bar { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; display: flex; align-items: center; padding: 6px 10px 6px 15px; gap: 12px; backdrop-filter: blur(10px); }
         .input-tools-horizontal { display: flex; align-items: center; gap: 8px; border-right: 1px solid rgba(255,255,255,0.05); padding-right: 12px; }
-        .tool-icon-btn { 
-          width: 36px; 
-          height: 36px; 
-          border-radius: 10px; 
-          background: rgba(255,255,255,0.03); 
-          border: 1px solid rgba(255,255,255,0.05);
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          color: #94a3b8; 
-          cursor: pointer; 
-          transition: all 0.2s;
-        }
+        .tool-icon-btn { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
         .tool-icon-btn:hover { background: rgba(0, 210, 255, 0.1); color: #00d2ff; border-color: rgba(0, 210, 255, 0.2); }
         .broadcast-toggle.active { background: #ffd200; color: black; border-color: #ffd200; box-shadow: 0 0 15px rgba(255, 210, 0, 0.3); }
 
         .chat-input-field { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 0.95rem; padding: 10px 0; }
         
-        .emoji-picker-mini { 
-          position: absolute; 
-          bottom: 50px; 
-          left: 0; 
-          background: #1e293b; 
-          border: 1px solid #334155; 
-          border-radius: 16px; 
-          padding: 10px; 
-          display: grid; 
-          grid-template-columns: repeat(4, 1fr); 
-          gap: 8px; 
-          z-index: 100; 
-          box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
-        }
+        .chat-image-preview { position: relative; margin-bottom: 10px; width: 100px; height: 100px; }
+        .chat-image-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; border: 1px solid #00d2ff; }
+        .chat-image-preview button { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .emoji-picker-mini { position: absolute; bottom: 60px; left: 0; background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
         .emoji-picker-mini button { font-size: 1.4rem; padding: 6px; background: none; border: none; cursor: pointer; border-radius: 8px; transition: 0.2s; }
         .emoji-picker-mini button:hover { background: rgba(255,255,255,0.05); transform: scale(1.1); }
         
@@ -438,8 +451,13 @@ const ChatView = ({ user }) => {
 
         @media (max-width: 1024px) {
           .chat-view-container { padding-top: 60px; }
-          .chat-sidebar { width: 100%; position: absolute; inset: 60px 0 0; z-index: 20; display: ${selectedChat ? 'none' : 'flex'}; }
-          .chat-main { position: absolute; inset: 60px 0 0; z-index: 21; display: ${selectedChat ? 'flex' : 'none'}; }
+          .chat-sidebar { width: 100%; position: absolute; inset: 60px 0 0; z-index: 20; display: flex; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+          .chat-view-container.in-chat .chat-sidebar { transform: translateX(-100%); pointer-events: none; }
+          
+          .chat-main { position: absolute; inset: 60px 0 0; z-index: 21; display: flex; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+          .chat-view-container.in-chat .chat-main { transform: translateX(0); }
+          
+          .mobile-chat-tabs { display: flex; }
           .mobile-only { display: block !important; }
         }
         .mobile-only { display: none; }
