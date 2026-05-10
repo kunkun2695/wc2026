@@ -55,7 +55,11 @@ async function patchDatabase() {
       )
     `);
 
-    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches và mạng xã hội thành công.');
+    // Bổ sung cột image_url cho Chat và DM
+    await db.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS image_url TEXT`);
+    await db.query(`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS image_url TEXT`);
+
+    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội và Chat Image thành công.');
   } catch (err) {
     console.error('⚠️ [DB Fix Error]', err.message);
   }

@@ -1,288 +1,288 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, User, Smile, ArrowLeft } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Send, Users, MessageSquare, Image as ImageIcon, 
+  Smile, X, ChevronLeft, MoreVertical, Search
+} from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const formatTime = (dateStr) => {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return new Intl.DateTimeFormat('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
-};
+const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
+const EMOJIS = ['⚽', '🏆', '🔥', '👏', '🙌', '😮', '😢', '😍', '🇻🇳', '🤣', '💪', '👇'];
 
 const ChatView = () => {
-  const [activeTab, setActiveTab] = useState('global');
-  const [messages, setMessages] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [activeMode, setActiveMode] = useState('public'); // 'public' or 'dm'
+  const [publicMessages, setPublicMessages] = useState([]);
+  const [dmUsers, setDmUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [newMessage, setNewMessage] = useState('');
+  const [dmMessages, setDmMessages] = useState([]);
+  const [content, setContent] = useState('');
+  const [image, setImage] = useState(null);
+  const [showEmojis, setShowEmojis] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const messagesEndRef = useRef(null);
-  
-  // SỬA LỖI: Dùng đúng key 'wc2026_session'
-  const currentUser = JSON.parse(localStorage.getItem('wc2026_session') || '{}');
-  const token = localStorage.getItem('wc2026_token');
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const chatEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const currentUser = JSON.parse(localStorage.getItem('wc2026_user') || '{}');
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    fetchPublicMessages();
+    fetchDmUsers();
+    const interval = setInterval(() => {
+      if (activeMode === 'public') fetchPublicMessages();
+      else if (selectedUser) fetchDmHistory(selectedUser.id);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [activeMode, selectedUser]);
 
   useEffect(() => {
-    if (activeTab === 'global') {
-      fetchGlobalMessages();
-      const interval = setInterval(fetchGlobalMessages, 3000);
-      return () => clearInterval(interval);
-    } else if (activeTab === 'private') {
-      fetchUsers();
-      if (selectedUser) {
-        fetchPrivateMessages();
-        const interval = setInterval(fetchPrivateMessages, 3000);
-        return () => clearInterval(interval);
-      }
-    }
-  }, [activeTab, selectedUser]);
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [publicMessages, dmMessages]);
 
-  const fetchUsers = async () => {
-    const finalApiUrl = API_URL || window.location.origin;
+  const fetchPublicMessages = async () => {
     try {
-      console.log('Đang lấy danh sách từ:', `${finalApiUrl}/api/dm/users`);
-      const res = await fetch(`${finalApiUrl}/api/dm/users`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await fetch(`${API_URL}/api/chat`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('wc2026_token')}` }
       });
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setUsers(data.filter(u => u.id !== currentUser.id));
-      } else {
-        console.error('Dữ liệu user không phải mảng:', data);
-      }
-    } catch (err) {
-      console.error('Lỗi fetchUsers:', err);
-    }
+      setPublicMessages(data);
+    } catch (err) {} finally { setLoading(false); }
   };
 
-  const fetchGlobalMessages = async () => {
-    const finalApiUrl = API_URL || window.location.origin;
+  const fetchDmUsers = async () => {
     try {
-      const res = await fetch(`${finalApiUrl}/api/chat`);
-      const data = await res.json();
-      if (Array.isArray(data)) setMessages(data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Lỗi fetchGlobalMessages:', err);
-      setLoading(false);
-    }
-  };
-
-  const fetchPrivateMessages = async () => {
-    if (!selectedUser) return;
-    const finalApiUrl = API_URL || window.location.origin;
-    try {
-      const res = await fetch(`${finalApiUrl}/api/dm/history/${selectedUser.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await fetch(`${API_URL}/api/dm/users`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('wc2026_token')}` }
       });
       const data = await res.json();
-      if (Array.isArray(data)) setMessages(data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Lỗi fetchPrivateMessages:', err);
-      setLoading(false);
+      setDmUsers(data);
+    } catch (err) {}
+  };
+
+  const fetchDmHistory = async (otherId) => {
+    try {
+      const res = await fetch(`${API_URL}/api/dm/history/${otherId}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('wc2026_token')}` }
+      });
+      const data = await res.json();
+      setDmMessages(data);
+    } catch (err) {}
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setImage(reader.result);
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || sending) return;
-
-    setSending(true);
-    const finalApiUrl = API_URL || window.location.origin;
-    const endpoint = activeTab === 'global' ? '/api/chat' : '/api/dm/send';
-    const body = activeTab === 'global' 
-      ? { content: newMessage } 
-      : { receiver_id: selectedUser.id, content: newMessage };
+  const sendMessage = async () => {
+    if (!content.trim() && !image) return;
+    const url = activeMode === 'public' ? `${API_URL}/api/chat` : `${API_URL}/api/dm/send`;
+    const body = activeMode === 'public' 
+      ? { content, image_url: image }
+      : { receiver_id: selectedUser.id, content, image_url: image };
 
     try {
-      const res = await fetch(`${finalApiUrl}${endpoint}`, {
+      const res = await fetch(url, {
         method: 'POST',
-        headers: {
+        headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${localStorage.getItem('wc2026_token')}`
         },
         body: JSON.stringify(body)
       });
-
       if (res.ok) {
-        setNewMessage('');
-        activeTab === 'global' ? fetchGlobalMessages() : fetchPrivateMessages();
-      } else {
-        const errorData = await res.json();
-        console.error('Lỗi gửi tin nhắn từ server:', errorData);
+        setContent('');
+        setImage(null);
+        setShowEmojis(false);
+        if (activeMode === 'public') fetchPublicMessages();
+        else fetchDmHistory(selectedUser.id);
       }
-    } catch (err) {
-      console.error('Lỗi kết nối khi gửi tin nhắn:', err);
-    } finally {
-      setSending(false);
-    }
+    } catch (err) {}
   };
 
   return (
-    <div className="chat-view-v3-wrapper">
-      <div className="chat-tabs-v3">
-        <button 
-          className={`tab-btn-v3 ${activeTab === 'global' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('global'); setSelectedUser(null); setMessages([]); }}
-        >
-          <MessageSquare size={18} /> Chat Tổng
-        </button>
-        <button 
-          className={`tab-btn-v3 ${activeTab === 'private' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('private'); setMessages([]); }}
-        >
-          <User size={18} /> Chat Riêng
-        </button>
+    <div className="chat-view-container">
+      {/* Sidebar - Desktop */}
+      <div className="chat-sidebar">
+        <div className="sidebar-tabs">
+          <button 
+            className={`tab-btn ${activeMode === 'public' ? 'active' : ''}`}
+            onClick={() => { setActiveMode('public'); setSelectedUser(null); }}
+          >
+            <Users size={20} /> <span>Cộng đồng</span>
+          </button>
+          <button 
+            className={`tab-btn ${activeMode === 'dm' ? 'active' : ''}`}
+            onClick={() => setActiveMode('dm')}
+          >
+            <MessageSquare size={20} /> <span>Tin nhắn riêng</span>
+          </button>
+        </div>
+
+        {activeMode === 'dm' && (
+          <div className="user-list">
+            {dmUsers.map(user => (
+              <div 
+                key={user.id} 
+                className={`user-item ${selectedUser?.id === user.id ? 'active' : ''}`}
+                onClick={() => setSelectedUser(user)}
+              >
+                <img src={user.avatar || 'https://via.placeholder.com/40'} alt="av" />
+                <div className="user-info">
+                  <div className="user-name">{user.name || user.username}</div>
+                  <div className="user-role">{user.role}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="chat-main-container-v3">
-        {activeTab === 'private' && !selectedUser ? (
-          <div className="user-list-v3">
-            <h3 className="section-title-v3">Thành viên</h3>
-            {users.length === 0 ? (
-              <p className="empty-text-v3">Không có ai trực tuyến.</p>
-            ) : (
-              users.map(u => (
-                <div key={u.id} className="user-item-v3" onClick={() => { setSelectedUser(u); setLoading(true); }}>
-                  <div className="user-avatar-v3">
-                    {u.avatar ? <img src={u.avatar} alt="" /> : <User size={20} color="#888" />}
-                  </div>
-                  <div className="user-info-v3">
-                    <div className="user-name-v3">{u.name || u.username}</div>
-                    <div className="user-role-v3">{u.role === 'admin' ? 'ADMIN' : 'MEMBER'}</div>
+      {/* Main Chat Area */}
+      <div className={`chat-main ${selectedUser || activeMode === 'public' ? 'show' : ''}`}>
+        <div className="chat-header">
+          {activeMode === 'dm' && selectedUser && (
+            <button className="back-btn" onClick={() => setSelectedUser(null)}><ChevronLeft /></button>
+          )}
+          <div className="header-info">
+            <h3>{activeMode === 'public' ? 'Phòng Chat Chung' : (selectedUser?.name || 'Chọn người để chat')}</h3>
+            <p>{activeMode === 'public' ? 'Hàng nghìn người đang online' : 'Đang trực tuyến'}</p>
+          </div>
+        </div>
+
+        <div className="messages-container">
+          {(activeMode === 'public' ? publicMessages : dmMessages).map((m, i) => {
+            const isMe = m.user_id === currentUser.id || m.sender_id === currentUser.id;
+            return (
+              <div key={m.id || i} className={`message-wrapper ${isMe ? 'me' : 'others'}`}>
+                {!isMe && activeMode === 'public' && (
+                  <img src={m.avatar || 'https://via.placeholder.com/32'} alt="av" className="msg-avatar" />
+                )}
+                <div className="message-content">
+                  {!isMe && activeMode === 'public' && <div className="msg-author">{m.name || m.username}</div>}
+                  <div className="msg-bubble">
+                    {m.content && <div className="msg-text">{m.content}</div>}
+                    {m.image_url && (
+                      <div className="msg-image">
+                        <img src={m.image_url} alt="chat-img" onClick={() => window.open(m.image_url)} />
+                      </div>
+                    )}
+                    <div className="msg-time">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                   </div>
                 </div>
-              ))
+              </div>
+            );
+          })}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input Area */}
+        {(activeMode === 'public' || selectedUser) && (
+          <div className="chat-input-wrapper">
+            {image && (
+              <div className="chat-image-preview">
+                <img src={image} alt="preview" />
+                <button onClick={() => setImage(null)}><X size={14} /></button>
+              </div>
             )}
-          </div>
-        ) : (
-          <div className="chat-container-v3">
-            <div className="chat-header-v3">
-              {activeTab === 'private' && (
-                <button className="back-btn-v3" onClick={() => setSelectedUser(null)}><ArrowLeft size={18} /></button>
-              )}
-              <div className="header-info-v3">
-                {activeTab === 'global' ? <span>Phòng Chat Tổng</span> : <span>{selectedUser?.name || selectedUser?.username}</span>}
+            
+            <div className="chat-input-bar">
+              <div className="input-tools">
+                <button onClick={() => fileInputRef.current.click()}><ImageIcon size={20} /></button>
+                <div className="emoji-wrapper">
+                  <button onClick={() => setShowEmojis(!showEmojis)}><Smile size={20} /></button>
+                  <AnimatePresence>
+                    {showEmojis && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="emoji-dropdown">
+                        {EMOJIS.map(e => <button key={e} onClick={() => setContent(c => c + e)}>{e}</button>)}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
+              
+              <input 
+                type="text" 
+                placeholder="Nhập tin nhắn..." 
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              />
+              
+              <button className="send-btn" onClick={sendMessage} disabled={!content.trim() && !image}>
+                <Send size={20} />
+              </button>
             </div>
-
-            <div className="messages-list-v3">
-              {loading ? (
-                <div className="chat-loading-v3"><div className="loader-v3"></div></div>
-              ) : messages.length === 0 ? (
-                <div className="empty-chat-v3"><Smile size={40} /><p>Hãy gửi tin nhắn đầu tiên!</p></div>
-              ) : (
-                messages.map((msg, idx) => {
-                  // SỬA LỖI: So sánh đúng ID từ currentUser
-                  const isMe = currentUser.id && (msg.user_id === currentUser.id || msg.sender_id === currentUser.id);
-                  return (
-                    <div key={msg.id || idx} className={`message-row-v3 ${isMe ? 'row-me' : 'row-other'}`}>
-                      {!isMe && (
-                        <div className="msg-avatar-v3">
-                          {msg.avatar ? <img src={msg.avatar} alt="" /> : <User size={12} color="#888" />}
-                        </div>
-                      )}
-                      <div className="message-bubble-v3">
-                        {!isMe && activeTab === 'global' && <div className="sender-name-v3">{msg.name || msg.username}</div>}
-                        <div className="bubble-content-v3">
-                          {msg.content}
-                          <span className="msg-time-v3">{formatTime(msg.created_at)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            <form className="chat-form-v3" onSubmit={handleSendMessage}>
-              <div className="input-group-v3">
-                <input 
-                  type="text" 
-                  placeholder="Nhập nội dung..." 
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                />
-                <button type="submit" disabled={!newMessage.trim() || sending}>
-                  <Send size={18} />
-                </button>
-              </div>
-            </form>
+            
+            <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleImageChange} />
           </div>
         )}
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .chat-view-v3-wrapper { height: calc(100vh - 120px) !important; display: flex !important; flex-direction: column !important; gap: 15px !important; padding: 10px !important; max-width: 600px !important; margin: 0 auto !important; }
-        .chat-tabs-v3 { display: flex !important; background: rgba(255, 255, 255, 0.05) !important; padding: 4px !important; border-radius: 12px !important; gap: 4px !important; }
-        .tab-btn-v3 { flex: 1 !important; padding: 10px !important; border-radius: 10px !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; font-weight: 700 !important; color: #666 !important; border: none !important; background: transparent !important; cursor: pointer !important; }
-        .tab-btn-v3.active { background: #00f3ff !important; color: #000 !important; }
-        .chat-main-container-v3 { flex: 1 !important; background: #0d121d !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 24px !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; }
-        .user-list-v3 { padding: 20px !important; overflow-y: auto !important; }
-        .section-title-v3 { font-size: 0.7rem !important; color: #555 !important; text-transform: uppercase !important; margin-bottom: 15px !important; letter-spacing: 1.5px !important; font-weight: 800 !important; }
-        .user-item-v3 { display: flex !important; align-items: center !important; gap: 12px !important; padding: 12px !important; border-radius: 16px !important; cursor: pointer !important; transition: 0.2s !important; }
-        .user-item-v3:hover { background: rgba(255, 255, 255, 0.05) !important; }
-        .user-avatar-v3 { width: 40px !important; height: 40px !important; background: #1a1f2e !important; border-radius: 50% !important; overflow: hidden !important; border: 1px solid rgba(255,255,255,0.1) !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-        .user-avatar-v3 img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
-        .user-name-v3 { font-weight: 600 !important; font-size: 0.95rem !important; color: #fff !important; }
-        .user-role-v3 { font-size: 0.7rem !important; color: #444 !important; font-weight: 800 !important; }
-
-        .chat-container-v3 { display: flex !important; flex-direction: column !important; height: 100% !important; }
-        .chat-header-v3 { padding: 12px 20px !important; background: rgba(255, 255, 255, 0.02) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; display: flex !important; align-items: center !important; gap: 12px !important; font-weight: 800 !important; color: #fff !important; }
-        .back-btn-v3 { color: #00f3ff !important; background: none !important; border: none !important; cursor: pointer !important; }
-
-        .messages-list-v3 { flex: 1 !important; padding: 20px !important; overflow-y: auto !important; display: flex !important; flex-direction: column !important; gap: 12px !important; }
-        .message-row-v3 { display: flex !important; gap: 10px !important; max-width: 85% !important; }
-        .row-me { align-self: flex-end !important; flex-direction: row-reverse !important; }
-        .row-other { align-self: flex-start !important; }
-        .msg-avatar-v3 { width: 30px !important; height: 30px !important; border-radius: 50% !important; background: #1a1f2e !important; flex-shrink: 0 !important; overflow: hidden !important; border: 1px solid rgba(255,255,255,0.1) !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-        .msg-avatar-v3 img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+        .chat-view-container { display: flex; height: 100vh; background: #0a0e17; padding-top: 60px; overflow: hidden; }
         
-        .message-bubble-v3 { display: flex !important; flex-direction: column !important; gap: 4px !important; }
-        .sender-name-v3 { font-size: 0.65rem !important; color: #555 !important; font-weight: 800 !important; margin: 0 10px !important; }
-        .bubble-content-v3 { padding: 10px 16px !important; border-radius: 18px !important; font-size: 0.9rem !important; line-height: 1.4 !important; word-break: break-word !important; position: relative !important; }
-        .row-me .bubble-content-v3 { background: #0084ff !important; color: #fff !important; border-bottom-right-radius: 4px !important; box-shadow: 0 4px 12px rgba(0, 132, 255, 0.2) !important; }
-        .row-other .bubble-content-v3 { background: #1e293b !important; color: #eee !important; border-bottom-left-radius: 4px !important; border: 1px solid rgba(255,255,255,0.05) !important; }
-        .msg-time-v3 { font-size: 0.6rem !important; opacity: 0.5 !important; display: block !important; margin-top: 4px !important; font-weight: 600 !important; }
-        .row-me .msg-time-v3 { text-align: right !important; color: rgba(255,255,255,0.6) !important; }
-
-        .chat-form-v3 { padding: 15px 20px !important; border-top: 1px solid rgba(255, 255, 255, 0.05) !important; }
-        .input-group-v3 { display: flex !important; gap: 10px !important; background: #1a1f2e !important; padding: 4px !important; border-radius: 14px !important; border: 1px solid rgba(255,255,255,0.05) !important; }
-        .chat-form-v3 input { flex: 1 !important; background: transparent !important; border: none !important; padding: 10px 15px !important; color: white !important; outline: none !important; font-size: 0.9rem !important; }
-        .chat-form-v3 button { background: #00f3ff !important; color: #000 !important; width: 38px !important; height: 38px !important; border-radius: 10px !important; display: flex !important; align-items: center !important; justify-content: center !important; border: none !important; cursor: pointer !important; }
+        .chat-sidebar { width: 320px; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px); }
+        .sidebar-tabs { display: flex; padding: 15px; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .tab-btn { flex: 1; background: rgba(255,255,255,0.03); border: none; color: #888; padding: 10px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .tab-btn.active { background: rgba(0, 210, 255, 0.1); color: #00d2ff; border: 1px solid rgba(0, 210, 255, 0.2); }
         
-        .chat-loading-v3 { display: flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; }
-        .loader-v3 { width: 25px !important; height: 25px !important; border: 2px solid rgba(0,243,255,0.1) !important; border-top-color: #00f3ff !important; border-radius: 50% !important; animation: spin-v3 1s linear infinite !important; }
-        @keyframes spin-v3 { to { transform: rotate(360deg) !important; } }
+        .user-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .user-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; cursor: pointer; transition: 0.2s; margin-bottom: 5px; }
+        .user-item:hover { background: rgba(255,255,255,0.03); }
+        .user-item.active { background: rgba(255,255,255,0.05); border-left: 3px solid #00d2ff; }
+        .user-item img { width: 44px; height: 44px; border-radius: 14px; object-fit: cover; }
+        .user-name { font-weight: 800; color: white; font-size: 0.95rem; }
+        .user-role { font-size: 0.7rem; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: #0a0e17; position: relative; }
+        .chat-header { padding: 15px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px; background: rgba(10, 14, 23, 0.8); backdrop-filter: blur(10px); z-index: 10; }
+        .header-info h3 { margin: 0; color: white; font-size: 1.1rem; }
+        .header-info p { margin: 0; color: #00d2ff; font-size: 0.75rem; font-weight: 600; }
+
+        .messages-container { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 20px; }
+        .message-wrapper { display: flex; gap: 12px; max-width: 80%; }
+        .message-wrapper.me { align-self: flex-end; flex-direction: row-reverse; }
+        
+        .msg-avatar { width: 32px; height: 32px; border-radius: 10px; }
+        .msg-bubble { padding: 12px 18px; border-radius: 18px; position: relative; }
+        .message-wrapper.me .msg-bubble { background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: white; border-bottom-right-radius: 4px; }
+        .message-wrapper.others .msg-bubble { background: rgba(255,255,255,0.05); color: #cbd5e1; border-bottom-left-radius: 4px; }
+        
+        .msg-author { font-size: 0.7rem; color: #00d2ff; font-weight: 900; margin-bottom: 4px; }
+        .msg-text { font-size: 0.95rem; line-height: 1.5; word-break: break-word; }
+        .msg-image { margin-top: 8px; border-radius: 12px; overflow: hidden; max-width: 250px; cursor: pointer; }
+        .msg-image img { width: 100%; display: block; transition: 0.3s; }
+        .msg-image img:hover { transform: scale(1.05); }
+        .msg-time { font-size: 0.65rem; opacity: 0.5; margin-top: 5px; text-align: right; font-weight: 600; }
+
+        .chat-input-wrapper { padding: 20px 25px; background: #0a0e17; border-top: 1px solid rgba(255,255,255,0.05); }
+        .chat-input-bar { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; display: flex; align-items: center; padding: 8px 15px; gap: 15px; }
+        .chat-input-bar input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 0.95rem; }
+        
+        .input-tools { display: flex; gap: 12px; color: #666; }
+        .input-tools button { background: none; border: none; color: inherit; cursor: pointer; transition: 0.2s; }
+        .input-tools button:hover { color: #00d2ff; }
+        
+        .emoji-wrapper { position: relative; display: flex; }
+        .emoji-dropdown { position: absolute; bottom: 40px; left: -10px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .emoji-dropdown button { font-size: 1.2rem; padding: 5px; }
+
+        .chat-image-preview { position: relative; display: inline-block; margin-bottom: 15px; border-radius: 12px; overflow: hidden; border: 2px solid #00d2ff; }
+        .chat-image-preview img { height: 80px; width: 80px; object-fit: cover; }
+        .chat-image-preview button { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.8); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .send-btn { background: #00d2ff; color: black; border: none; width: 42px; height: 42px; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .send-btn:hover { transform: scale(1.1); background: #33e0ff; }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         @media (max-width: 768px) {
-          .chat-view-v3-wrapper { 
-            height: calc(100vh - 225px) !important; 
-            padding: 0 !important; 
-            gap: 0 !important; 
-            margin-top: -10px !important;
-          }
-          .chat-main-container-v3 { border-radius: 0 !important; border: none !important; }
-          .chat-tabs-v3 { border-radius: 0 !important; padding: 10px 15px !important; background: #0d121d !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; }
-          .chat-header-v3 { padding: 8px 15px !important; font-size: 0.9rem !important; }
-          .messages-list-v3 { padding: 12px !important; gap: 8px !important; }
-          .chat-form-v3 { padding: 10px 12px 25px !important; background: #0d121d !important; }
-          .input-group-v3 { padding: 2px !important; border-radius: 12px !important; }
+          .chat-sidebar { width: 100%; position: absolute; inset: 60px 0 0; z-index: 20; transform: translateX(0); transition: 0.3s; }
+          .chat-main { position: absolute; inset: 60px 0 0; z-index: 21; transform: translateX(100%); transition: 0.3s; }
+          .chat-main.show { transform: translateX(0); }
+          .chat-sidebar { display: ${selectedUser ? 'none' : 'flex'}; }
+          .chat-main { display: ${selectedUser || activeMode === 'public' ? 'flex' : 'none'}; }
         }
       ` }} />
     </div>
