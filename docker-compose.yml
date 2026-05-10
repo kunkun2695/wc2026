@@ -1,22 +1,16 @@
 version: '3.8'
-
 services:
   app:
-    build:
-      context: .
-      args:
-        # Thay đổi URL này thành tên miền thực tế của bạn khi deploy
-        VITE_API_URL: https://estrip.fun
-        VITE_VAPID_PUBLIC_KEY: BE_cpojus2_nYd4aTJdzHTL-b9f-Csp5RTBez_2cmyB96lkrJN3AW-GBuDNOr7L9sTug9kmNmZud0Y6e90TbUj0
-    ports:
+    image: longtran26/wc2026:latest
+    ports:   # <--- Chữ p này phải thẳng hàng với chữ i của image
       - "5005:5005"
-    environment:
+    environment: # <--- Chữ e này cũng phải thẳng hàng
       - DATABASE_URL=postgres://user:pass@db:5432/worldcup2026
       - CORS_ORIGIN=*
       - JWT_SECRET=worldcup2026_secret_key_prod_by_antigravity
       - VAPID_PUBLIC_KEY=BE_cpojus2_nYd4aTJdzHTL-b9f-Csp5RTBez_2cmyB96lkrJN3AW-GBuDNOr7L9sTug9kmNmZud0Y6e90TbUj0
       - VAPID_PRIVATE_KEY=ixGqkAeBMHOD7KKUwYmONKxpwjQC9j6DVDhrvNFYTWY
-    depends_on:
+    depends_on: # <--- Chữ d này cũng thẳng hàng
       - db
 
   db:
