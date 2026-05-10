@@ -110,15 +110,8 @@ router.post('/chat', authenticateUser, async (req, res) => {
 
   console.log('[AI DEBUG] TẤT CẢ model đều thất bại.');
   // Nếu tất cả các lần thử đều thất bại
-  res.status(500).json({
-    error: "AI tạm thời không khả dụng",
-    details: lastError?.message,
-    debug_params: {
-      attempted_models: attemptedModels,
-      current_key: maskKey(apiKey),
-      error_message: lastError?.message
-    },
-    suggestion: "Kiểm tra lại API Key trong file .env và đảm bảo model này được hỗ trợ trong vùng của bạn."
+  res.json({
+    reply: "⚠️ **Guru:** Xin lỗi bạn, hiện tại tôi đã dùng hết hạn mức kết nối trong ngày (Quota limit). Vui lòng quay lại sau ít phút hoặc thử lại vào ngày mai nhé! ⚽️",
   });
 });
 
@@ -160,7 +153,7 @@ router.post('/stream', authenticateUser, async (req, res) => {
   for (const modelName of modelsToTry) {
     console.log(`[AI STREAM DEBUG] Đang thử Model: ${modelName}...`);
     // Gửi thông tin debug về client để người dùng thấy tiến trình
-    res.write(`data: ${JSON.stringify({ text: `\n\n*(Hệ thống: Đang thử kết nối tới ${modelName}...)*\n\n` })}\n\n`);
+    // Đã gỡ bỏ thông báo debug hệ thống tại đây
 
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
@@ -184,7 +177,7 @@ router.post('/stream', authenticateUser, async (req, res) => {
     } catch (error) {
       console.error(`[AI STREAM DEBUG] Model ${modelName} LỖI:`, error.message);
       // Gửi lỗi của model này về client
-      res.write(`data: ${JSON.stringify({ text: `\n\n*(Hệ thống: ${modelName} lỗi: ${error.message})*\n\n` })}\n\n`);
+      // Đã gỡ bỏ thông báo lỗi kỹ thuật tại đây
       lastError = error;
       if (error.message.includes('API key') || error.message.includes('403') || error.message.includes('401')) {
         break;
@@ -195,7 +188,7 @@ router.post('/stream', authenticateUser, async (req, res) => {
 
   if (!success) {
     console.log('[AI STREAM DEBUG] TẤT CẢ model stream đều thất bại.');
-    res.write(`data: ${JSON.stringify({ error: `AI lỗi cuối cùng: ${lastError?.message || 'Hết lượt thử'}` })}\n\n`);
+    res.write(`data: ${JSON.stringify({ text: "\n\n⚠️ **Guru:** Xin lỗi bạn, hiện tại tôi đã dùng hết hạn mức kết nối trong ngày (Quota limit). Vui lòng quay lại sau nhé! ⚽️" })}\n\n`);
     res.end();
   }
 });
