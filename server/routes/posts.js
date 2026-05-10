@@ -39,18 +39,38 @@ router.post('/', authenticateUser, async (req, res) => {
   }
 });
 
+const { sendPushNotification } = require('./notifications');
+
 // 3. Like/Unlike bài viết
 router.post('/:id/like', authenticateUser, async (req, res) => {
   const postId = req.params.id;
   const userId = req.user.id;
 
   try {
+    const postInfo = await db.query('SELECT user_id, content FROM posts WHERE id = $1', [postId]);
+    if (postInfo.rows.length === 0) return res.status(404).json({ error: 'Bài viết không tồn tại' });
+    const postOwnerId = postInfo.rows[0].user_id;
+
     const check = await db.query('SELECT * FROM post_likes WHERE user_id = $1 AND post_id = $2', [userId, postId]);
     if (check.rows.length > 0) {
       await db.query('DELETE FROM post_likes WHERE user_id = $1 AND post_id = $2', [userId, postId]);
       res.json({ liked: false });
     } else {
       await db.query('INSERT INTO post_likes (user_id, post_id) VALUES ($1, $2)', [userId, postId]);
+      
+      // Thông báo cho chủ bài viết (nếu không phải tự mình like bài mình)
+      if (postOwnerId !== userId) {
+        const title = 'Tương tác mới';
+        const message = `${req.user.username} đã thích bài viết của bạn.`;
+        
+        await db.query(`
+          INSERT INTO notifications (user_id, sender_id, type, title, message, content, url)
+          VALUES ($1, $2, $3, $4, $5, $5, $6)
+        `, [postOwnerId, userId, 'like', title, message, '/social']);
+
+        sendPushNotification(postOwnerId, title, message, '/social').catch(() => {});
+      }
+      
       res.json({ liked: true });
     }
   } catch (err) {
@@ -78,13 +98,32 @@ router.get('/:id/comments', authenticateUser, async (req, res) => {
 router.post('/:id/comments', authenticateUser, async (req, res) => {
   const { content } = req.body;
   const postId = req.params.id;
+  const userId = req.user.id;
   if (!content) return res.status(400).json({ error: 'Nội dung bình luận trống' });
 
   try {
+    const postInfo = await db.query('SELECT user_id FROM posts WHERE id = $1', [postId]);
+    if (postInfo.rows.length === 0) return res.status(404).json({ error: 'Bài viết không tồn tại' });
+    const postOwnerId = postInfo.rows[0].user_id;
+
     const result = await db.query(
       'INSERT INTO post_comments (post_id, user_id, content) VALUES ($1, $2, $3) RETURNING *',
-      [postId, req.user.id, content]
+      [postId, userId, content]
     );
+
+    // Thông báo cho chủ bài viết (nếu không phải tự mình bình luận bài mình)
+    if (postOwnerId !== userId) {
+      const title = 'Bình luận mới';
+      const message = `${req.user.username} đã bình luận: "${content.substring(0, 30)}${content.length > 30 ? '...' : ''}"`;
+      
+      await db.query(`
+        INSERT INTO notifications (user_id, sender_id, type, title, message, content, url)
+        VALUES ($1, $2, $3, $4, $5, $5, $6)
+      `, [postOwnerId, userId, 'comment', title, message, '/social']);
+
+      sendPushNotification(postOwnerId, title, message, '/social').catch(() => {});
+    }
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Lỗi gửi bình luận' });
