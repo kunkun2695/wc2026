@@ -260,7 +260,7 @@ const App = () => {
         <div className="mobile-header-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Trophy size={22} color="var(--primary-cyan)" />
-            <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.2rem' }}>Bench-Bets</span>
+            <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.2rem' }}>Bench-Bets v2</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
@@ -279,7 +279,7 @@ const App = () => {
         <div className="sidebar-logo" style={{ marginBottom: '30px', padding: '0 10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Trophy size={24} color="var(--primary-cyan)" />
-            <h1 className="font-outfit" style={{ fontSize: '1.4rem', fontWeight: 800 }}>Bench-Bets</h1>
+            <h1 className="font-outfit" style={{ fontSize: '1.4rem', fontWeight: 800 }}>Bench-Bets v2</h1>
           </div>
         </div>
 
