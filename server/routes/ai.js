@@ -15,7 +15,7 @@ const getAIClient = () => {
   // Nếu là key của Google (thường không bắt đầu bằng sk-)
   if (!apiKey.startsWith('sk-')) {
     const genAI = new GoogleGenerativeAI(apiKey);
-    return { type: 'gemini', client: genAI.getGenerativeModel({ model: "gemini-pro" }) };
+    return { type: 'gemini', client: genAI.getGenerativeModel({ model: "gemini-1.5-flash" }) };
   }
   
   // Nếu là key của OpenAI
