@@ -424,7 +424,7 @@ const App = () => {
           )}
           {activeTab === 'social' && (
             <motion.div key="social" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <SocialView />
+              <SocialView onOpenComments={handleOpenComments} />
             </motion.div>
           )}
           {activeTab === 'admin_matches' && (
