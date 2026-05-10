@@ -562,8 +562,8 @@ const App = () => {
         @media (max-width: 1024px) {
           .mobile-header { display: block; }
           .main-content { 
-            padding-top: calc(80px + env(safe-area-inset-top, 20px)); 
-            padding-bottom: 120px;
+            padding-top: calc(90px + env(safe-area-inset-top, 20px)); 
+            padding-bottom: 130px;
           }
         }
       `}</style>

@@ -1,5 +1,9 @@
 const { execSync } = require('child_process');
 const path = require('path');
+const dotenv = require('dotenv');
+
+// Nạp cấu hình ENV từ thư mục gốc
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 async function init() {
   console.log('🚀 Bắt đầu quá trình kiểm tra và cập nhật Database...');

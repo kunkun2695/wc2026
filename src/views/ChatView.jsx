@@ -271,9 +271,18 @@ const ChatView = () => {
         @keyframes spin-v3 { to { transform: rotate(360deg) !important; } }
 
         @media (max-width: 768px) {
-          .chat-view-v3-wrapper { height: calc(100vh - 150px) !important; padding: 0 !important; gap: 0 !important; }
+          .chat-view-v3-wrapper { 
+            height: calc(100vh - 225px) !important; 
+            padding: 0 !important; 
+            gap: 0 !important; 
+            margin-top: -10px !important;
+          }
           .chat-main-container-v3 { border-radius: 0 !important; border: none !important; }
-          .chat-tabs-v3 { border-radius: 0 !important; padding: 8px !important; }
+          .chat-tabs-v3 { border-radius: 0 !important; padding: 10px 15px !important; background: #0d121d !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; }
+          .chat-header-v3 { padding: 8px 15px !important; font-size: 0.9rem !important; }
+          .messages-list-v3 { padding: 12px !important; gap: 8px !important; }
+          .chat-form-v3 { padding: 10px 12px 25px !important; background: #0d121d !important; }
+          .input-group-v3 { padding: 2px !important; border-radius: 12px !important; }
         }
       ` }} />
     </div>

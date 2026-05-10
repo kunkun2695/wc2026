@@ -1,14 +1,9 @@
-const { Pool } = require('pg');
-require('dotenv').config();
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
-});
+const db = require('./config/db');
 
 async function setupDirectMessages() {
   try {
     // Tạo bảng tin nhắn riêng
-    await pool.query(`
+    await db.query(`
       CREATE TABLE IF NOT EXISTS direct_messages (
         id SERIAL PRIMARY KEY,
         sender_id INTEGER REFERENCES users(id),
@@ -20,13 +15,13 @@ async function setupDirectMessages() {
     `);
 
     // Tạo index để truy vấn nhanh hơn
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_dm_sender ON direct_messages(sender_id)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_dm_receiver ON direct_messages(receiver_id)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_dm_sender ON direct_messages(sender_id)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_dm_receiver ON direct_messages(receiver_id)`);
 
     console.log('✅ Đã khởi tạo bảng direct_messages thành công!');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Lỗi khởi tạo database:', err);
+    console.error('❌ Lỗi khởi tạo database DM:', err.message);
     process.exit(1);
   }
 }
