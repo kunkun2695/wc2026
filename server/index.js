@@ -77,6 +77,7 @@ const chatRoutes = require('./routes/chat');
 const dmRoutes = require('./routes/dm');
 const postsRoutes = require('./routes/posts');
 const aiRoutes = require('./routes/ai');
+const adminRoutes = require('./routes/admin');
 const configRoutes = require('./routes/config');
 
 const app = express();
@@ -102,6 +103,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/dm', dmRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/config', configRoutes);
 
 // Serve Static Files

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, X, RefreshCw, Megaphone, Send, Sparkles } from 'lucide-react';
+import { Shield, X, RefreshCw, Megaphone, Send, Sparkles, Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MatchCard from '../components/MatchCard';
 
@@ -159,6 +159,47 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
     setIsSyncing(false);
   };
 
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetConfirmCode, setResetConfirmCode] = useState('');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetMsg, setResetMsg] = useState('');
+
+  const handleResetSystem = async () => {
+    if (resetConfirmCode !== 'RESET_WC2026_FINAL') {
+      alert('Mã xác nhận không đúng!');
+      return;
+    }
+    
+    if (!confirm('HÀNH ĐỘNG NÀY KHÔNG THỂ HOÀN TÁC! Bạn có chắc chắn muốn xóa toàn bộ dữ liệu bài đăng, tin nhắn và lịch sử không?')) {
+      return;
+    }
+
+    setResetLoading(true);
+    setResetMsg('');
+    const finalApiUrl = API_URL || window.location.origin;
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${finalApiUrl}/api/admin/reset-system`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ confirmation_code: resetConfirmCode })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResetMsg('✅ ' + data.message);
+        setShowResetConfirm(false);
+        setResetConfirmCode('');
+        setTimeout(() => window.location.reload(), 2000); // Reload to refresh all data
+      } else {
+        setResetMsg('❌ ' + data.error);
+      }
+    } catch (err) {
+      setResetMsg('❌ Lỗi kết nối');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const stats = {
     total: matches.length,
     live: matches.filter(m => m.status === 'LIVE').length,
@@ -274,11 +315,67 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
           </div>
         </section>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '60px' }}>
           {matches.map(m => (
             <MatchCard key={m.id} match={m} isAdmin={true} onEdit={setEditingMatch} />
           ))}
         </div>
+
+        {/* DANGER ZONE - Reset System */}
+        <section style={{ 
+          background: 'rgba(239, 68, 68, 0.05)', 
+          padding: '30px', 
+          borderRadius: '24px', 
+          border: '1px solid rgba(239, 68, 68, 0.2)',
+          marginTop: '60px' 
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+            <AlertTriangle size={20} color="#ef4444" />
+            <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#ef4444' }}>DANGER ZONE (VÙNG NGUY HIỂM)</h3>
+          </div>
+          <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '20px' }}>
+            Hành động này sẽ <strong>XÓA VĨNH VIỄN</strong> toàn bộ bài đăng cộng đồng, tất cả tin nhắn chat, tin nhắn riêng, các kèo dự đoán và reset điểm người dùng về 0. Hãy cực kỳ cẩn thận.
+          </p>
+          
+          {!showResetConfirm ? (
+            <button 
+              onClick={() => setShowResetConfirm(true)}
+              style={{ padding: '12px 25px', borderRadius: '12px', background: '#ef4444', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Trash2 size={18} />
+              RESET TOÀN BỘ HỆ THỐNG
+            </button>
+          ) : (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '16px' }}>
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'white', marginBottom: '10px' }}>
+                Để xác nhận, vui lòng nhập mã: <code style={{ background: '#000', padding: '2px 6px', color: '#00d2ff' }}>RESET_WC2026_FINAL</code>
+              </p>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input 
+                  type="text" 
+                  value={resetConfirmCode}
+                  onChange={e => setResetConfirmCode(e.target.value)}
+                  placeholder="Nhập mã xác nhận..."
+                  style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#000', border: '1px solid #ef4444', color: 'white' }}
+                />
+                <button 
+                  onClick={handleResetSystem}
+                  disabled={resetLoading}
+                  style={{ padding: '0 25px', borderRadius: '10px', background: '#ef4444', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer' }}
+                >
+                  {resetLoading ? 'ĐANG RESET...' : 'XÁC NHẬN XÓA'}
+                </button>
+                <button 
+                  onClick={() => setShowResetConfirm(false)}
+                  style={{ padding: '0 20px', borderRadius: '10px', background: '#334155', color: 'white', fontWeight: 700, border: 'none', cursor: 'pointer' }}
+                >
+                  HỦY
+                </button>
+              </div>
+              {resetMsg && <div style={{ marginTop: '10px', fontSize: '0.8rem', fontWeight: 700, color: resetMsg.includes('✅') ? '#00ff64' : '#ff4d4d' }}>{resetMsg}</div>}
+            </motion.div>
+          )}
+        </section>
       </div>
 
       <AnimatePresence>
