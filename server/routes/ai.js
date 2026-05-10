@@ -3,15 +3,23 @@ const router = express.Router();
 const { authenticateUser } = require('../middleware/auth');
 
 const OpenAI = require('openai');
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Khởi tạo hàm lấy Client OpenAI một cách an toàn
+const getOpenAIClient = () => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey || apiKey === 'sk-xxxx') return null;
+  return new OpenAI({ apiKey });
+};
 
 router.post('/chat', authenticateUser, async (req, res) => {
   const { message } = req.body;
   
   if (!message) return res.status(400).json({ error: 'Nội dung trống' });
 
-  // Nếu không có API Key, dùng bộ não giả lập như cũ
-  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-xxxx') {
+  const openai = getOpenAIClient();
+
+  // Nếu không có API Key hoặc lỗi khởi tạo, dùng bộ não giả lập
+  if (!openai) {
     return simulateAiResponse(message, res);
   }
 
