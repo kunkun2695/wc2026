@@ -6,8 +6,14 @@ import {
   Smile,
   MessageSquare
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+const formatTime = (dateStr) => {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  } catch (e) {
+    return '';
+  }
+};
 
 const ChatView = () => {
   const [messages, setMessages] = useState([]);
@@ -131,7 +137,7 @@ const ChatView = () => {
                     <div className="message-info">
                       <span className="sender-name">{msg.name || msg.username}</span>
                       <span className="send-time">
-                        {format(new Date(msg.created_at), 'HH:mm', { locale: vi })}
+                        {formatTime(msg.created_at)}
                       </span>
                     </div>
                     <div className={`message-bubble ${isMe ? 'bubble-me' : 'bubble-other'}`}>
