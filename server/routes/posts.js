@@ -130,4 +130,33 @@ router.post('/:id/comments', authenticateUser, async (req, res) => {
   }
 });
 
+// 6. Xóa bài viết
+router.delete('/:id', authenticateUser, async (req, res) => {
+  const postId = req.params.id;
+  const userId = req.user.id;
+  const userRole = req.user.role;
+
+  try {
+    // Kiểm tra quyền sở hữu hoặc quyền admin
+    const post = await db.query('SELECT user_id FROM posts WHERE id = $1', [postId]);
+    if (post.rows.length === 0) return res.status(404).json({ error: 'Bài viết không tồn tại' });
+
+    if (post.rows[0].user_id !== userId && userRole !== 'admin') {
+      return res.status(403).json({ error: 'Bạn không có quyền xóa bài viết này' });
+    }
+
+    await db.query('BEGIN');
+    // Xóa likes và comments trước khi xóa post
+    await db.query('DELETE FROM post_likes WHERE post_id = $1', [postId]);
+    await db.query('DELETE FROM post_comments WHERE post_id = $1', [postId]);
+    await db.query('DELETE FROM posts WHERE id = $1', [postId]);
+    await db.query('COMMIT');
+
+    res.json({ message: 'Đã xóa bài viết thành công' });
+  } catch (err) {
+    await db.query('ROLLBACK');
+    res.status(500).json({ error: 'Lỗi khi xóa bài viết' });
+  }
+});
+
 module.exports = router;

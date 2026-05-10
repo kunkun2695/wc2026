@@ -7,15 +7,19 @@ import API_URL from '../config';
 // Danh sách Emoji phổ biến để anh em nhanh chóng chọn
 const EMOJIS = ['⚽', '🏆', '🔥', '👏', '🙌', '😮', '😢', '😍', '🇻🇳', '🤣', '💪', '👇'];
 
-const PostCard = ({ post, onLike, onOpenComments }) => {
+const PostCard = ({ post, onLike, onOpenComments, onDelete, currentUser }) => {
   const [isLiked, setIsLiked] = useState(post.is_liked);
   const [likesCount, setLikesCount] = useState(parseInt(post.likes_count));
+  const [showOptions, setShowOptions] = useState(false);
 
   const handleLike = () => {
     setIsLiked(!isLiked);
     setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
     onLike(post.id);
   };
+
+  const isOwner = currentUser && (post.user_id === currentUser.id);
+  const isAdmin = currentUser && (currentUser.role === 'admin');
 
   return (
     <motion.div 
@@ -29,7 +33,26 @@ const PostCard = ({ post, onLike, onOpenComments }) => {
           <div className="post-author">{post.name || post.username}</div>
           <div className="post-time">{new Date(post.created_at).toLocaleString('vi-VN')}</div>
         </div>
-        <button className="post-more-btn"><MoreHorizontal size={18} /></button>
+        <div className="post-options-wrapper">
+          <button className="post-more-btn" onClick={() => setShowOptions(!showOptions)}><MoreHorizontal size={18} /></button>
+          <AnimatePresence>
+            {showOptions && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                className="post-options-dropdown"
+              >
+                {(isOwner || isAdmin) && (
+                  <button className="option-item delete" onClick={() => { onDelete(post.id); setShowOptions(false); }}>
+                    <X size={14} /> Xóa bài viết
+                  </button>
+                )}
+                <button className="option-item" onClick={() => setShowOptions(false)}>Báo cáo</button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       <div className="post-content">
@@ -137,6 +160,24 @@ const SocialView = () => {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('wc2026_token')}` }
       });
     } catch (err) {}
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này không?')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/posts/${postId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('wc2026_token')}` }
+      });
+      if (res.ok) {
+        fetchPosts();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Lỗi khi xóa bài viết');
+      }
+    } catch (err) {
+      alert('Lỗi kết nối server');
+    }
   };
 
   const openComments = async (post) => {
@@ -251,9 +292,15 @@ const SocialView = () => {
             posts.length > 0 ? posts.map(post => {
               const userString = localStorage.getItem('wc2026_user');
               const currentUser = userString ? JSON.parse(userString) : null;
-              const isMe = currentUser && post.user_id == currentUser.id;
               return (
-                <PostCard key={post.id} post={post} onLike={handleLike} onOpenComments={openComments} />
+                <PostCard 
+                  key={post.id} 
+                  post={post} 
+                  onLike={handleLike} 
+                  onOpenComments={openComments} 
+                  onDelete={handleDeletePost}
+                  currentUser={currentUser}
+                />
               )
             }) : (
               <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Chưa có bài viết nào.</div>
@@ -497,7 +544,14 @@ const SocialView = () => {
         .post-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); }
         .post-author { font-weight: 800; color: white; font-size: 1rem; }
         .post-time { font-size: 0.75rem; color: #666; margin-top: 2px; }
-        .post-more-btn { margin-left: auto; background: none; border: none; color: #555; cursor: pointer; padding: 5px; }
+        .post-options-wrapper { position: relative; margin-left: auto; }
+        .post-more-btn { background: none; border: none; color: #555; cursor: pointer; padding: 5px; transition: 0.2s; }
+        .post-more-btn:hover { color: white; }
+        .post-options-dropdown { position: absolute; top: 100%; right: 0; background: #1a1f2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px; z-index: 100; min-width: 150px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .option-item { width: 100%; text-align: left; background: none; border: none; color: #94a3b8; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+        .option-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .option-item.delete { color: #ef4444; }
+        .option-item.delete:hover { background: rgba(239, 68, 68, 0.1); }
         
         .post-text { color: #e2e8f0; line-height: 1.6; margin-bottom: 15px; white-space: pre-wrap; font-size: 1.05rem; }
         .post-image-container { border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; }
