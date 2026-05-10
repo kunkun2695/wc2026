@@ -648,7 +648,7 @@ const App = () => {
           min-width: 0; 
           position: relative; 
           height: 100vh;
-          overflow-y: auto;
+          overflow: ${activeTab === 'chat' ? 'hidden' : 'auto'};
         }
 
         .mobile-header { display: none; }
@@ -660,7 +660,7 @@ const App = () => {
             padding-top: ${hideHeader ? 'env(safe-area-inset-top, 20px)' : 'calc(60px + env(safe-area-inset-top, 0px))'}; 
             padding-bottom: 80px; 
             height: 100vh;
-            overflow: ${hideHeader ? 'hidden' : 'auto'};
+            overflow: ${activeTab === 'chat' ? 'hidden' : 'auto'};
           }
           .mobile-header {
             display: block; position: fixed; top: 0; left: 0; right: 0;
