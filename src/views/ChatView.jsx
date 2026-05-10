@@ -21,6 +21,7 @@ const ChatView = ({ user }) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
+  const [isBroadcastMode, setIsBroadcastMode] = useState(false);
   
   const chatEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -140,7 +141,7 @@ const ChatView = ({ user }) => {
     if (!content.trim() && !image) return;
     const url = selectedChat.type === 'public' ? `${API_URL}/api/chat` : `${API_URL}/api/dm/send`;
     const body = selectedChat.type === 'public' 
-      ? { content, image_url: image, broadcast: window.isBroadcastMode }
+      ? { content, image_url: image, broadcast: isBroadcastMode }
       : { receiver_id: selectedChat.id, content, image_url: image };
 
     try {
@@ -309,8 +310,8 @@ const ChatView = ({ user }) => {
                 </div>
                 {selectedChat.id === 'public' && currentUser.role === 'admin' && (
                   <button 
-                    className={`tool-icon-btn broadcast-toggle ${window.isBroadcastMode ? 'active' : ''}`}
-                    onClick={() => { window.isBroadcastMode = !window.isBroadcastMode; setContent(c => c); }} // Force re-render
+                    className={`tool-icon-btn broadcast-toggle ${isBroadcastMode ? 'active' : ''}`}
+                    onClick={() => setIsBroadcastMode(!isBroadcastMode)}
                     title="Gửi thông báo Push đến tất cả"
                   >
                     <Megaphone size={18} />

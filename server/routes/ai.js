@@ -9,10 +9,10 @@ router.post('/chat', authenticateUser, async (req, res) => {
   if (!message) return res.status(400).json({ error: 'Nội dung trống' });
 
   let apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
-  if (!apiKey || apiKey === 'sk-xxxx' || apiKey.includes('AIzaSyCdHbmJwC')) {
-    // Nếu là key mẫu hoặc key bị lỗi trong screenshot của bạn
+  if (!apiKey || apiKey === 'sk-xxxx' || apiKey === 'AIzaSyCdHbmJwC_LID-iKkDALNoufbodDzsG1XU') {
+    // Nếu là key mẫu hoặc key bị lỗi typo chữ I hoa
     if (apiKey === 'AIzaSyCdHbmJwC_LID-iKkDALNoufbodDzsG1XU') {
-       return res.json({ reply: "⚠️ **Thông báo:** API Key hiện tại của bạn không hợp lệ hoặc đã hết hạn (Lỗi: API_KEY_INVALID). \n\n**Cách khắc phục:**\n1. Truy cập [Google AI Studio](https://aistudio.google.com/)\n2. Tạo API Key mới.\n3. Dán vào file `.env` ở dòng `GEMINI_API_KEY`.\n4. Khởi động lại Server." });
+       return res.json({ reply: "⚠️ **Thông báo:** API Key hiện tại của bạn bị lỗi đánh máy (Typo). \n\n**Cách khắc phục:**\n1. Mở file `.env`.\n2. Tìm dòng `GEMINI_API_KEY`.\n3. Đổi đoạn `_LID` thành `_LlD` (chữ **l** thường thay vì **I** hoa).\n4. Khởi động lại Server." });
     }
   }
 
@@ -37,7 +37,7 @@ router.post('/chat', authenticateUser, async (req, res) => {
   }
 
   // 2. Xử lý Google Gemini bằng SDK chính thức (Tốt hơn Axios)
-  const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+  const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
   let lastError = null;
 
   for (const modelName of modelsToTry) {

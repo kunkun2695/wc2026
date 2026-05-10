@@ -150,7 +150,33 @@ router.post('/broadcast', authenticateUser, async (req, res) => {
   }
 });
 
+// Hàm gửi thông báo toàn hệ thống (Dùng cho Chat Admin hoặc Admin Panel)
+const sendBroadcastNotification = async (title, body, url = '/') => {
+  try {
+    const usersResult = await db.query('SELECT id FROM users');
+    const users = usersResult.rows;
+
+    const insertPromises = users.map(user => {
+      return db.query(`
+        INSERT INTO notifications (user_id, sender_id, type, title, message, content, url, is_read)
+        VALUES ($1, $2, $3, $4, $5, $5, $6, FALSE)
+      `, [user.id, 1, 'announcement', title, body, url]); // Giả sử Admin ID là 1 hoặc hệ thống
+    });
+    
+    await Promise.all(insertPromises);
+
+    users.forEach(user => {
+      sendPushNotification(user.id, title, body, url);
+    });
+    return true;
+  } catch (error) {
+    console.error('Broadcast Error:', error);
+    return false;
+  }
+};
+
 module.exports = {
   router,
-  sendPushNotification
+  sendPushNotification,
+  sendBroadcastNotification
 };
