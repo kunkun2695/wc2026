@@ -653,11 +653,16 @@ const App = () => {
 
         @media (max-width: 1024px) {
           .sidebar { display: none; }
-          .main-content { padding-bottom: 100px; }
+          .main-content { 
+            padding-top: calc(60px + env(safe-area-inset-top, 0px)); 
+            padding-bottom: 80px; 
+            height: 100vh;
+          }
           .mobile-header {
             display: block; position: fixed; top: 0; left: 0; right: 0;
             background: #0f172a; z-index: 2000; border-bottom: 1px solid rgba(255,255,255,0.05);
             padding-top: env(safe-area-inset-top, 20px);
+            height: calc(60px + env(safe-area-inset-top, 20px));
           }
         }
       `}</style>
