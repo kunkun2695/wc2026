@@ -68,6 +68,8 @@ router.get('/history/:otherId', authenticateUser, async (req, res) => {
   }
 });
 
+const { sendPushNotification } = require('./notifications');
+
 // Gửi tin nhắn riêng
 router.post('/send', authenticateUser, async (req, res) => {
   const { receiver_id, content } = req.body;
@@ -82,7 +84,30 @@ router.post('/send', authenticateUser, async (req, res) => {
       'INSERT INTO direct_messages (sender_id, receiver_id, content) VALUES ($1, $2, $3) RETURNING *',
       [sender_id, receiver_id, content]
     );
-    res.json(result.rows[0]);
+    const newMessage = result.rows[0];
+
+    // Tạo thông báo trong hệ thống
+    await db.query(`
+      INSERT INTO notifications (user_id, sender_id, type, title, message, content, url, is_read)
+      VALUES ($1, $2, $3, $4, $5, $5, $6, FALSE)
+    `, [
+      receiver_id, 
+      sender_id, 
+      'dm', 
+      'Tin nhắn mới', 
+      `${req.user.username}: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`, 
+      '/chat'
+    ]);
+
+    // Gửi Push Notification (thông báo đẩy điện thoại)
+    sendPushNotification(
+      receiver_id, 
+      'Tin nhắn mới từ ' + req.user.username, 
+      content.length > 100 ? content.substring(0, 97) + '...' : content, 
+      '/chat'
+    ).catch(err => console.error('Lỗi gửi push DM:', err));
+
+    res.json(newMessage);
   } catch (err) {
     res.status(500).json({ error: 'Lỗi gửi tin nhắn' });
   }
