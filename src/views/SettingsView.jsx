@@ -10,7 +10,8 @@ const SettingsView = ({ user, onUpdateUser }) => {
   const [avatar, setAvatar] = useState(user.avatar || '👤');
   const [password, setPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState('');
+   const [message, setMessage] = useState('');
+  const [pushEnabled, setPushEnabled] = useState('Notification' in window && Notification.permission === 'granted');
 
   const avatarOptions = ['👤', '⚽', '🏆', '🔥', '🦁', '🦅', '🧤', '🏟️', '👟', '📢'];
 
@@ -137,17 +138,36 @@ const SettingsView = ({ user, onUpdateUser }) => {
                 <button 
                   type="button"
                   onClick={async () => {
-                    if ('Notification' in window) {
+                    if (!('Notification' in window)) {
+                      alert('Trình duyệt này không hỗ trợ thông báo đẩy. Nếu dùng iPhone, hãy thử "Thêm vào màn hình chính" (Add to Home Screen).');
+                      return;
+                    }
+                    
+                    if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+                      alert('Thông báo đẩy yêu cầu kết nối bảo mật (HTTPS). Vui lòng sử dụng HTTPS.');
+                      return;
+                    }
+
+                    if (Notification.permission === 'denied') {
+                      alert('Bạn đã chặn thông báo trong phần cài đặt của điện thoại/trình duyệt. Vui lòng vào Cài đặt để bật lại cho trang web này.');
+                      return;
+                    }
+
+                    try {
                       const res = await Notification.requestPermission();
                       if (res === 'granted') {
                         await subscribeToPush();
+                        setPushEnabled(true);
                         setMessage('Đã bật thông báo thành công!');
                       } else {
-                        setMessage('Bạn đã từ chối quyền thông báo.');
+                        setPushEnabled(false);
+                        setMessage('Bạn chưa cấp quyền thông báo.');
                       }
+                    } catch (err) {
+                      alert('Lỗi: ' + err.message);
                     }
                   }}
-                  className={`notif-toggle ${('Notification' in window && Notification.permission === 'granted') ? 'active' : ''}`}
+                  className={`notif-toggle ${pushEnabled ? 'active' : ''}`}
                 >
                   <div className="toggle-dot"></div>
                 </button>
