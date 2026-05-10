@@ -657,7 +657,7 @@ const App = () => {
         @media (max-width: 1024px) {
           .sidebar { display: none; }
           .main-content { 
-            padding-top: ${hideHeader ? '0' : 'calc(60px + env(safe-area-inset-top, 0px))'}; 
+            padding-top: ${hideHeader ? 'env(safe-area-inset-top, 20px)' : 'calc(60px + env(safe-area-inset-top, 0px))'}; 
             padding-bottom: 80px; 
             height: 100vh;
             overflow: ${hideHeader ? 'hidden' : 'auto'};

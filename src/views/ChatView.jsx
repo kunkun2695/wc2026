@@ -296,7 +296,7 @@ const ChatView = ({ user, onToggleHeader }) => {
           display: flex; 
           align-items: center; 
           justify-content: space-between; 
-          background: rgba(15, 23, 42, 0.8); 
+          background: rgba(10, 14, 23, 0.95); 
           backdrop-filter: blur(20px) saturate(180%); 
           z-index: 50;
           position: sticky;
@@ -371,19 +371,15 @@ const ChatView = ({ user, onToggleHeader }) => {
 
         @media (max-width: 1024px) {
           .chat-view-container { display: flex; flex-direction: column; height: 100%; position: relative; }
-          .chat-sidebar { 
-            width: 100%; 
-            height: 100%; 
-            display: ${selectedChat ? 'none' : 'flex'}; 
-            position: relative;
-            border-right: none;
-          }
-          .chat-main { 
-            width: 100%; 
-            height: 100%; 
-            display: ${selectedChat ? 'flex' : 'none'}; 
-            position: relative;
-          }
+          .chat-sidebar { width: 100%; height: 100%; position: relative; border-right: none; }
+          .chat-main { width: 100%; height: 100%; position: relative; }
+          
+          /* Using class-based visibility for reactivity */
+          .in-chat .chat-sidebar { display: none; }
+          .in-chat .chat-main { display: flex; }
+          .in-list .chat-sidebar { display: flex; }
+          .in-list .chat-main { display: none; }
+
           .mobile-chat-tabs { display: flex; }
           .mobile-only { display: block !important; }
         }
