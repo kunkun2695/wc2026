@@ -13,7 +13,9 @@ const PAGE_SIZE = 30;
 const ChatView = ({ user }) => {
   const [messages, setMessages] = useState([]);
   const [dmUsers, setDmUsers] = useState([]);
-  const [selectedChat, setSelectedChat] = useState({ id: 'public', type: 'public', name: 'Cộng đồng' });
+  // On mobile, start with null to show list. On desktop, start with public.
+  const isMobile = window.innerWidth <= 1024;
+  const [selectedChat, setSelectedChat] = useState(isMobile ? null : { id: 'public', type: 'public', name: 'Cộng đồng' });
   const [content, setContent] = useState('');
   const [image, setImage] = useState(null);
   const [showEmojis, setShowEmojis] = useState(false);
@@ -25,7 +27,6 @@ const ChatView = ({ user }) => {
   
   const chatEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
-  const fileInputRef = useRef(null);
   const currentUser = user || JSON.parse(localStorage.getItem('wc2026_user') || '{}');
 
   useEffect(() => {
@@ -33,6 +34,7 @@ const ChatView = ({ user }) => {
   }, []);
 
   useEffect(() => {
+    if (!selectedChat) return;
     setMessages([]);
     setOffset(0);
     setHasMore(true);
@@ -163,11 +165,10 @@ const ChatView = ({ user }) => {
 
   return (
     <div className={`chat-view-container ${selectedChat ? 'in-chat' : 'in-list'}`}>
+      {/* Sidebar - Visible on Desktop or when no chat selected on Mobile */}
       <div className="chat-sidebar">
         <div className="sidebar-header-unified">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-outfit m-0">Tin nhắn</h2>
-          </div>
+          <h2 className="font-outfit m-0">Tin nhắn</h2>
           <div className="mobile-chat-tabs">
             <button className={selectedChat?.id === 'public' ? 'active' : ''} onClick={() => setSelectedChat({ id: 'public', type: 'public', name: 'Cộng đồng' })}>
               <Globe size={16} /> Cộng đồng
@@ -196,7 +197,8 @@ const ChatView = ({ user }) => {
         </div>
       </div>
 
-      <div className={`chat-main ${selectedChat ? 'show' : ''}`}>
+      {/* Main Chat Area - Visible on Desktop or when chat selected on Mobile */}
+      <div className="chat-main">
         {selectedChat ? (
           <>
             <div className="chat-header">
@@ -249,9 +251,9 @@ const ChatView = ({ user }) => {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .chat-view-container { display: flex; height: 100%; background: #0a0e17; width: 100%; overflow: hidden; position: relative; }
+        .chat-view-container { display: flex; height: 100%; background: #0a0e17; width: 100%; overflow: hidden; }
         .chat-sidebar { width: 320px; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px); flex-shrink: 0; }
-        .sidebar-header-unified { padding: 25px 20px 15px; }
+        .sidebar-header-unified { padding: 20px; }
         .sidebar-header-unified h2 { font-size: 1.5rem; font-weight: 900; color: white; margin-bottom: 15px; }
         .mobile-chat-tabs { display: none; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; gap: 4px; }
         .mobile-chat-tabs button { flex: 1; padding: 8px; border: none; background: transparent; color: #64748b; font-size: 0.75rem; font-weight: 800; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
@@ -300,10 +302,20 @@ const ChatView = ({ user }) => {
         @keyframes spin { to { transform: rotate(360deg); } }
 
         @media (max-width: 1024px) {
-          .chat-sidebar { width: 100%; position: absolute; inset: 0; z-index: 20; display: flex; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-          .chat-view-container.in-chat .chat-sidebar { transform: translateX(-100%); pointer-events: none; }
-          .chat-main { position: absolute; inset: 0; z-index: 21; display: flex; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-          .chat-view-container.in-chat .chat-main { transform: translateX(0); }
+          .chat-view-container { display: flex; flex-direction: column; height: 100%; position: relative; }
+          .chat-sidebar { 
+            width: 100%; 
+            height: 100%; 
+            display: ${selectedChat ? 'none' : 'flex'}; 
+            position: relative;
+            border-right: none;
+          }
+          .chat-main { 
+            width: 100%; 
+            height: 100%; 
+            display: ${selectedChat ? 'flex' : 'none'}; 
+            position: relative;
+          }
           .mobile-chat-tabs { display: flex; }
           .mobile-only { display: block !important; }
         }
