@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Users, MessageSquare, Image as ImageIcon, 
-  Smile, X, ChevronLeft, MoreVertical, Search, Globe
+  Smile, X, ChevronLeft, MoreVertical, Search, Globe, Megaphone
 } from 'lucide-react';
 import UserAvatar from '../components/UserAvatar';
 import API_URL from '../config';
@@ -140,7 +140,7 @@ const ChatView = ({ user }) => {
     if (!content.trim() && !image) return;
     const url = selectedChat.type === 'public' ? `${API_URL}/api/chat` : `${API_URL}/api/dm/send`;
     const body = selectedChat.type === 'public' 
-      ? { content, image_url: image }
+      ? { content, image_url: image, broadcast: window.isBroadcastMode }
       : { receiver_id: selectedChat.id, content, image_url: image };
 
     try {
@@ -285,42 +285,52 @@ const ChatView = ({ user }) => {
             </div>
           )}
           
-          <div className="chat-input-bar">
-            <div className="input-tools">
-              <label htmlFor="chat-image-upload" className="chat-tool-btn">
-                <ImageIcon size={20} />
-                <input 
-                  id="chat-image-upload"
-                  type="file" 
-                  hidden 
-                  accept="image/*" 
-                  onChange={handleImageChange} 
-                />
-              </label>
-              <div className="emoji-wrapper">
-                <button onClick={() => setShowEmojis(!showEmojis)}><Smile size={20} /></button>
-                <AnimatePresence>
-                  {showEmojis && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="emoji-dropdown">
-                      {EMOJIS.map(e => <button key={e} onClick={() => setContent(c => c + e)}>{e}</button>)}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            <div className="chat-input-bar">
+              <div className="input-tools-horizontal">
+                <label htmlFor="chat-image-upload" className="tool-icon-btn">
+                  <ImageIcon size={20} />
+                  <input 
+                    id="chat-image-upload"
+                    type="file" 
+                    hidden 
+                    accept="image/*" 
+                    onChange={handleImageChange} 
+                  />
+                </label>
+                <div className="emoji-wrapper">
+                  <button className="tool-icon-btn" onClick={() => setShowEmojis(!showEmojis)}><Smile size={20} /></button>
+                  <AnimatePresence>
+                    {showEmojis && (
+                      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="emoji-picker-mini">
+                        {EMOJIS.map(e => <button key={e} onClick={() => setContent(c => c + e)}>{e}</button>)}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                {selectedChat.id === 'public' && currentUser.role === 'admin' && (
+                  <button 
+                    className={`tool-icon-btn broadcast-toggle ${window.isBroadcastMode ? 'active' : ''}`}
+                    onClick={() => { window.isBroadcastMode = !window.isBroadcastMode; setContent(c => c); }} // Force re-render
+                    title="Gửi thông báo Push đến tất cả"
+                  >
+                    <Megaphone size={18} />
+                  </button>
+                )}
               </div>
+              
+              <input 
+                type="text" 
+                className="chat-input-field"
+                placeholder="Nhập tin nhắn..." 
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              />
+              
+              <button className="send-btn" onClick={sendMessage} disabled={!content.trim() && !image}>
+                <Send size={20} />
+              </button>
             </div>
-            
-            <input 
-              type="text" 
-              placeholder="Nhập tin nhắn..." 
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            />
-            
-            <button className="send-btn" onClick={sendMessage} disabled={!content.trim() && !image}>
-              <Send size={20} />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -372,9 +382,52 @@ const ChatView = ({ user }) => {
         .msg-text { font-size: 0.95rem; line-height: 1.5; }
         .msg-time { font-size: 0.65rem; opacity: 0.5; margin-top: 5px; text-align: right; }
 
-        .chat-input-wrapper { padding: 20px 25px; background: #0a0e17; border-top: 1px solid rgba(255,255,255,0.05); }
-        .chat-input-bar { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; display: flex; align-items: center; padding: 8px 15px; gap: 15px; }
-        .chat-input-bar input { flex: 1; background: transparent; border: none; color: white; outline: none; }
+        .chat-input-wrapper { padding: 15px 20px; background: #0a0e17; border-top: 1px solid rgba(255,255,255,0.05); }
+        .chat-input-bar { 
+          background: rgba(255,255,255,0.02); 
+          border: 1px solid rgba(255,255,255,0.08); 
+          border-radius: 20px; 
+          display: flex; 
+          align-items: center; 
+          padding: 6px 10px 6px 15px; 
+          gap: 12px;
+          backdrop-filter: blur(10px);
+        }
+        .input-tools-horizontal { display: flex; align-items: center; gap: 8px; border-right: 1px solid rgba(255,255,255,0.05); padding-right: 12px; }
+        .tool-icon-btn { 
+          width: 36px; 
+          height: 36px; 
+          border-radius: 10px; 
+          background: rgba(255,255,255,0.03); 
+          border: 1px solid rgba(255,255,255,0.05);
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          color: #94a3b8; 
+          cursor: pointer; 
+          transition: all 0.2s;
+        }
+        .tool-icon-btn:hover { background: rgba(0, 210, 255, 0.1); color: #00d2ff; border-color: rgba(0, 210, 255, 0.2); }
+        .broadcast-toggle.active { background: #ffd200; color: black; border-color: #ffd200; box-shadow: 0 0 15px rgba(255, 210, 0, 0.3); }
+
+        .chat-input-field { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 0.95rem; padding: 10px 0; }
+        
+        .emoji-picker-mini { 
+          position: absolute; 
+          bottom: 50px; 
+          left: 0; 
+          background: #1e293b; 
+          border: 1px solid #334155; 
+          border-radius: 16px; 
+          padding: 10px; 
+          display: grid; 
+          grid-template-columns: repeat(4, 1fr); 
+          gap: 8px; 
+          z-index: 100; 
+          box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
+        }
+        .emoji-picker-mini button { font-size: 1.4rem; padding: 6px; background: none; border: none; cursor: pointer; border-radius: 8px; transition: 0.2s; }
+        .emoji-picker-mini button:hover { background: rgba(255,255,255,0.05); transform: scale(1.1); }
         
         .send-btn { background: #00d2ff; color: black; border: none; width: 42px; height: 42px; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .send-btn:disabled { opacity: 0.5; }

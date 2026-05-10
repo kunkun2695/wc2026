@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { authenticateUser } = require('../middleware/auth');
+const { sendBroadcastNotification } = require('./notifications');
 
 // Lấy danh sách tin nhắn chat
 router.get('/', async (req, res) => {
@@ -52,7 +53,19 @@ router.post('/', authenticateUser, async (req, res) => {
       WHERE m.id = $1
     `, [result.rows[0].id]);
 
-    res.status(201).json(fullMessage.rows[0]);
+    const msgData = fullMessage.rows[0];
+
+    // Xử lý thông báo toàn quốc nếu là Admin và có cờ broadcast
+    if (req.body.broadcast && req.user.role === 'admin') {
+      const displayContent = content ? content : '📷 Đã gửi một ảnh mới';
+      sendBroadcastNotification(
+        'Thông báo từ Admin: ' + (req.user.name || req.user.username),
+        displayContent,
+        '/chat'
+      ).catch(err => console.error('Lỗi broadcast từ chat:', err));
+    }
+
+    res.status(201).json(msgData);
   } catch (error) {
     res.status(500).json({ error: 'Lỗi gửi tin nhắn: ' + (error.message || 'Lỗi không xác định') });
   }

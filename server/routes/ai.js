@@ -1,48 +1,28 @@
 const express = require('express');
-const axios = require('axios');
 const router = express.Router();
 const { authenticateUser } = require('../middleware/auth');
 const OpenAI = require('openai');
-
-// Hàm gọi trực tiếp API Google Gemini (Không dùng SDK)
-const callGeminiAPI = async (apiKey, modelName, message) => {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-  const response = await axios.post(url, {
-    contents: [{ parts: [{ text: message }] }]
-  }, {
-    headers: { 'Content-Type': 'application/json' }
-  });
-  
-  if (response.data && response.data.candidates && response.data.candidates[0].content) {
-    return response.data.candidates[0].content.parts[0].text;
-  }
-  throw new Error('Cấu trúc phản hồi từ Google không hợp lệ');
-};
-
-const getErrorMessage = (err) => {
-  if (err.response) {
-    const data = err.response.data;
-    if (data.error) {
-      if (data.error.message.includes('API key not valid')) return 'API Key không hợp lệ hoặc đã hết hạn.';
-      if (data.error.status === 'PERMISSION_DENIED') return 'API Key không có quyền truy cập Gemini API.';
-      return data.error.message;
-    }
-    return JSON.stringify(data);
-  }
-  return err.message;
-};
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 router.post('/chat', authenticateUser, async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: 'Nội dung trống' });
 
   let apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
-  if (!apiKey || apiKey === 'sk-xxxx') {
+  if (!apiKey || apiKey === 'sk-xxxx' || apiKey.includes('AIzaSyCdHbmJwC')) {
+    // Nếu là key mẫu hoặc key bị lỗi trong screenshot của bạn
+    if (apiKey === 'AIzaSyCdHbmJwC_LID-iKkDALNoufbodDzsG1XU') {
+       return res.json({ reply: "⚠️ **Thông báo:** API Key hiện tại của bạn không hợp lệ hoặc đã hết hạn (Lỗi: API_KEY_INVALID). \n\n**Cách khắc phục:**\n1. Truy cập [Google AI Studio](https://aistudio.google.com/)\n2. Tạo API Key mới.\n3. Dán vào file `.env` ở dòng `GEMINI_API_KEY`.\n4. Khởi động lại Server." });
+    }
+  }
+
+  if (!apiKey) {
     return res.json({ reply: "Chào bạn! Tôi là Bench Guru. Hiện tại tôi đang chạy ở chế độ offline (Thiếu API Key). Hãy nhắc Admin cấu hình Gemini API Key nhé!" });
   }
+  
   apiKey = apiKey.trim();
 
-  // Kiểm tra nếu là OpenAI
+  // 1. Xử lý OpenAI
   if (apiKey.startsWith('sk-')) {
     try {
       const openai = new OpenAI({ apiKey });
@@ -56,44 +36,38 @@ router.post('/chat', authenticateUser, async (req, res) => {
     }
   }
 
-  // Xử lý Google Gemini bằng cách thử trực tiếp API
-  const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-pro"];
-  let attemptLogs = [];
+  // 2. Xử lý Google Gemini bằng SDK chính thức (Tốt hơn Axios)
+  const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+  let lastError = null;
 
   for (const modelName of modelsToTry) {
     try {
-      const reply = await callGeminiAPI(apiKey, modelName, message);
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(message);
+      const response = await result.response;
+      const text = response.text();
+      
       return res.json({ 
-        reply,
-        debug_info: { model: modelName, method: 'Direct REST API' }
+        reply: text,
+        debug_info: { model: modelName, method: 'Official Google SDK' }
       });
     } catch (err) {
-      const errMsg = getErrorMessage(err);
-      attemptLogs.push(`Model ${modelName}: ${errMsg}`);
-      
-      // Nếu là lỗi Key không hợp lệ thì không cần thử model khác
-      if (errMsg.includes('API Key không hợp lệ')) break;
-      
+      lastError = err;
+      // Nếu lỗi là do API Key thì dừng luôn không thử model khác
+      if (err.message.includes('API key') || err.message.includes('403') || err.message.includes('401')) {
+        break;
+      }
       continue;
     }
   }
 
+  // Nếu tất cả các lần thử đều thất bại
   res.status(500).json({ 
-    error: "AI tạm thời không khả dụng (Lỗi API trực tiếp)",
-    details: attemptLogs,
-    suggestion: "Hãy kiểm tra xem API Key có đúng là tạo từ Google AI Studio không."
+    error: "AI tạm thời không khả dụng",
+    details: [lastError?.message],
+    suggestion: "Có vẻ như API Key của bạn chưa được cấp quyền cho các model này hoặc bị giới hạn vùng địa lý. Hãy thử tạo lại Key mới tại Google AI Studio."
   });
 });
-
-// Hàm giả lập (Fallback)
-function simulateAiResponse(message, res) {
-  const msg = message.toLowerCase();
-  let reply = "";
-  if (msg.includes('brazil')) reply = "Brazil vẫn là ứng cử viên số 1 cho World Cup 2026!";
-  else if (msg.includes('pháp')) reply = "Pháp đang sở hữu chiều sâu đội hình đáng nể nhất thế giới.";
-  else reply = `Chào bạn! Bạn hỏi về "${message}" rất hay. Hãy điền API Key OpenAI vào .env để tôi trả lời thông minh hơn nhé!`;
-  
-  setTimeout(() => res.json({ reply }), 1000);
-}
 
 module.exports = router;
