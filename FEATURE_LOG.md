@@ -120,20 +120,21 @@ Tài liệu này lưu lại các tính năng đã hoàn thiện và cấu trúc 
 - **Database Persistence**: Tích hợp bảng `system_config` trong Database để lưu trữ các cài đặt hệ thống. Tự động nạp cấu hình vào bộ nhớ (Memory) ngay khi Server khởi động (Cold Start Recovery).
 - **Security Logic**: Mã hóa ẩn Key trên giao diện và bảo vệ API Config bằng Middleware xác thực quyền Admin (`isAdmin`).
 
-### 12. Chuyển Đổi Sang Google Gemini AI (Hoàn Toàn Miễn Phí)
-- **Migration Engine**: Chuyển đổi toàn bộ "bộ não" của trợ lý Bench Guru từ OpenAI (trả phí) sang **Google Gemini 1.5 Flash** (miễn phí). Giải quyết triệt để lỗi `429 Quota Exceeded`.
-- **Hybrid AI Support**: Backend thông minh tự động nhận diện loại Key (Gemini hoặc OpenAI) để điều phối yêu cầu, đảm bảo tính linh hoạt tối đa cho người vận hành.
-- **Diagnostics**: Nâng cấp hệ thống báo lỗi chi tiết từ Server về Chat View, giúp Admin dễ dàng nhận biết tình trạng của API Key (hết tiền, sai key, v.v.).
+### 12. Chuyển Đổi Sang Google Gemini AI & Kiến Trúc "Nuclear"
+- **Direct REST API Integration**: Chuyển đổi từ SDK sang gọi trực tiếp API Google qua Axios để khắc phục lỗi 404 Model Not Found. Đây là giải pháp ổn định nhất, không phụ thuộc vào thư viện bên ngoài.
+- **Multi-Model Fallback**: Hệ thống thông minh tự động thử lần lượt các mô hình (`gemini-1.5-flash`, `gemini-pro`) để đảm bảo AI luôn phản hồi.
+- **Advanced Diagnostics**: Tích hợp hệ thống "Báo cáo chẩn đoán" chi tiết ngay trên giao diện Chat. Bench Guru sẽ liệt kê chi tiết các lần thử và mã lỗi từ Google để Admin dễ dàng "bắt bệnh".
 
 ### 13. Đại Tu Giao Diện Di Động & Sửa Lỗi Critical (10/05/2026 - Đêm)
 - **Mobile Navigation 2.0**:
-    - **AI Tab Integration**: Thêm nút "Trợ lý AI" (Sparkles icon) vào thanh điều hướng dưới (Bottom Nav) cho điện thoại.
-    - **Header Cleanup**: Sắp xếp lại Thông báo, Cài đặt và Đăng xuất nằm ngang hàng, gọn gàng trên mọi dòng điện thoại (iOS/Android).
-    - **Hierarchy**: Chuyển nút Cài đặt lên Header để nhường không gian cho các tính năng tương tác chính ở Bottom Nav.
-- **Critical Fixes (Sửa lỗi nghiêm trọng)**:
-    - **Social View Crash**: Khắc phục lỗi "Màn hình đen" ở mục Cộng đồng do truy cập biến `currentUser` chưa xác định.
-    - **NaN% Logic**: Sửa lỗi hiển thị `NaN%` trên thẻ trận đấu khi chưa có người bình chọn bằng cách gia cố logic toán học và xử lý giá trị `null`.
-    - **Icon Sync**: Đồng bộ biểu tượng Cúp (Trophy) cho mục Xếp hạng trên toàn hệ thống.
+    - **AI Tab Integration**: Thêm nút "Trợ lý AI" (Sparkles icon) vào thanh điều hướng dưới (Bottom Nav).
+    - **Header Cleanup**: Sắp xếp lại Thông báo, Cài đặt và Đăng xuất nằm ngang hàng, gọn gàng trên Mobile.
+- **Notification Hardening**:
+    - **10s Polling**: Thiết lập cơ chế tự động quét thông báo và tin nhắn chưa đọc mỗi 10 giây.
+    - **Badge Sync**: Sửa lỗi thuộc tính `unread_count` và đồng bộ biểu tượng thông báo đỏ trên toàn hệ thống.
+- **Critical Fixes**: 
+    - Khắc phục lỗi "Màn hình đen" ở trang Cộng đồng.
+    - Sửa lỗi hiển thị `NaN%` trên thẻ trận đấu và đồng bộ biểu tượng Cúp (Trophy) cho mục Xếp hạng.
 
 ---
-*Cập nhật lần cuối: 10/05/2026 - 15:52*
+*Cập nhật lần cuối: 10/05/2026 - 16:22*

@@ -119,8 +119,13 @@ const SocialView = () => {
         setContent('');
         setImage(null);
         fetchPosts();
+      } else {
+        const data = await res.json();
+        alert('Lỗi đăng bài: ' + (data.error || 'Vui lòng thử lại'));
       }
-    } catch (err) {} finally { setSubmitting(false); }
+    } catch (err) {
+      alert('Lỗi kết nối server: ' + err.message);
+    } finally { setSubmitting(false); }
   };
 
   const handleLike = async (postId) => {

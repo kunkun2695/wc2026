@@ -26,7 +26,7 @@ router.get('/', authenticateUser, async (req, res) => {
 // 2. Đăng bài viết mới
 router.post('/', authenticateUser, async (req, res) => {
   const { content, image_url } = req.body;
-  if (!content) return res.status(400).json({ error: 'Nội dung bài viết không được để trống' });
+  if (!content && !image_url) return res.status(400).json({ error: 'Nội dung hoặc ảnh bài viết không được để trống' });
 
   try {
     const result = await db.query(
