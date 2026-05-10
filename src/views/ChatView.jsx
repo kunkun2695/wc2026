@@ -22,7 +22,9 @@ const ChatView = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
-  const currentUser = JSON.parse(localStorage.getItem('wc2026_user') || '{}');
+  
+  // SỬA LỖI: Dùng đúng key 'wc2026_session'
+  const currentUser = JSON.parse(localStorage.getItem('wc2026_session') || '{}');
   const token = localStorage.getItem('wc2026_token');
 
   const scrollToBottom = () => {
@@ -117,103 +119,85 @@ const ChatView = () => {
   };
 
   return (
-    <div className="chat-view-wrapper">
-      <div className="chat-tabs">
+    <div className="chat-view-v3-wrapper">
+      <div className="chat-tabs-v3">
         <button 
-          className={`tab-btn ${activeTab === 'global' ? 'active' : ''}`}
+          className={`tab-btn-v3 ${activeTab === 'global' ? 'active' : ''}`}
           onClick={() => { setActiveTab('global'); setSelectedUser(null); setMessages([]); }}
         >
           <MessageSquare size={18} /> Chat Tổng
         </button>
         <button 
-          className={`tab-btn ${activeTab === 'private' ? 'active' : ''}`}
+          className={`tab-btn-v3 ${activeTab === 'private' ? 'active' : ''}`}
           onClick={() => { setActiveTab('private'); setMessages([]); }}
         >
           <User size={18} /> Chat Riêng
         </button>
       </div>
 
-      <div className="chat-main-container">
+      <div className="chat-main-container-v3">
         {activeTab === 'private' && !selectedUser ? (
-          <div className="user-list">
-            <h3 className="section-title">Danh sách thành viên</h3>
+          <div className="user-list-v3">
+            <h3 className="section-title-v3">Thành viên</h3>
             {users.length === 0 ? (
-              <p className="empty-text">Chưa có ai trực tuyến.</p>
+              <p className="empty-text-v3">Không có ai trực tuyến.</p>
             ) : (
               users.map(u => (
-                <div key={u.id} className="user-item" onClick={() => { setSelectedUser(u); setLoading(true); }}>
-                  <div className="user-avatar">
-                    {u.avatar ? <img src={u.avatar} alt="" /> : <User size={24} color="#888" />}
+                <div key={u.id} className="user-item-v3" onClick={() => { setSelectedUser(u); setLoading(true); }}>
+                  <div className="user-avatar-v3">
+                    {u.avatar ? <img src={u.avatar} alt="" /> : <User size={20} color="#888" />}
                   </div>
-                  <div className="user-info">
-                    <div className="user-name">{u.name || u.username}</div>
-                    <div className="user-role">{u.role === 'admin' ? 'Quản trị viên' : 'Thành viên'}</div>
+                  <div className="user-info-v3">
+                    <div className="user-name-v3">{u.name || u.username}</div>
+                    <div className="user-role-v3">{u.role === 'admin' ? 'ADMIN' : 'MEMBER'}</div>
                   </div>
                 </div>
               ))
             )}
           </div>
         ) : (
-          <div className="chat-container">
-            <div className="chat-header">
+          <div className="chat-container-v3">
+            <div className="chat-header-v3">
               {activeTab === 'private' && (
-                <button className="back-btn" onClick={() => setSelectedUser(null)}><ArrowLeft size={20} /></button>
+                <button className="back-btn-v3" onClick={() => setSelectedUser(null)}><ArrowLeft size={18} /></button>
               )}
-              <div className="header-info">
-                {activeTab === 'global' ? (
-                  <>
-                    <MessageSquare size={18} color="var(--primary-cyan)" />
-                    <span>Phòng Chat Thế Giới 2026</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="mini-avatar">
-                      {selectedUser?.avatar ? <img src={selectedUser.avatar} alt="" /> : <User size={12} color="#888" />}
-                    </div>
-                    <span>{selectedUser?.name || selectedUser?.username}</span>
-                  </>
-                )}
+              <div className="header-info-v3">
+                {activeTab === 'global' ? <span>Phòng Chat Tổng</span> : <span>{selectedUser?.name || selectedUser?.username}</span>}
               </div>
             </div>
 
-            <div className="messages-list">
+            <div className="messages-list-v3">
               {loading ? (
-                <div className="chat-loading"><div className="loader"></div></div>
+                <div className="chat-loading-v3"><div className="loader-v3"></div></div>
               ) : messages.length === 0 ? (
-                <div className="empty-chat"><Smile size={40} /><p>Bắt đầu gáy thôi!</p></div>
+                <div className="empty-chat-v3"><Smile size={40} /><p>Hãy gửi tin nhắn đầu tiên!</p></div>
               ) : (
                 messages.map((msg, idx) => {
-                  const isMe = (msg.user_id === currentUser.id) || (msg.sender_id === currentUser.id);
+                  // SỬA LỖI: So sánh đúng ID từ currentUser
+                  const isMe = currentUser.id && (msg.user_id === currentUser.id || msg.sender_id === currentUser.id);
                   return (
-                    <motion.div 
-                      key={msg.id || idx}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className={`message-row ${isMe ? 'row-me' : 'row-other'}`}
-                    >
-                      {!isMe && activeTab === 'global' && (
-                        <div className="msg-avatar">
-                          {msg.avatar ? <img src={msg.avatar} alt="" /> : <User size={14} color="#888" />}
+                    <div key={msg.id || idx} className={`message-row-v3 ${isMe ? 'row-me' : 'row-other'}`}>
+                      {!isMe && (
+                        <div className="msg-avatar-v3">
+                          {msg.avatar ? <img src={msg.avatar} alt="" /> : <User size={12} color="#888" />}
                         </div>
                       )}
-                      <div className="message-content-wrapper">
-                        {!isMe && activeTab === 'global' && (
-                          <span className="sender-name">{msg.name || msg.username}</span>
-                        )}
-                        <div className={`message-bubble ${isMe ? 'bubble-me' : 'bubble-other'}`}>
+                      <div className="message-bubble-v3">
+                        {!isMe && activeTab === 'global' && <div className="sender-name-v3">{msg.name || msg.username}</div>}
+                        <div className="bubble-content-v3">
                           {msg.content}
-                          <span className="msg-time">{formatTime(msg.created_at)}</span>
+                          <span className="msg-time-v3">{formatTime(msg.created_at)}</span>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })
               )}
               <div ref={messagesEndRef} />
             </div>
 
-            <form className="chat-form" onSubmit={handleSendMessage}>
-              <div className="input-group">
+            <form className="chat-form-v3" onSubmit={handleSendMessage}>
+              <div className="input-group-v3">
                 <input 
                   type="text" 
                   placeholder="Nhập nội dung..." 
@@ -229,118 +213,55 @@ const ChatView = () => {
         )}
       </div>
 
-      <style>{`
-        .chat-view-wrapper {
-          height: calc(100vh - 120px);
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-          padding: 10px;
-          max-width: 600px;
-          margin: 0 auto;
-        }
-        .chat-tabs {
-          display: flex;
-          background: rgba(255, 255, 255, 0.05);
-          padding: 4px;
-          border-radius: 12px;
-          gap: 4px;
-        }
-        .tab-btn {
-          flex: 1;
-          padding: 10px;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          font-weight: 700;
-          color: #666;
-          transition: 0.2s;
-          border: none;
-          background: transparent;
-          cursor: pointer;
-        }
-        .tab-btn.active {
-          background: var(--primary-cyan);
-          color: #000;
-        }
-        .chat-main-container {
-          flex: 1;
-          background: #0d121d;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 24px;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-        .user-list { padding: 20px; overflow-y: auto; }
-        .section-title { font-size: 0.7rem; color: #555; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1.5px; font-weight: 800; }
-        .empty-text { text-align: center; color: #444; margin-top: 30px; font-size: 0.9rem; }
-        .user-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; cursor: pointer; transition: 0.2s; }
-        .user-item:hover { background: rgba(255, 255, 255, 0.05); }
-        .user-avatar { width: 44px; height: 44px; background: #1a1f2e; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
-        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .user-name { font-weight: 600; font-size: 0.95rem; }
-        .user-role { font-size: 0.7rem; color: #555; }
+      <style dangerouslySetInnerHTML={{ __html: `
+        .chat-view-v3-wrapper { height: calc(100vh - 120px) !important; display: flex !important; flex-direction: column !important; gap: 15px !important; padding: 10px !important; max-width: 600px !important; margin: 0 auto !important; }
+        .chat-tabs-v3 { display: flex !important; background: rgba(255, 255, 255, 0.05) !important; padding: 4px !important; border-radius: 12px !important; gap: 4px !important; }
+        .tab-btn-v3 { flex: 1 !important; padding: 10px !important; border-radius: 10px !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; font-weight: 700 !important; color: #666 !important; border: none !important; background: transparent !important; cursor: pointer !important; }
+        .tab-btn-v3.active { background: #00f3ff !important; color: #000 !important; }
+        .chat-main-container-v3 { flex: 1 !important; background: #0d121d !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 24px !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; }
+        .user-list-v3 { padding: 20px !important; overflow-y: auto !important; }
+        .section-title-v3 { font-size: 0.7rem !important; color: #555 !important; text-transform: uppercase !important; margin-bottom: 15px !important; letter-spacing: 1.5px !important; font-weight: 800 !important; }
+        .user-item-v3 { display: flex !important; align-items: center !important; gap: 12px !important; padding: 12px !important; border-radius: 16px !important; cursor: pointer !important; transition: 0.2s !important; }
+        .user-item-v3:hover { background: rgba(255, 255, 255, 0.05) !important; }
+        .user-avatar-v3 { width: 40px !important; height: 40px !important; background: #1a1f2e !important; border-radius: 50% !important; overflow: hidden !important; border: 1px solid rgba(255,255,255,0.1) !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+        .user-avatar-v3 img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+        .user-name-v3 { font-weight: 600 !important; font-size: 0.95rem !important; color: #fff !important; }
+        .user-role-v3 { font-size: 0.7rem !important; color: #444 !important; font-weight: 800 !important; }
 
-        .chat-container { display: flex; flex-direction: column; height: 100%; }
-        .chat-header { padding: 12px 20px; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; gap: 12px; }
-        .header-info { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 0.9rem; }
-        .mini-avatar { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: #222; border: 1.5px solid var(--primary-cyan); display: flex; align-items: center; justify-content: center; }
-        .back-btn { color: var(--primary-cyan); background: none; border: none; cursor: pointer; }
+        .chat-container-v3 { display: flex !important; flex-direction: column !important; height: 100% !important; }
+        .chat-header-v3 { padding: 12px 20px !important; background: rgba(255, 255, 255, 0.02) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; display: flex !important; align-items: center !important; gap: 12px !important; font-weight: 800 !important; color: #fff !important; }
+        .back-btn-v3 { color: #00f3ff !important; background: none !important; border: none !important; cursor: pointer !important; }
 
-        .messages-list { flex: 1; padding: 15px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .message-row { display: flex; gap: 10px; max-width: 90%; }
-        .row-me { align-self: flex-end; flex-direction: row-reverse; }
-        .row-other { align-self: flex-start; }
-        .msg-avatar { width: 32px; height: 32px; border-radius: 50%; background: #1a1f2e; overflow: hidden; flex-shrink: 0; margin-top: auto; }
+        .messages-list-v3 { flex: 1 !important; padding: 20px !important; overflow-y: auto !important; display: flex !important; flex-direction: column !important; gap: 12px !important; }
+        .message-row-v3 { display: flex !important; gap: 10px !important; max-width: 85% !important; }
+        .row-me { align-self: flex-end !important; flex-direction: row-reverse !important; }
+        .row-other { align-self: flex-start !important; }
+        .msg-avatar-v3 { width: 30px !important; height: 30px !important; border-radius: 50% !important; background: #1a1f2e !important; flex-shrink: 0 !important; overflow: hidden !important; border: 1px solid rgba(255,255,255,0.1) !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+        .msg-avatar-v3 img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
         
-        .message-content-wrapper { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
-        .sender-name { font-size: 0.65rem; color: #555; font-weight: 800; margin: 0 10px; text-transform: uppercase; }
-        .message-bubble { 
-          padding: 10px 16px; 
-          border-radius: 18px; 
-          font-size: 0.92rem; 
-          line-height: 1.4; 
-          display: inline-block;
-          word-break: break-word;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .bubble-me { 
-          background: #00f3ff; 
-          color: #000; 
-          border-bottom-right-radius: 4px; 
-          font-weight: 500;
-        }
-        .bubble-other { 
-          background: #1a1f2e; 
-          color: #eee; 
-          border-bottom-left-radius: 4px; 
-          border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .msg-time { font-size: 0.6rem; opacity: 0.4; display: block; margin-top: 5px; font-weight: 600; }
-        .row-me .msg-time { text-align: right; color: rgba(0,0,0,0.4); }
+        .message-bubble-v3 { display: flex !important; flex-direction: column !important; gap: 4px !important; }
+        .sender-name-v3 { font-size: 0.65rem !important; color: #555 !important; font-weight: 800 !important; margin: 0 10px !important; }
+        .bubble-content-v3 { padding: 10px 16px !important; border-radius: 18px !important; font-size: 0.9rem !important; line-height: 1.4 !important; word-break: break-word !important; position: relative !important; }
+        .row-me .bubble-content-v3 { background: #00f3ff !important; color: #000 !important; border-bottom-right-radius: 4px !important; }
+        .row-other .bubble-content-v3 { background: #1a1f2e !important; color: #eee !important; border-bottom-left-radius: 4px !important; border: 1px solid rgba(255,255,255,0.05) !important; }
+        .msg-time-v3 { font-size: 0.6rem !important; opacity: 0.4 !important; display: block !important; margin-top: 4px !important; font-weight: 600 !important; }
+        .row-me .msg-time-v3 { text-align: right !important; color: rgba(0,0,0,0.5) !important; }
 
-        .chat-form { padding: 15px 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
-        .input-group { display: flex; gap: 10px; background: #1a1f2e; padding: 5px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
-        .chat-form input { flex: 1; background: transparent; border: none; padding: 10px 15px; color: white; outline: none; font-size: 0.9rem; }
-        .chat-form button { background: var(--primary-cyan); color: #000; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: 0.2s; }
-        .chat-form button:hover { transform: scale(1.05); }
-        .chat-form button:disabled { opacity: 0.2; }
+        .chat-form-v3 { padding: 15px 20px !important; border-top: 1px solid rgba(255, 255, 255, 0.05) !important; }
+        .input-group-v3 { display: flex !important; gap: 10px !important; background: #1a1f2e !important; padding: 4px !important; border-radius: 14px !important; border: 1px solid rgba(255,255,255,0.05) !important; }
+        .chat-form-v3 input { flex: 1 !important; background: transparent !important; border: none !important; padding: 10px 15px !important; color: white !important; outline: none !important; font-size: 0.9rem !important; }
+        .chat-form-v3 button { background: #00f3ff !important; color: #000 !important; width: 38px !important; height: 38px !important; border-radius: 10px !important; display: flex !important; align-items: center !important; justify-content: center !important; border: none !important; cursor: pointer !important; }
         
-        .chat-loading { display: flex; align-items: center; justify-content: center; height: 100%; }
-        .loader { width: 25px; height: 25px; border: 2px solid rgba(0,243,255,0.1); border-top-color: var(--primary-cyan); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .empty-chat { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; opacity: 0.2; color: white; }
+        .chat-loading-v3 { display: flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; }
+        .loader-v3 { width: 25px !important; height: 25px !important; border: 2px solid rgba(0,243,255,0.1) !important; border-top-color: #00f3ff !important; border-radius: 50% !important; animation: spin-v3 1s linear infinite !important; }
+        @keyframes spin-v3 { to { transform: rotate(360deg) !important; } }
 
         @media (max-width: 768px) {
-          .chat-view-wrapper { height: calc(100vh - 150px); padding: 0; gap: 0; }
-          .chat-main-container { border-radius: 0; border: none; }
-          .chat-tabs { border-radius: 0; padding: 8px; }
+          .chat-view-v3-wrapper { height: calc(100vh - 150px) !important; padding: 0 !important; gap: 0 !important; }
+          .chat-main-container-v3 { border-radius: 0 !important; border: none !important; }
+          .chat-tabs-v3 { border-radius: 0 !important; padding: 8px !important; }
         }
-      `}</style>
+      ` }} />
     </div>
   );
 };
