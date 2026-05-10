@@ -433,8 +433,18 @@ const SocialView = () => {
       ` }} />
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .social-view-container { padding: 100px 20px 120px; min-height: 100vh; background: #0a0e17; }
-        .social-feed-max { max-width: 600px; margin: 0 auto; }
+        .social-view-container { 
+          padding: 100px 5vw 120px; 
+          min-height: 100vh; 
+          background: #0a0e17; 
+          display: flex;
+          justify-content: center;
+        }
+        .social-feed-max { 
+          width: 100%;
+          max-width: 900px; 
+          margin: 0 auto; 
+        }
         
         .post-composer-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 20px; margin-bottom: 30px; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .composer-header { display: flex; gap: 15px; margin-bottom: 15px; }

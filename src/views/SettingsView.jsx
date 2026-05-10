@@ -189,9 +189,10 @@ const SettingsView = ({ user, onUpdateUser }) => {
 
       <style jsx>{`
         .settings-container {
-          max-width: 500px;
+          max-width: 700px;
           margin: 0 auto;
           padding-bottom: 120px;
+          padding: 0 5vw;
         }
         .settings-header {
           text-align: center;

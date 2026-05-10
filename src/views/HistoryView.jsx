@@ -90,9 +90,10 @@ const HistoryView = ({ predictions }) => {
 
       <style jsx>{`
         .history-container {
-          max-width: 500px;
+          max-width: 800px;
           margin: 0 auto;
           padding-bottom: 120px;
+          padding: 0 5vw;
         }
         .page-header-history {
           text-align: center;
