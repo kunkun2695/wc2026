@@ -64,7 +64,7 @@ router.post('/chat', authenticateUser, async (req, res) => {
     }
   }
 
-  const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+  const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-pro"];
   let lastError = null;
   let attemptedModels = [];
 
@@ -76,7 +76,7 @@ router.post('/chat', authenticateUser, async (req, res) => {
   for (const modelName of modelsToTry) {
     attemptedModels.push(modelName);
     try {
-      const genAI = new GoogleGenerativeAI(apiKey);
+      const genAI = new GoogleGenerativeAI(apiKey.trim());
       const model = genAI.getGenerativeModel({ model: modelName });
       const result = await model.generateContent(fullMessage);
       const response = await result.response;
@@ -91,6 +91,7 @@ router.post('/chat', authenticateUser, async (req, res) => {
         }
       });
     } catch (err) {
+      console.error(`AI Chat Error with ${modelName}:`, err.message);
       lastError = err;
       if (err.message.includes('API key') || err.message.includes('403') || err.message.includes('401')) {
         break;
@@ -106,11 +107,9 @@ router.post('/chat', authenticateUser, async (req, res) => {
     debug_params: {
       attempted_models: attemptedModels,
       current_key: maskKey(apiKey),
-      env_gemini_key: maskKey(process.env.GEMINI_API_KEY),
-      env_openai_key: maskKey(process.env.OPENAI_API_KEY),
       error_message: lastError?.message
     },
-    suggestion: "Có vẻ như API Key của bạn bị lỗi hoặc chưa được cấp quyền cho các model này. Kiểm tra lại file .env (chú ý typo l thường và I hoa)."
+    suggestion: "Kiểm tra lại API Key trong file .env và đảm bảo model này được hỗ trợ trong vùng của bạn."
   });
 });
 
@@ -126,7 +125,7 @@ router.post('/stream', authenticateUser, async (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
-  const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+  const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-pro"];
   let success = false;
   let lastError = null;
 
