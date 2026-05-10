@@ -94,5 +94,20 @@ Tài liệu này lưu lại các tính năng đã hoàn thiện và cấu trúc 
     - **Sửa lỗi Logic Push**: Khắc phục lỗi sai khóa Token (`wc2026_token`) khiến việc đăng ký thông báo với server bị thất bại.
 - **Debug & Feedback**: Thêm các bảng thông báo lỗi (Alert) chi tiết để người dùng biết nguyên nhân khi không bật được thông báo (do thiếu HTTPS hoặc bị chặn quyền).
 
+### 9. Nâng Cấp Trải Nghiệm Premium & Ổn Định Đa Phương Tiện (10/05/2026 - Chiều)
+- **Multimedia Reliability (Độ tin cậy đa phương tiện)**:
+    - **Trigger Hình ảnh**: Chuyển đổi toàn bộ nút chọn ảnh sang cơ chế `label/id` bản ngữ. Đảm bảo cửa sổ chọn ảnh luôn hiện ra ngay lập tức trên mọi trình duyệt (Safari, Chrome, Mobile) mà không bị chặn.
+    - **Server Payload**: Tăng giới hạn Payload của Express Server lên **50MB** (từ 100KB), cho phép gửi ảnh độ phân giải cao dạng Base64 mà không bị lỗi `413 Payload Too Large`.
+- **Premium Sidebar Redesign**:
+    - **Cấu trúc High-End**: Chuyển đổi Sidebar sang phong cách Glassmorphism với các nhóm điều hướng rõ ràng (Trang chủ, Cá nhân, Quản trị).
+    - **User Profile Card**: Thêm thẻ danh tính người dùng (Avatar + Tên + Chức danh) ở chân Sidebar, tạo cảm giác chuyên nghiệp như một Dashboard thực thụ.
+    - **Hiệu ứng Glow**: Tích hợp các chỉ báo "Active" dạng Neon phát sáng và hiệu ứng trượt mượt mà.
+- **Responsive Layout Expansion (Mở rộng không gian)**:
+    - **Workstation Layout**: Loại bỏ giới hạn 600px cũ, mở rộng không gian nội dung lên tới **1200px** trên màn hình lớn.
+    - **Xóa bỏ lề thừa**: Loại bỏ khoảng trống "màu vàng" (Centered margins) để nội dung bám sát Sidebar một cách liền mạch, tận dụng tối đa diện tích màn hình máy tính.
+- **Ổn Định Hệ Thống Chat**:
+    - **Đồng bộ danh tính (Identity Sync)**: Khắc phục lỗi tin nhắn "không biết của ai" bằng cách sử dụng so sánh tương đối (`==`) cho ID người dùng, giải quyết triệt để sự sai khác kiểu dữ liệu (String vs Number) từ DB.
+    - **Seamless UI**: Sửa lỗi "rò rỉ ánh sáng" (Light leakage) và khoảng hở giữa Sidebar và nội dung Chat trên Desktop.
+
 ---
-*Cập nhật lần cuối: 10/05/2026 - 11:00*
+*Cập nhật lần cuối: 10/05/2026 - 15:05*

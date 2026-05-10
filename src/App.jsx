@@ -588,7 +588,13 @@ const App = () => {
         }
         .logout-icon-btn:hover { background: #ef4444; color: white; }
 
-        .main-content { flex: 1; min-width: 0; position: relative; }
+        .main-content { 
+          flex: 1; 
+          min-width: 0; 
+          position: relative; 
+          height: 100vh;
+          overflow-y: auto;
+        }
 
         .mobile-header { display: none; }
         .notif-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 4900; }
