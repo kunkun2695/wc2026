@@ -20,6 +20,7 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
       setComments(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Lỗi lấy bình luận:', err);
+      // alert('Không thể lấy bình luận: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -59,9 +60,13 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
         setComments([...comments, addedComment]);
         setNewComment('');
         if (onCommentChange) onCommentChange();
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Lỗi không xác định' }));
+        alert('Lỗi gửi bình luận: ' + (errorData.error || res.statusText));
       }
     } catch (err) {
       console.error('Lỗi gửi bình luận:', err);
+      alert('Lỗi kết nối mạng hoặc server: ' + err.message);
     } finally {
       setSending(false);
     }
@@ -150,17 +155,11 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
           placeholder="Nhập nội dung gáy..." 
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              handleSend(e);
-            }
-          }}
           disabled={sending}
         />
         <button 
           type="submit" 
           disabled={sending || !newComment.trim()}
-          onClick={handleSend}
         >
           <Send size={18} />
         </button>

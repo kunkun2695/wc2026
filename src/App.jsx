@@ -44,7 +44,6 @@ const App = () => {
       }
       await fetchData();
       fetchNotifications();
-      requestNotificationPermission();
     };
     checkSession();
 
@@ -159,6 +158,7 @@ const App = () => {
       setSelectedMatchId(notif.match_id);
       setActiveTab('match_detail');
       setShowNotifications(false);
+      requestNotificationPermission(); // Request on interaction
     } catch (err) {}
   };
 
@@ -240,7 +240,7 @@ const App = () => {
             <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.2rem' }}>Bench-Bets</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button onClick={() => setShowNotifications(true)} className="mobile-notif-btn">
+            <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
               <Bell size={20} />
               {notifications.some(n => !n.is_read) && <span className="notif-badge-mini"></span>}
             </button>
@@ -287,7 +287,7 @@ const App = () => {
             </>
           )}
 
-          <button onClick={() => setShowNotifications(true)} className={`nav-item ${showNotifications ? 'active' : ''}`}>
+          <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className={`nav-item ${showNotifications ? 'active' : ''}`}>
             <Bell size={18} /> Thông báo
             {notifications.some(n => !n.is_read) && <span className="notif-count-badge">{notifications.filter(n => !n.is_read).length}</span>}
           </button>
