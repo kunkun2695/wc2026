@@ -427,7 +427,7 @@ const App = () => {
           )}
           {activeTab === 'history' && (
             <motion.div key="hi" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <HistoryView predictions={predictions} />
+              <HistoryView predictions={predictions} matches={matches} />
             </motion.div>
           )}
           {activeTab === 'settings' && (

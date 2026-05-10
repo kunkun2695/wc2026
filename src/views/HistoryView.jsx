@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { History, CheckCircle2, Clock, Trophy, XCircle, AlertCircle, TrendingUp } from 'lucide-react';
 
-const HistoryView = ({ predictions }) => {
+const HistoryView = ({ predictions, matches = [] }) => {
   const renderFlag = (flag) => {
     const isUrl = flag?.startsWith('http') || flag?.includes('.');
     if (isUrl) return <img src={flag} alt="flag" className="flag-mini-history" />;
@@ -45,6 +45,11 @@ const HistoryView = ({ predictions }) => {
           const isCorrect = actualOutcome && myChoice === actualOutcome;
           const isFinished = p.status === 'FT';
           const { time, date } = parseTime(p.match_time);
+          
+          // Tìm trận đấu gốc để lấy logo nếu trong p bị thiếu
+          const originalMatch = matches.find(m => m.id === p.match_id);
+          const t1_flag = p.team1_flag || originalMatch?.team1_flag;
+          const t2_flag = p.team2_flag || originalMatch?.team2_flag;
 
           return (
             <motion.div 
@@ -77,7 +82,7 @@ const HistoryView = ({ predictions }) => {
               {/* Body: Teams and Scores */}
               <div className="card-body">
                 <div className="team-info-mini">
-                  <div className="flag-box">{renderFlag(p.team1_flag)}</div>
+                  <div className="flag-box">{renderFlag(t1_flag)}</div>
                   <span className="name-box">{p.team1_name}</span>
                 </div>
 
@@ -91,7 +96,7 @@ const HistoryView = ({ predictions }) => {
 
                 <div className="team-info-mini right">
                   <span className="name-box">{p.team2_name}</span>
-                  <div className="flag-box">{renderFlag(p.team2_flag)}</div>
+                  <div className="flag-box">{renderFlag(t2_flag)}</div>
                 </div>
               </div>
 
