@@ -1,7 +1,6 @@
 version: '3.8'
 services:
   app:
-    build: .
     image: longtran26/wc2026:latest
     ports:   # <--- Chữ p này phải thẳng hàng với chữ i của image
       - "5005:5005"
