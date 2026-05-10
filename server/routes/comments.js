@@ -4,7 +4,7 @@ const db = require('../config/db');
 const { sendPushNotification } = require('./notifications');
 const jwt = require('jsonwebtoken');
 
-const SECRET_KEY = 'worldcup2026-secret-key';
+const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
 // Middleware xác thực
 const authenticateUser = (req, res, next) => {

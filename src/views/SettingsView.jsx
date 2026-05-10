@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { User, Camera, Lock, CheckCircle } from 'lucide-react';
 import { mockAuth } from '../data/mockAuth';
 import API_URL from '../config';
+import { subscribeToPush } from '../utils/pushNotifications';
 
 const SettingsView = ({ user, onUpdateUser }) => {
   const [name, setName] = useState(user.name || '');
@@ -138,7 +139,12 @@ const SettingsView = ({ user, onUpdateUser }) => {
                   onClick={async () => {
                     if ('Notification' in window) {
                       const res = await Notification.requestPermission();
-                      setMessage(res === 'granted' ? 'Đã bật thông báo thành công!' : 'Bạn đã từ chối quyền thông báo.');
+                      if (res === 'granted') {
+                        await subscribeToPush();
+                        setMessage('Đã bật thông báo thành công!');
+                      } else {
+                        setMessage('Bạn đã từ chối quyền thông báo.');
+                      }
                     }
                   }}
                   className={`notif-toggle ${('Notification' in window && Notification.permission === 'granted') ? 'active' : ''}`}

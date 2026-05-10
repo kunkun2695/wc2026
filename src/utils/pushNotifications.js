@@ -1,3 +1,5 @@
+import API_URL from '../config';
+
 const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String) {
@@ -41,7 +43,7 @@ export async function subscribeToPush() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/subscribe`, {
+      await fetch(`${API_URL}/api/notifications/subscribe`, {
         method: 'POST',
         body: JSON.stringify(subscription),
         headers: {

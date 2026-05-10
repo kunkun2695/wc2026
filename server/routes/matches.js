@@ -2,11 +2,9 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const axios = require('axios');
-
-const FOOTBALL_DATA_API_KEY = '545cbd97d6964d96bdc65580d348674b';
 const jwt = require('jsonwebtoken');
 
-const SECRET_KEY = 'worldcup2026-secret-key';
+const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
 const authenticateAdmin = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -39,7 +37,8 @@ router.get('/', async (req, res) => {
     `);
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('[MATCHES ROUTE ERROR]', error);
+    res.status(500).json({ error: error.message || 'Lỗi không xác định' });
   }
 });
 
@@ -84,7 +83,6 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
 
 const { syncMatches } = require('../services/syncService');
 
-// 4. Đồng bộ dữ liệu nâng cao (Tự động nạp Đội + Trận)
 router.post('/sync', async (req, res) => {
   try {
     const synced = await syncMatches();

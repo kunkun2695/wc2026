@@ -2,8 +2,8 @@ self.addEventListener('push', (event) => {
   const data = event.data.json();
   const options = {
     body: data.body,
-    icon: '/icon-192x192.png', // Đảm bảo bạn có icon này trong public
-    badge: '/icon-192x192.png',
+    icon: '/logo192.png',
+    badge: '/logo192.png',
     vibrate: [100, 50, 100],
     data: {
       url: data.url || '/'

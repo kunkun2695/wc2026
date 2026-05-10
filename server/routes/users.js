@@ -4,7 +4,7 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const SECRET_KEY = 'worldcup2026-secret-key';
+const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;

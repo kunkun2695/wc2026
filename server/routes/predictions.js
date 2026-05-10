@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../config/db');
 const jwt = require('jsonwebtoken');
 
-const SECRET_KEY = 'worldcup2026-secret-key';
+const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
 // Middleware xác thực người dùng
 const authenticateUser = (req, res, next) => {

@@ -4,7 +4,7 @@ const db = require('../config/db');
 const jwt = require('jsonwebtoken');
 const webpush = require('web-push');
 
-const SECRET_KEY = 'worldcup2026-secret-key';
+const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
 // Cấu hình Web Push
 webpush.setVapidDetails(

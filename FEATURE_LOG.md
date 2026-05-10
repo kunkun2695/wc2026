@@ -48,11 +48,45 @@ Tài liệu này lưu lại các tính năng đã hoàn thiện và cấu trúc 
 
 ---
 
-## 🚀 Định Hướng Nâng Cấp (Roadmap)
-- [ ] **Thông báo (Push Notifications)**: Gửi thông báo khi có điểm hoặc khi trận đấu sắp diễn ra.
-- [ ] **Bình luận (Comments)**: Cho phép mọi người "gáy" với nhau dưới mỗi trận đấu.
-- [ ] **Giải thưởng (Rewards)**: Hệ thống danh hiệu cho những "Nhà tiên tri" xuất sắc nhất.
-- [ ] **Bảo mật**: Chuyển API Key và Secret Key vào file `.env` (Đã chuẩn bị sẵn).
+### 6. Hệ Thống Thông Báo Đẩy (Web Push Notifications)
+- **Web Push**: Tích hợp VAPID Keys để gửi thông báo hệ thống trực tiếp lên màn hình khóa điện thoại.
+- **Service Worker**: Triển khai `sw.js` để nhận tin nhắn ngay cả khi ứng dụng đang chạy ngầm.
+- **Thông báo gáy**: Tự động gửi thông báo khi có người bình luận ("gáy") vào trận đấu bạn đang quan tâm.
+- **Thông báo điểm**: Gửi tin nhắn chúc mừng kèm số điểm nhận được ngay khi trận đấu kết thúc.
+
+### 7. Tính Năng Tương Tác (Social Interaction)
+- **Hệ thống Gáy (Comments)**: Cho phép người dùng thảo luận, cà khịa nhau dưới mỗi trận đấu.
+- **Real-time Notifications**: Tự động tạo thông báo trong ứng dụng và thông báo đẩy khi có tương tác mới.
 
 ---
-*Cập nhật lần cuối: 09/05/2026*
+
+## 🛠 Thông Số Kỹ Thuật (Technical Stack)
+
+- **Frontend**: React (Vite), Framer Motion, Lucide React, Vanilla CSS.
+- **Backend**: Node.js, Express, PostgreSQL, **Web-Push**.
+- **Containerization**: **Docker & Docker Compose** (Đã tối ưu hóa cho môi trường Production).
+- **Deployment**: **Cloudflare Tunnel** (Bỏ qua port forwarding, hỗ trợ HTTPS tự động).
+- **Automation**: `node-cron`, `axios`.
+- **Database Schema**:
+    - `users`: (id, username, password, name, avatar, role, points)
+    - `matches`: (id, team1_name, team2_name, team1_score, team2_score, status, match_time, group_name, team1_flag, team2_flag)
+    - `predictions`: (id, user_id, match_id, predicted_home_score, predicted_away_score, points)
+    - `comments`: (id, match_id, user_id, content, created_at)
+    - `push_subscriptions`: (id, user_id, endpoint, p256dh, auth)
+
+---
+
+## 🚀 Môi Trường Vận Hành (Infrastructure)
+- **Môi trường song song**: Hỗ trợ 2 stack độc lập (Test & Production) chạy trên cùng một máy chủ.
+- **Auto-Config**: Tự động nhận diện môi trường (Local Dev vs Production Docker) để trỏ API và DB chính xác.
+- **PWA Ready**: Hỗ trợ cài đặt làm ứng dụng trên iOS/Android với Service Worker và Manifest.
+
+---
+## 🚀 Định Hướng Nâng Cấp (Roadmap)
+- [x] **Thông báo (Push Notifications)**: Đã hoàn thành.
+- [x] **Bình luận (Comments)**: Đã hoàn thành.
+- [ ] **Giải thưởng (Rewards)**: Hệ thống danh hiệu cho những "Nhà tiên tri" xuất sắc nhất.
+- [x] **Bảo mật**: Chuyển API Key và Secret Key vào file `.env` (Đã hoàn thành).
+
+---
+*Cập nhật lần cuối: 09/05/2026 - 17:00*

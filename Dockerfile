@@ -32,4 +32,5 @@ ENV PORT=5005
 
 EXPOSE 5005
 
-CMD ["node", "server/index.js"]
+# Start command with DB initialization
+CMD ["npm", "start", "--prefix", "server"]

@@ -1,6 +1,3 @@
--- Tạo cơ sở dữ liệu (Nếu dùng PostgreSQL trên Server riêng)
--- CREATE DATABASE worldcup2026;
-
 -- Bảng Người dùng
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
@@ -72,20 +69,17 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Bảng Đăng ký Thông báo đẩy
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT UNIQUE NOT NULL,
+    auth TEXT NOT NULL,
+    p256dh TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Dữ liệu mẫu Admin (Mật khẩu mặc định: Long26@8865)
 INSERT INTO users (username, password, name, avatar, role) 
 VALUES ('admin', 'Long26@8865', 'Quản trị viên', '🛡️', 'admin')
 ON CONFLICT (username) DO NOTHING;
-
--- Nạp sẵn đội tham gia (Ví dụ)
-INSERT INTO teams (name, flag, group_name) VALUES
-('USA', '🇺🇸', 'A'), ('MEXICO', '🇲🇽', 'B'), ('CANADA', '🇨🇦', 'C'),
-('VIETNAM', '🇻🇳', 'A'), ('ARGENTINA', '🇦🇷', 'D'), ('BRAZIL', '🇧🇷', 'E')
-ON CONFLICT (name) DO NOTHING;
-
--- Dữ liệu mẫu Trận đấu
-INSERT INTO matches (group_name, team1_name, team1_flag, team1_score, team2_name, team2_flag, team2_score, status, match_time)
-VALUES 
-('Group A', 'USA', '🇺🇸', 2, 'VIETNAM', '🇻🇳', 1, 'LIVE', '75'''),
-('Group B', 'MEXICO', '🇲🇽', 0, 'FRANCE', '🇫🇷', 0, 'UPCOMING', '20:00')
-ON CONFLICT DO NOTHING;

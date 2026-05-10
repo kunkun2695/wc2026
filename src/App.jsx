@@ -16,6 +16,7 @@ import HistoryView from './views/HistoryView';
 import MatchDetailView from './views/MatchDetailView';
 import { mockAuth } from './data/mockAuth';
 import API_URL from './config';
+import { subscribeToPush } from './utils/pushNotifications';
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -35,6 +36,9 @@ const App = () => {
       const savedUser = mockAuth.getCurrentUser();
       if (savedUser) {
         setUser(savedUser);
+        if ('Notification' in window && Notification.permission === 'granted') {
+          subscribeToPush();
+        }
       }
       await fetchData();
       fetchNotifications();
