@@ -3,7 +3,8 @@ name: Deploy to Production
 on:
   push:
     branches:
-      - main  # Hoặc tên branch chính của bạn (master/main)
+      - main
+      - dev
 
 jobs:
   deploy:
