@@ -72,6 +72,7 @@ const SocialView = () => {
   const [commentContent, setCommentContent] = useState('');
   const [comments, setComments] = useState([]);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     fetchPosts();
@@ -118,6 +119,7 @@ const SocialView = () => {
       if (res.ok) {
         setContent('');
         setImage(null);
+        if (textareaRef.current) textareaRef.current.style.height = '80px';
         fetchPosts();
       } else {
         const data = await res.json();
@@ -175,9 +177,15 @@ const SocialView = () => {
           <div className="composer-header">
             <UserAvatar src={localStorage.getItem('wc2026_user') ? JSON.parse(localStorage.getItem('wc2026_user')).avatar : '👤'} size={40} className="composer-avatar" />
             <textarea 
+              ref={textareaRef}
               placeholder="Bạn đang nghĩ gì về các trận đấu hôm nay?" 
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+              }}
+              style={{ overflowY: 'hidden' }}
             />
           </div>
 
@@ -462,7 +470,7 @@ const SocialView = () => {
         .post-composer-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 20px; margin-bottom: 30px; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .composer-header { display: flex; gap: 15px; margin-bottom: 15px; }
         .composer-avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #00d2ff; object-fit: cover; }
-        .post-composer-card textarea { flex: 1; background: transparent; border: none; color: white; font-size: 1.05rem; outline: none; resize: none; min-height: 60px; font-family: inherit; }
+        .post-composer-card textarea { flex: 1; background: transparent; border: none; color: white; font-size: 1.1rem; outline: none; resize: none; min-height: 80px; font-family: inherit; transition: height 0.1s; }
         
         .composer-image-preview { position: relative; margin-bottom: 15px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
         .composer-image-preview img { width: 100%; max-height: 300px; object-fit: cover; }
