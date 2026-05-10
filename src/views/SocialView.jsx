@@ -185,9 +185,16 @@ const SocialView = () => {
 
           <div className="composer-footer">
             <div className="composer-tools">
-              <button className="tool-btn" onClick={() => fileInputRef.current.click()}>
+              <label htmlFor="social-image-upload" className="tool-btn">
                 <ImageIcon size={18} /> <span>Ảnh</span>
-              </button>
+                <input 
+                  id="social-image-upload"
+                  type="file" 
+                  hidden 
+                  accept="image/*" 
+                  onChange={handleImageChange} 
+                />
+              </label>
               <div className="emoji-tool-wrapper">
                 <button className="tool-btn" onClick={() => setShowEmojis(!showEmojis)}>
                   <Smile size={18} /> <span>Cảm xúc</span>
@@ -209,14 +216,6 @@ const SocialView = () => {
               </div>
             </div>
             
-            <input 
-              type="file" 
-              hidden 
-              ref={fileInputRef} 
-              accept="image/*" 
-              onChange={handleImageChange} 
-            />
-
             <button 
               className="post-submit-btn" 
               onClick={handleCreatePost}

@@ -189,7 +189,16 @@ const ChatView = () => {
             
             <div className="chat-input-bar">
               <div className="input-tools">
-                <button onClick={() => fileInputRef.current.click()}><ImageIcon size={20} /></button>
+                <label htmlFor="chat-image-upload" className="chat-tool-btn">
+                  <ImageIcon size={20} />
+                  <input 
+                    id="chat-image-upload"
+                    type="file" 
+                    hidden 
+                    accept="image/*" 
+                    onChange={handleImageChange} 
+                  />
+                </label>
                 <div className="emoji-wrapper">
                   <button onClick={() => setShowEmojis(!showEmojis)}><Smile size={20} /></button>
                   <AnimatePresence>
@@ -214,8 +223,6 @@ const ChatView = () => {
                 <Send size={20} />
               </button>
             </div>
-            
-            <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleImageChange} />
           </div>
         )}
       </div>
