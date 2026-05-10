@@ -133,15 +133,19 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
             <div className="info-item">
               <Calendar size={18} className="text-cyan-400" />
               <div className="info-text">
-                <span className="info-label">Thời gian</span>
-                <span className="info-value">{match.match_time || 'Chưa cập nhật'}</span>
+                <span className="info-label">Ngày thi đấu</span>
+                <span className="info-value">
+                  {match.match_time ? (match.match_time.includes(' - ') ? match.match_time.split(' - ')[1] : match.match_time.split(' ')[1]) : '---'}
+                </span>
               </div>
             </div>
             <div className="info-item">
-              <Users size={18} className="text-purple-400" />
+              <Clock size={18} className="text-purple-400" />
               <div className="info-text">
-                <span className="info-label">Bình chọn</span>
-                <span className="info-value">{match.total_votes || 0} phiếu</span>
+                <span className="info-label">Giờ bắt đầu</span>
+                <span className="info-value">
+                  {match.match_time ? (match.match_time.includes(' - ') ? match.match_time.split(' - ')[0] : match.match_time.split(' ')[0]) : '---'}
+                </span>
               </div>
             </div>
           </div>

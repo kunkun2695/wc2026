@@ -86,17 +86,22 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
             {displayMatches.map((m, idx) => {
               const pred = predictions.find(p => p.match_id === m.id);
               
-              // Kiểm tra xem có phải trận đầu tiên của ngày không để hiện nhãn ngày
-              const showDateLabel = idx === 0 || 
-                (m.match_time && displayMatches[idx-1].match_time && 
-                 m.match_time.split(' ')[1] !== displayMatches[idx-1].match_time.split(' ')[1]);
+              // Improved date detection
+              const matchDate = m.match_time ? (m.match_time.includes(' - ') ? m.match_time.split(' - ')[1] : m.match_time.split(' ')[1]) : 'Sắp tới';
+              const prevMatchDate = idx > 0 && displayMatches[idx-1].match_time ? 
+                (displayMatches[idx-1].match_time.includes(' - ') ? displayMatches[idx-1].match_time.split(' - ')[1] : displayMatches[idx-1].match_time.split(' ')[1]) : null;
+
+              const showDateLabel = idx === 0 || matchDate !== prevMatchDate;
 
               return (
                 <div key={m.id} className="timeline-item">
                   {showDateLabel && (
                     <div className="timeline-date-label">
-                      <Clock size={14} />
-                      <span>{m.match_time ? `NGÀY ${m.match_time.split(' ')[1]}` : 'CHƯA XÁC ĐỊNH'}</span>
+                      <div className="date-pill">
+                        <Calendar size={14} />
+                        <span>{matchDate ? `NGÀY ${matchDate}` : 'CHƯA XÁC ĐỊNH'}</span>
+                      </div>
+                      <div className="date-line" />
                     </div>
                   )}
                   <div className="match-card-wrapper">
@@ -134,9 +139,34 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
         .filter-tab-btn.active { background: #00d2ff; color: #020617; box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); }
 
         .timeline-container { position: relative; }
-        .matches-timeline { display: flex; flex-direction: column; gap: 20px; }
+        .matches-timeline { display: flex; flex-direction: column; gap: 30px; }
         
-        .timeline-date-label { display: flex; align-items: center; gap: 8px; color: #475569; font-weight: 900; font-size: 0.75rem; letter-spacing: 2px; margin: 20px 0 10px 10px; }
+        .timeline-date-label { 
+          display: flex; 
+          align-items: center; 
+          gap: 15px; 
+          margin: 30px 0 15px 0;
+        }
+        .date-pill {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(255, 255, 255, 0.05);
+          padding: 6px 16px;
+          border-radius: 30px;
+          color: #94a3b8;
+          font-weight: 900;
+          font-size: 0.7rem;
+          letter-spacing: 1.5px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          white-space: nowrap;
+        }
+        .date-line {
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+        }
+
         .match-card-wrapper { transition: transform 0.3s; }
         .match-card-wrapper:hover { transform: scale(1.01); }
 
