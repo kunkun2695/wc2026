@@ -28,6 +28,7 @@ const AiAssistantView = () => {
     setIsTyping(true);
 
     try {
+      console.log('[AI FRONTEND] Đang gửi yêu cầu tới:', `${API_URL}/api/ai/stream`);
       const response = await fetch(`${API_URL}/api/ai/stream`, {
         method: 'POST',
         headers: {
@@ -37,17 +38,24 @@ const AiAssistantView = () => {
         body: JSON.stringify({ message: userMsg })
       });
 
-      if (!response.ok) throw new Error('Network response was not ok');
+      if (!response.ok) {
+        console.error('[AI FRONTEND] Lỗi HTTP:', response.status);
+        throw new Error('Network response was not ok');
+      }
 
+      console.log('[AI FRONTEND] Đã kết nối thành công, đang chờ luồng dữ liệu (stream)...');
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let accumulatedText = '';
       let buffer = '';
-      let hasStarted = false; // Biến kiểm soát xem AI đã bắt đầu nói chưa
+      let hasStarted = false;
 
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('[AI FRONTEND] Luồng dữ liệu kết thúc (Stream Done).');
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         let lines = buffer.split('\n\n');
@@ -56,33 +64,25 @@ const AiAssistantView = () => {
         for (const line of lines) {
           const cleanLine = line.replace(/^data: /, '').trim();
           if (!cleanLine || cleanLine === '[DONE]') {
-            if (cleanLine === '[DONE]') {
-              setMessages(prev => {
-                const newMsgs = [...prev];
-                const last = newMsgs[newMsgs.length - 1];
-                if (last && last.role === 'assistant') last.isStreaming = false;
-                return newMsgs;
-              });
-            }
             continue;
           }
 
           try {
             const data = JSON.parse(cleanLine);
             if (data.error) {
+              console.error('[AI FRONTEND] Lỗi từ Server:', data.error);
               setIsTyping(false);
               setMessages(prev => [...prev, { role: 'assistant', content: `❌ **Lỗi:** ${data.error}` }]);
               break;
             }
             if (data.text) {
               if (!hasStarted) {
-                // CHỮ ĐẦU TIÊN XUẤT HIỆN: Ẩn 3 chấm và tạo khung tin nhắn
+                console.log('[AI FRONTEND] Bắt đầu nhận những chữ đầu tiên...');
                 setIsTyping(false);
                 hasStarted = true;
                 setMessages(prev => [...prev, { role: 'assistant', content: data.text, isStreaming: true }]);
                 accumulatedText = data.text;
               } else {
-                // Các chữ tiếp theo: Cập nhật vào khung đã có
                 accumulatedText += data.text;
                 setMessages(prev => {
                   const newMsgs = [...prev];
@@ -92,11 +92,13 @@ const AiAssistantView = () => {
                 });
               }
             }
-          } catch (e) { console.warn('Stream chunk error'); }
+          } catch (e) { 
+            console.warn('[AI FRONTEND] Lỗi phân tích cú pháp chunk:', e.message); 
+          }
         }
       }
     } catch (err) {
-      console.error('Fetch error:', err);
+      console.error('[AI FRONTEND] Lỗi Fetch/Stream:', err);
       setIsTyping(false);
       setMessages(prev => [...prev, { role: 'assistant', content: 'Lỗi kết nối rồi đại ca ơi! Hãy thử tải lại trang nhé.' }]);
     } finally {
