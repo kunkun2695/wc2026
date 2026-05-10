@@ -242,10 +242,10 @@ const ChatView = () => {
         .message-bubble-v3 { display: flex !important; flex-direction: column !important; gap: 4px !important; }
         .sender-name-v3 { font-size: 0.65rem !important; color: #555 !important; font-weight: 800 !important; margin: 0 10px !important; }
         .bubble-content-v3 { padding: 10px 16px !important; border-radius: 18px !important; font-size: 0.9rem !important; line-height: 1.4 !important; word-break: break-word !important; position: relative !important; }
-        .row-me .bubble-content-v3 { background: #00f3ff !important; color: #000 !important; border-bottom-right-radius: 4px !important; }
-        .row-other .bubble-content-v3 { background: #1a1f2e !important; color: #eee !important; border-bottom-left-radius: 4px !important; border: 1px solid rgba(255,255,255,0.05) !important; }
-        .msg-time-v3 { font-size: 0.6rem !important; opacity: 0.4 !important; display: block !important; margin-top: 4px !important; font-weight: 600 !important; }
-        .row-me .msg-time-v3 { text-align: right !important; color: rgba(0,0,0,0.5) !important; }
+        .row-me .bubble-content-v3 { background: #0084ff !important; color: #fff !important; border-bottom-right-radius: 4px !important; box-shadow: 0 4px 12px rgba(0, 132, 255, 0.2) !important; }
+        .row-other .bubble-content-v3 { background: #1e293b !important; color: #eee !important; border-bottom-left-radius: 4px !important; border: 1px solid rgba(255,255,255,0.05) !important; }
+        .msg-time-v3 { font-size: 0.6rem !important; opacity: 0.5 !important; display: block !important; margin-top: 4px !important; font-weight: 600 !important; }
+        .row-me .msg-time-v3 { text-align: right !important; color: rgba(255,255,255,0.6) !important; }
 
         .chat-form-v3 { padding: 15px 20px !important; border-top: 1px solid rgba(255, 255, 255, 0.05) !important; }
         .input-group-v3 { display: flex !important; gap: 10px !important; background: #1a1f2e !important; padding: 4px !important; border-radius: 14px !important; border: 1px solid rgba(255,255,255,0.05) !important; }
