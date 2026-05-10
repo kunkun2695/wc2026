@@ -8,6 +8,23 @@ const cron = require('node-cron');
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const { syncMatches } = require('./services/syncService');
+const db = require('./config/db');
+
+// Tự động vá Database khi khởi động
+async function patchDatabase() {
+  try {
+    await db.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'general'`);
+    await db.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS title VARCHAR(255)`);
+    await db.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message TEXT`);
+    await db.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS url VARCHAR(255) DEFAULT '/'`);
+    // Chuyển content cũ sang message nếu cần
+    await db.query(`UPDATE notifications SET message = content WHERE message IS NULL AND content IS NOT NULL`).catch(() => {});
+    console.log('✅ [DB Fix] Đã cập nhật bảng notifications thành công.');
+  } catch (err) {
+    console.error('⚠️ [DB Fix Error]', err.message);
+  }
+}
+patchDatabase();
 
 // Modules
 const teamsRoutes = require('./routes/teams');
@@ -38,6 +55,7 @@ app.use('/api/predictions', predictionsRoutes);
 app.use('/api/comments', commentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/dm', dmRoutes);
 
 // Serve Static Files
 const distPath = path.join(__dirname, '../dist');

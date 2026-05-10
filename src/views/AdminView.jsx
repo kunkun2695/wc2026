@@ -5,6 +5,14 @@ import MatchCard from '../components/MatchCard';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const FlagDisplay = ({ flag }) => {
+  const isUrl = flag?.startsWith('http') || flag?.includes('.');
+  if (isUrl) {
+    return <img src={flag} alt="flag" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
+  }
+  return <span style={{ fontSize: '2.5rem' }}>{flag || '⚽'}</span>;
+};
+
 const MatchEditorModal = ({ match, onClose, onSave }) => {
   const [s1, setS1] = useState(match.team1_score || 0);
   const [s2, setS2] = useState(match.team2_score || 0);
@@ -14,44 +22,51 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }} onClick={onClose}></div>
-      <div style={{ position: 'relative', width: '100%', maxWidth: '500px', background: '#1a1f2e', borderRadius: '24px', padding: '30px', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: '500px', background: '#1a1f2e', borderRadius: '24px', padding: '30px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>CẬP NHẬT TỈ SỐ</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}><X size={24} /></button>
         </div>
         
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
-          <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>{match.team1_flag}</div>
-            <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '10px' }}>{match.team1_name}</div>
-            <input type="number" value={s1} onChange={e => setS1(parseInt(e.target.value))} style={{ width: '60px', padding: '10px', textAlign: 'center', borderRadius: '8px', border: 'none', background: '#000', color: 'white', fontWeight: 900 }} />
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+          <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
+            <div style={{ width: '60px', height: '40px', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <FlagDisplay flag={match.team1_flag} />
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '10px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{match.team1_name}</div>
+            <input type="number" value={s1} onChange={e => setS1(parseInt(e.target.value) || 0)} style={{ width: '60px', padding: '12px', textAlign: 'center', borderRadius: '12px', border: 'none', background: '#000', color: '#00d2ff', fontWeight: 900, fontSize: '1.2rem' }} />
           </div>
-          <div style={{ fontWeight: 900, color: '#444' }}>VS</div>
-          <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>{match.team2_flag}</div>
-            <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '10px' }}>{match.team2_name}</div>
-            <input type="number" value={s2} onChange={e => setS2(parseInt(e.target.value))} style={{ width: '60px', padding: '10px', textAlign: 'center', borderRadius: '8px', border: 'none', background: '#000', color: 'white', fontWeight: 900 }} />
+          
+          <div style={{ fontWeight: 900, color: 'rgba(255,255,255,0.1)', fontSize: '0.8rem' }}>VS</div>
+          
+          <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
+            <div style={{ width: '60px', height: '40px', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <FlagDisplay flag={match.team2_flag} />
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '10px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{match.team2_name}</div>
+            <input type="number" value={s2} onChange={e => setS2(parseInt(e.target.value) || 0)} style={{ width: '60px', padding: '12px', textAlign: 'center', borderRadius: '12px', border: 'none', background: '#000', color: '#00d2ff', fontWeight: 900, fontSize: '1.2rem' }} />
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
           <div>
-            <label style={{ fontSize: '0.7rem', color: '#555', display: 'block', marginBottom: '5px' }}>TRẠNG THÁI</label>
-            <select value={status} onChange={e => setStatus(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#000', color: 'white', border: 'none' }}>
+            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>TRẠNG THÁI</label>
+            <select value={status} onChange={e => setStatus(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }}>
               <option value="UPCOMING">Sắp diễn ra</option>
               <option value="LIVE">Trực tiếp</option>
               <option value="FINISHED">Kết thúc</option>
+              <option value="FT">Kết thúc (FT)</option>
             </select>
           </div>
           <div>
-            <label style={{ fontSize: '0.7rem', color: '#555', display: 'block', marginBottom: '5px' }}>THỜI GIAN</label>
-            <input type="text" value={time} onChange={e => setTime(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#000', color: 'white', border: 'none' }} />
+            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>THỜI GIAN</label>
+            <input type="text" value={time} onChange={e => setTime(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} />
           </div>
         </div>
 
         <button 
           onClick={() => onSave(match.id, { team1_score: s1, team2_score: s2, status, match_time: time })}
-          style={{ width: '100%', padding: '15px', borderRadius: '12px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer' }}
+          style={{ width: '100%', padding: '18px', borderRadius: '16px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.9rem', letterSpacing: '1px', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(0,210,255,0.3)' }}
         >
           LƯU KẾT QUẢ
         </button>
@@ -72,9 +87,10 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
     if (!notifTitle || !notifBody) return;
     setNotifLoading(true);
     setNotifMsg('');
+    const finalApiUrl = API_URL || window.location.origin;
     try {
       const token = localStorage.getItem('wc2026_token');
-      const res = await fetch(`${API_URL}/api/notifications/broadcast`, {
+      const res = await fetch(`${finalApiUrl}/api/notifications/broadcast`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ title: notifTitle, body: notifBody })
