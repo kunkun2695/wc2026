@@ -243,45 +243,195 @@ const SocialView = () => {
         </div>
       </div>
 
-      {/* Comments Drawer */}
+      {/* Comments Drawer - Modern Premium Version */}
       <AnimatePresence>
         {selectedPost && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="modal-overlay" onClick={() => setSelectedPost(null)} />
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="comments-drawer">
-              <div className="drawer-header">
-                <h3>Bình luận</h3>
-                <button className="close-drawer-btn" onClick={() => setSelectedPost(null)}><X size={20} /></button>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="modern-modal-overlay" 
+              onClick={() => setSelectedPost(null)} 
+            />
+            <motion.div 
+              initial={{ y: "100%" }} 
+              animate={{ y: 0 }} 
+              exit={{ y: "100%" }} 
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="modern-comments-drawer"
+            >
+              <div className="modern-drawer-handle" />
+              
+              <div className="modern-drawer-header">
+                <div className="header-title-group">
+                  <MessageCircle size={24} className="header-icon" />
+                  <div>
+                    <h3>Thảo luận sôi nổi</h3>
+                    <span>{comments.length} bình luận</span>
+                  </div>
+                </div>
+                <button className="modern-close-btn" onClick={() => setSelectedPost(null)}>
+                  <X size={20} />
+                </button>
               </div>
-              <div className="comments-list">
+
+              <div className="modern-comments-list">
                 {comments.length === 0 ? (
-                  <p style={{ textAlign: 'center', color: '#555', padding: '20px' }}>Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+                  <div className="empty-comments">
+                    <div className="empty-icon">💬</div>
+                    <p>Chưa có ai lên tiếng... Hãy là người mở màn!</p>
+                  </div>
                 ) : (
-                  comments.map(c => (
-                    <div key={c.id} className="comment-item">
-                      <img src={c.avatar || 'https://via.placeholder.com/32'} alt="av" />
-                      <div className="comment-bubble">
-                        <div className="comment-author">{c.name || c.username}</div>
-                        <div className="comment-text">{c.content}</div>
+                  comments.map((c, idx) => (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      key={c.id} 
+                      className="modern-comment-item"
+                    >
+                      <div className="avatar-wrapper">
+                        <img src={c.avatar || 'https://via.placeholder.com/32'} alt="av" />
+                        <div className="online-indicator" />
                       </div>
-                    </div>
+                      <div className="modern-comment-content">
+                        <div className="comment-info">
+                          <span className="author-name">{c.name || c.username}</span>
+                          <span className="comment-date">{new Date(c.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div className="comment-text-bubble">
+                          {c.content}
+                        </div>
+                      </div>
+                    </motion.div>
                   ))
                 )}
               </div>
-              <div className="comment-input-area">
-                <input 
-                  type="text" 
-                  placeholder="Viết bình luận..." 
-                  value={commentContent}
-                  onChange={(e) => setCommentContent(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendComment()}
-                />
-                <button className="send-comment-btn" onClick={handleSendComment}><Send size={18} /></button>
+
+              <div className="modern-input-section">
+                <div className="input-container-glass">
+                  <input 
+                    type="text" 
+                    placeholder="Viết điều gì đó thật hay..." 
+                    value={commentContent}
+                    onChange={(e) => setCommentContent(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendComment()}
+                  />
+                  <button 
+                    className={`modern-send-btn ${commentContent.trim() ? 'active' : ''}`}
+                    onClick={handleSendComment}
+                  >
+                    <Send size={20} />
+                  </button>
+                </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .modern-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9000; backdrop-filter: blur(8px); }
+        .modern-comments-drawer { 
+          position: fixed; bottom: 0; left: 0; right: 0; 
+          background: rgba(15, 23, 42, 0.95); 
+          border-radius: 32px 32px 0 0; 
+          z-index: 9001; 
+          max-height: 85vh; 
+          display: flex; flex-direction: column; 
+          border-top: 1px solid rgba(255,255,255,0.1);
+          box-shadow: 0 -20px 50px rgba(0,0,0,0.5);
+          backdrop-filter: blur(25px);
+        }
+        
+        .modern-drawer-handle {
+          width: 40px; height: 5px; background: rgba(255,255,255,0.2);
+          border-radius: 10px; margin: 12px auto;
+        }
+
+        .modern-drawer-header {
+          padding: 10px 25px 20px; display: flex; justify-content: space-between; align-items: center;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .header-title-group { display: flex; align-items: center; gap: 15px; }
+        .header-icon { color: #00d2ff; filter: drop-shadow(0 0 8px rgba(0,210,255,0.5)); }
+        .header-title-group h3 { color: white; margin: 0; font-size: 1.2rem; font-weight: 800; }
+        .header-title-group span { color: #64748b; font-size: 0.85rem; font-weight: 600; }
+        
+        .modern-close-btn { 
+          background: rgba(255,255,255,0.05); border: none; color: white; 
+          width: 36px; height: 36px; border-radius: 50%; display: flex; 
+          align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;
+        }
+        .modern-close-btn:hover { background: rgba(255,255,255,0.15); transform: rotate(90deg); }
+
+        .modern-comments-list { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 20px; }
+        
+        .modern-comment-item { display: flex; gap: 15px; }
+        .avatar-wrapper { position: relative; }
+        .avatar-wrapper img { 
+          width: 40px; height: 40px; border-radius: 14px; object-fit: cover;
+          border: 2px solid rgba(0,210,255,0.2);
+        }
+        .online-indicator {
+          position: absolute; bottom: -2px; right: -2px; width: 12px; height: 12px;
+          background: #10b981; border: 2px solid #0f172a; border-radius: 50%;
+        }
+
+        .modern-comment-content { flex: 1; }
+        .comment-info { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .author-name { color: #f1f5f9; font-weight: 800; font-size: 0.9rem; }
+        .comment-date { color: #64748b; font-size: 0.7rem; font-weight: 600; }
+        
+        .comment-text-bubble {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.05);
+          padding: 12px 18px; border-radius: 20px; border-top-left-radius: 4px;
+          color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .empty-comments { text-align: center; padding: 60px 20px; color: #475569; }
+        .empty-icon { font-size: 3rem; margin-bottom: 15px; opacity: 0.5; }
+
+        .modern-input-section { 
+          padding: 20px 25px; background: rgba(15, 23, 42, 0.8);
+          border-top: 1px solid rgba(255,255,255,0.05);
+          padding-bottom: calc(25px + env(safe-area-inset-bottom));
+        }
+        .input-container-glass {
+          display: flex; gap: 12px; align-items: center;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.1);
+          padding: 8px 8px 8px 20px; border-radius: 20px;
+          transition: 0.3s;
+        }
+        .input-container-glass:focus-within {
+          border-color: #00d2ff; background: rgba(255,255,255,0.05);
+          box-shadow: 0 0 20px rgba(0,210,255,0.1);
+        }
+        .input-container-glass input {
+          flex: 1; background: transparent; border: none; color: white;
+          outline: none; font-size: 1rem; font-weight: 500;
+        }
+        .modern-send-btn {
+          width: 44px; height: 44px; border: none; border-radius: 16px;
+          background: rgba(255,255,255,0.05); color: #475569;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; transition: 0.3s;
+        }
+        .modern-send-btn.active {
+          background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+          color: white; box-shadow: 0 5px 15px rgba(0,210,255,0.4);
+        }
+        .modern-send-btn:hover:not(:disabled) { transform: scale(1.05); }
+
+        @media (max-width: 768px) {
+          .modern-comments-drawer { border-radius: 24px 24px 0 0; }
+          .modern-comments-list { padding: 15px; }
+        }
+      ` }} />
 
       <style dangerouslySetInnerHTML={{ __html: `
         .social-view-container { padding: 100px 20px 120px; min-height: 100vh; background: #0a0e17; }
