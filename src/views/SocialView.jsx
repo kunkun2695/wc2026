@@ -236,11 +236,15 @@ const SocialView = () => {
             </div>
           ) : (
             posts.length > 0 ? posts.map(post => {
-              const isMe = post.user_id == currentUser.id;
+              const userString = localStorage.getItem('wc2026_user');
+              const currentUser = userString ? JSON.parse(userString) : null;
+              const isMe = currentUser && post.user_id == currentUser.id;
               return (
                 <PostCard key={post.id} post={post} onLike={handleLike} onOpenComments={openComments} />
               )
-            }) : null
+            }) : (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Chưa có bài viết nào.</div>
+            )
           )}
         </div>
       </div>
