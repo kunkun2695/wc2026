@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Home, Trophy, Search, Edit3, Settings, 
+import {
+  Home, Trophy, Search, Edit3, Settings,
   Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles, GitBranch
 } from 'lucide-react';
 import BracketView from './views/BracketView';
@@ -73,14 +73,14 @@ const App = () => {
       });
       const data = await res.json();
       setUnreadChatCount(data.unread_count || 0);
-    } catch (err) {}
+    } catch (err) { }
   };
 
   // Poll for notifications and counts every 10s
   useEffect(() => {
     const token = mockAuth.getToken();
     if (!token) return;
-    
+
     const interval = setInterval(() => {
       fetchUnreadChatCount();
       fetchNotifications();
@@ -164,7 +164,7 @@ const App = () => {
       });
       const data = await res.json();
       const notifs = Array.isArray(data) ? data : [];
-      
+
       // Check for new notifications to show push alert
       if (notifs.length > 0) {
         const newest = notifs[0];
@@ -173,7 +173,7 @@ const App = () => {
         }
         setLastNotifId(newest.id);
       }
-      
+
       setNotifications(notifs);
     } catch (err) {
       console.error('Lỗi fetch notifications');
@@ -188,7 +188,7 @@ const App = () => {
         headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
       });
       fetchNotifications();
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const deleteAllNotifications = async () => {
@@ -200,7 +200,7 @@ const App = () => {
         headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
       });
       setNotifications([]);
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const handleNotificationClick = async (notif) => {
@@ -215,7 +215,7 @@ const App = () => {
       setActiveTab('match_detail');
       setShowNotifications(false);
       requestNotificationPermission(); // Request on interaction
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const savePrediction = async (match_id, home_score, away_score) => {
@@ -223,7 +223,7 @@ const App = () => {
       const host = window.location.hostname;
       const res = await fetch(`${API_URL}/api/predictions`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${mockAuth.getToken()}`
         },
@@ -243,7 +243,7 @@ const App = () => {
     const host = window.location.hostname;
     const res = await fetch(`${API_URL}/api/matches/${id}`, {
       method: 'PUT',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${mockAuth.getToken()}`
       },
@@ -257,7 +257,7 @@ const App = () => {
       const host = window.location.hostname;
       const res = await fetch(`${API_URL}/api/matches/sync`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${mockAuth.getToken()}`
         }
       });
@@ -296,7 +296,7 @@ const App = () => {
               <div className="brand-logo-glow" style={{ width: '32px', height: '32px' }}>
                 <Trophy size={18} className="brand-icon" />
               </div>
-              <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>Bench-Bets</span>
+              <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>Bench-Bets v2</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
@@ -352,7 +352,7 @@ const App = () => {
             </button>
             <button onClick={() => setActiveTab('ai')} className={`nav-item ${activeTab === 'ai' ? 'active' : ''}`}>
               <div className="active-indicator" />
-              <Sparkles size={18} className="nav-icon" color="#00d2ff" /> 
+              <Sparkles size={18} className="nav-icon" color="#00d2ff" />
               <span style={{ color: activeTab === 'ai' ? '#00d2ff' : 'inherit' }}>Trợ lý AI</span>
             </button>
           </div>
@@ -398,9 +398,9 @@ const App = () => {
 
         <div className="sidebar-footer">
           <div className="user-profile-mini">
-            <UserAvatar 
-              src={user?.avatar} 
-              className="user-avatar-mini" 
+            <UserAvatar
+              src={user?.avatar}
+              className="user-avatar-mini"
               size={36}
             />
             <div className="user-details-mini">
@@ -419,10 +419,10 @@ const App = () => {
         <AnimatePresence mode="wait">
           {activeTab === 'home' && (
             <motion.div key="h" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <HomeView 
-                matches={matches} 
-                predictions={predictions} 
-                onSavePrediction={savePrediction} 
+              <HomeView
+                matches={matches}
+                predictions={predictions}
+                onSavePrediction={savePrediction}
                 onRefreshMatches={fetchData}
                 onOpenComments={handleOpenComments}
               />
@@ -465,9 +465,9 @@ const App = () => {
           )}
           {activeTab === 'admin_matches' && (
             <motion.div key="am" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <MatchManagementView 
-                matches={matches} 
-                onUpdateScore={updateMatchScore} 
+              <MatchManagementView
+                matches={matches}
+                onUpdateScore={updateMatchScore}
                 onSync={syncMatches}
               />
             </motion.div>
@@ -484,9 +484,9 @@ const App = () => {
           )}
           {activeTab === 'match_detail' && (
             <motion.div key="md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <MatchDetailView 
-                matchId={selectedMatchId} 
-                onBack={() => setActiveTab('home')} 
+              <MatchDetailView
+                matchId={selectedMatchId}
+                onBack={() => setActiveTab('home')}
                 matches={matches}
                 predictions={predictions}
                 onSavePrediction={savePrediction}
@@ -530,14 +530,14 @@ const App = () => {
       <AnimatePresence>
         {showNotifications && (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="notif-overlay"
               onClick={() => setShowNotifications(false)}
             />
-            <NotificationsDrawer 
+            <NotificationsDrawer
               notifications={notifications}
               onClose={() => setShowNotifications(false)}
               onMarkAsRead={markNotificationsAsRead}
@@ -550,15 +550,15 @@ const App = () => {
 
         {commentMatch && (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="notif-overlay"
               style={{ zIndex: 5900 }}
               onClick={() => setCommentMatch(null)}
             />
-            <CommentSection 
+            <CommentSection
               matchId={commentMatch.id}
               matchTitle={`${commentMatch.team1_name} vs ${commentMatch.team2_name}`}
               onClose={() => setCommentMatch(null)}
