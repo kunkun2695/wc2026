@@ -4,66 +4,73 @@ const { authenticateUser } = require('../middleware/auth');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const db = require('../config/db');
 
+// Helper lấy bối cảnh an toàn (Không bao giờ làm treo AI)
+async function getSafeContext(userId) {
+  return new Promise(async (resolve) => {
+    // Đặt timeout 1.5 giây, quá thời gian này sẽ bỏ qua DB
+    const timeout = setTimeout(() => resolve(""), 1500);
+    
+    try {
+      const userRes = await db.query('SELECT username, points FROM users WHERE id = $1', [userId]);
+      const user = userRes.rows[0];
+      if (!user) {
+        clearTimeout(timeout);
+        return resolve("");
+      }
+
+      // Lấy thống kê đơn giản
+      const statsRes = await db.query('SELECT COUNT(*) as total FROM predictions WHERE user_id = $1', [userId]);
+      const total = statsRes.rows[0]?.total || 0;
+
+      clearTimeout(timeout);
+      resolve(`[User: ${user.username}, Points: ${user.points}, Total Predictions: ${total}]. Rules: +3 pts for win. `);
+    } catch (e) {
+      clearTimeout(timeout);
+      resolve("");
+    }
+  });
+}
+
 router.post('/stream', authenticateUser, async (req, res) => {
   const { message } = req.body;
   const apiKey = (process.env.GEMINI_API_KEY || "").trim();
   
-  // Thiết lập header chống đệm (Buffering) mạnh mẽ nhất
+  // Header quan trọng
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no'); // Ép Nginx/Cloudflare đẩy dữ liệu ngay
+  res.setHeader('X-Accel-Buffering', 'no');
 
-  // Gửi ngay một gói tin trống để "đánh thức" đường truyền
-  res.write(': keep-alive\n\n');
-  res.flushHeaders && res.flushHeaders();
-
-  // Thử lấy thông tin cơ bản nhanh nhất có thể
-  let context = "";
-  try {
-    const userRes = await db.query('SELECT username FROM users WHERE id = $1', [req.user.id]);
-    if (userRes.rows[0]) context = `[User: ${userRes.rows[0].username}]. `;
-  } catch (e) {}
-
-  const fullPrompt = context + message;
-  const modelsToTry = ["gemini-1.5-flash", "gemini-pro"];
-  let success = false;
+  // Gửi heartbeat ngay
+  res.write(': wake-up\n\n');
 
   try {
+    // Lấy context một cách an toàn (có timeout)
+    const context = await getSafeContext(req.user.id);
+    const fullPrompt = context + message;
+
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Ưu tiên flash cho tốc độ nhanh nhất
+    // Thử flash trước cho nhanh
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContentStream(fullPrompt);
 
+    let hasData = false;
     for await (const chunk of result.stream) {
-      success = true;
-      const text = chunk.text();
-      res.write(`data: ${JSON.stringify({ text })}\n\n`);
-      // Đảm bảo dữ liệu được đẩy đi ngay
-      res.flush && res.flush();
+      hasData = true;
+      res.write(`data: ${JSON.stringify({ text: chunk.text() })}\n\n`);
     }
     
-    if (success) {
+    if (hasData) {
       res.write('data: [DONE]\n\n');
-      res.end();
     } else {
-      throw new Error("Không nhận được dữ liệu từ AI");
+      res.write(`data: ${JSON.stringify({ error: "AI không có phản hồi." })}\n\n`);
     }
+    res.end();
+
   } catch (error) {
-    console.error('Stream error:', error.message);
-    // Nếu lỗi, thử dùng chat thường để cứu vãn
-    try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      const result = await model.generateContent(fullPrompt);
-      const text = (await result.response).text();
-      res.write(`data: ${JSON.stringify({ text })}\n\n`);
-      res.write('data: [DONE]\n\n');
-      res.end();
-    } catch (e) {
-      res.write(`data: ${JSON.stringify({ error: "AI đang bận, thử lại sau nhé!" })}\n\n`);
-      res.end();
-    }
+    console.error('Final Stream Error:', error.message);
+    res.write(`data: ${JSON.stringify({ error: "Kết nối AI gặp sự cố, hãy thử lại." })}\n\n`);
+    res.end();
   }
 });
 
