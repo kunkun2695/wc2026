@@ -5,7 +5,7 @@ import API_URL from '../config';
 
 const AiAssistantView = () => {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Xin chào! Tôi là **Bench Guru**. Tôi đã sẵn sàng hỗ trợ bạn với tốc độ tối đa. Bạn muốn hỏi gì về World Cup 2026?' }
+    { role: 'assistant', content: 'Xin chào! Tôi là **Bench Guru**. Bạn muốn hỏi gì về World Cup 2026 hôm nay?' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -21,8 +21,10 @@ const AiAssistantView = () => {
     const userMsg = input.trim();
     setInput('');
     
+    // 1. Thêm tin nhắn user
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
-    setMessages(prev => [...prev, { role: 'assistant', content: '', isStreaming: true }]);
+    
+    // 2. Bật trạng thái đang nhập (hiện 3 chấm)
     setIsTyping(true);
 
     try {
@@ -40,60 +42,58 @@ const AiAssistantView = () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let accumulatedText = '';
-      let buffer = ''; // Bộ nhớ đệm để xử lý các dòng dữ liệu dở dang
+      let buffer = '';
+      let hasStarted = false; // Biến kiểm soát xem AI đã bắt đầu nói chưa
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        
-        // Tách các dòng theo định dạng SSE (data: ...)
         let lines = buffer.split('\n\n');
-        buffer = lines.pop(); // Giữ lại dòng cuối cùng có thể chưa hoàn chỉnh
+        buffer = lines.pop();
 
         for (const line of lines) {
           const cleanLine = line.replace(/^data: /, '').trim();
-          if (!cleanLine) continue;
-          
-          if (cleanLine === '[DONE]') {
-            setMessages(prev => {
-              const newMsgs = [...prev];
-              const last = newMsgs[newMsgs.length - 1];
-              if (last) last.isStreaming = false;
-              return newMsgs;
-            });
+          if (!cleanLine || cleanLine === '[DONE]') {
+            if (cleanLine === '[DONE]') {
+              setMessages(prev => {
+                const newMsgs = [...prev];
+                const last = newMsgs[newMsgs.length - 1];
+                if (last && last.role === 'assistant') last.isStreaming = false;
+                return newMsgs;
+              });
+            }
             continue;
           }
 
           try {
             const data = JSON.parse(cleanLine);
             if (data.text) {
-              accumulatedText += data.text;
-              setMessages(prev => {
-                const newMsgs = [...prev];
-                const last = newMsgs[newMsgs.length - 1];
-                if (last) last.content = accumulatedText;
-                return newMsgs;
-              });
+              if (!hasStarted) {
+                // CHỮ ĐẦU TIÊN XUẤT HIỆN: Ẩn 3 chấm và tạo khung tin nhắn
+                setIsTyping(false);
+                hasStarted = true;
+                setMessages(prev => [...prev, { role: 'assistant', content: data.text, isStreaming: true }]);
+                accumulatedText = data.text;
+              } else {
+                // Các chữ tiếp theo: Cập nhật vào khung đã có
+                accumulatedText += data.text;
+                setMessages(prev => {
+                  const newMsgs = [...prev];
+                  const last = newMsgs[newMsgs.length - 1];
+                  if (last && last.role === 'assistant') last.content = accumulatedText;
+                  return newMsgs;
+                });
+              }
             }
-          } catch (e) {
-            // Nếu JSON không hợp lệ do gói tin bị cắt, ta bỏ qua và đợi gói tiếp theo
-            console.warn('Bỏ qua gói tin lỗi:', cleanLine);
-          }
+          } catch (e) { console.warn('Stream chunk error'); }
         }
       }
     } catch (err) {
       console.error('Fetch error:', err);
-      setMessages(prev => {
-        const newMsgs = [...prev];
-        const last = newMsgs[newMsgs.length - 1];
-        if (last) {
-          last.content = 'Lỗi kết nối rồi đại ca ơi! Hãy thử tải lại trang nhé.';
-          last.isStreaming = false;
-        }
-        return newMsgs;
-      });
+      setIsTyping(false);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Lỗi kết nối rồi đại ca ơi! Hãy thử tải lại trang nhé.' }]);
     } finally {
       setIsTyping(false);
     }
@@ -101,9 +101,7 @@ const AiAssistantView = () => {
 
   const formatText = (text) => {
     if (!text) return '';
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n/g, '<br/>');
+    return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>');
   };
 
   return (
@@ -112,7 +110,7 @@ const AiAssistantView = () => {
         <header className="ai-header">
           <div className="ai-badge">
             <Zap size={14} fill="currentColor" />
-            <span>GEMINI 2.5 STREAMING</span>
+            <span>REAL-TIME ENGINE</span>
           </div>
           <h2 className="font-outfit">Bench Guru</h2>
         </header>
@@ -135,14 +133,17 @@ const AiAssistantView = () => {
                 </div>
               </motion.div>
             ))}
-            {isTyping && (!messages[messages.length-1]?.content) && (
-              <div className="msg-row ai">
+            
+            {/* CHỈ HIỆN 3 CHẤM KHI CHƯA CÓ CHỮ NÀO TRẢ VỀ */}
+            {isTyping && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="msg-row ai">
                 <div className="msg-icon pulse"><Bot size={18} /></div>
                 <div className="typing-indicator-modern">
                   <span></span><span></span><span></span>
                 </div>
-              </div>
+              </motion.div>
             )}
+            
             <div ref={scrollRef} />
           </div>
         </div>
