@@ -32,7 +32,9 @@ const ChatView = () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat`);
       const data = await response.json();
-      setMessages(data);
+      if (Array.isArray(data)) {
+        setMessages(data);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Lỗi lấy tin nhắn:', error);
