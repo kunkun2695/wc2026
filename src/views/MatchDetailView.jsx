@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, Calendar, MapPin, Users, Zap, Check, Send } from 'lucide-react';
+import { ArrowLeft, Trophy, Calendar, MapPin, Users, Zap, Check, Send, Clock } from 'lucide-react';
 import CommentSection from '../components/CommentSection';
 
 const FlagIcon = ({ flag }) => {

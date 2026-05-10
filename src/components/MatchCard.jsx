@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Edit3, Zap, Check, MessageSquare, Clock, MapPin } from 'lucide-react';
+import { Edit3, Zap, Check, MessageSquare, Clock, MapPin, Users } from 'lucide-react';
 import { mockAuth } from '../data/mockAuth';
 
 const FlagIcon = ({ flag }) => {
