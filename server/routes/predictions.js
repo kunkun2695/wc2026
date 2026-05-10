@@ -62,7 +62,18 @@ router.get('/my', authenticateUser, async (req, res) => {
 router.get('/leaderboard', async (req, res) => {
   try {
     const result = await db.query(`
-      SELECT u.id, u.name, u.avatar, COALESCE(SUM(p.points), 0) as total_points
+      SELECT 
+        u.id, 
+        u.name, 
+        u.avatar, 
+        COALESCE(SUM(p.points), 0) as total_points,
+        COALESCE(SUM(
+          CASE 
+            WHEN p.points > 0 THEN 10000 
+            WHEN p.points = 0 THEN 30000 
+            ELSE 0 
+          END
+        ), 0) as total_fines
       FROM users u
       LEFT JOIN predictions p ON u.id = p.user_id
       GROUP BY u.id, u.name, u.avatar

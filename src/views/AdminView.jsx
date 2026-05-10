@@ -1,7 +1,95 @@
 import React, { useState } from 'react';
-import { Shield, X, RefreshCw } from 'lucide-react';
+import { Shield, X, RefreshCw, Megaphone, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MatchCard from '../components/MatchCard';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const AnnouncementComposer = () => {
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleBroadcast = async () => {
+    if (!title || !body) return;
+    setLoading(true);
+    setMessage('');
+    
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${API_URL}/api/notifications/broadcast`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ title, body })
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setMessage('✅ ' + data.message);
+        setTitle('');
+        setBody('');
+      } else {
+        setMessage('❌ ' + data.error);
+      }
+    } catch (err) {
+      setMessage('❌ Lỗi kết nối server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="glass-card !p-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <label className="text-[10px] font-black text-white/40 uppercase">Tiêu đề thông báo</label>
+          <input 
+            type="text" 
+            className="input-field" 
+            placeholder="Ví dụ: CẬP NHẬT TỈ SỐ MỚI" 
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-[10px] font-black text-white/40 uppercase">Nội dung chi tiết</label>
+          <textarea 
+            className="input-field min-h-[100px] py-3" 
+            placeholder="Nhập nội dung bạn muốn gửi đến tất cả thành viên..."
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+          />
+        </div>
+        <div className="flex justify-between items-center mt-2">
+          <span className="text-[10px] text-white/40 italic">
+            * Thông báo này sẽ được gửi tới toàn bộ thành viên qua Notification và Push.
+          </span>
+          <button 
+            onClick={handleBroadcast}
+            disabled={loading || !title || !body}
+            className="flex items-center gap-2 bg-accent-blue text-black px-6 py-3 rounded-xl font-black uppercase text-xs transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
+          >
+            {loading ? <RefreshCw size={14} className="animate-spin" /> : <Megaphone size={14} />}
+            {loading ? 'Đang gửi...' : 'Gửi ngay'}
+          </button>
+        </div>
+        {message && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-2 text-xs font-bold"
+          >
+            {message}
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const MatchEditorModal = ({ match, onClose, onSave }) => {
   const [s1, setS1] = useState(match.team1_score);
@@ -121,6 +209,15 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
           <p className="text-[10px] font-black text-white/40 uppercase mb-1">Sắp tới</p>
           <p className="text-2xl font-black text-white/40">{stats.upcoming}</p>
         </div>
+      </div>
+      
+      {/* Broadcast Notification Section */}
+      <div className="mb-10">
+        <div className="flex items-center gap-3 mb-4">
+          <Shield className="text-accent-blue" size={20} />
+          <span className="text-[10px] font-black text-accent-blue uppercase tracking-[0.3em]">Gửi thông báo toàn quốc</span>
+        </div>
+        <AnnouncementComposer />
       </div>
 
       <div className="match-list-container">

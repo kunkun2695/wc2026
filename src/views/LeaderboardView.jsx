@@ -43,9 +43,15 @@ const LeaderboardView = ({ leaderboard }) => {
               <span className="user-role-lb">{index === 0 ? 'Dẫn đầu' : 'Thành viên'}</span>
             </div>
 
-            <div className="user-points-lb">
-              <span className="points-val">{user.total_points || 0}</span>
-              <span className="points-label">ĐIỂM</span>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+              <div className="user-fines-lb">
+                <span className="fines-val">{Math.floor(user.total_fines / 1000)}k</span>
+                <span className="fines-label">TIỀN PHẠT</span>
+              </div>
+              <div className="user-points-lb">
+                <span className="points-val">{user.total_points || 0}</span>
+                <span className="points-label">ĐIỂM</span>
+              </div>
             </div>
           </motion.div>
         )) : (
@@ -135,7 +141,7 @@ const LeaderboardView = ({ leaderboard }) => {
           color: var(--text-dim);
           text-transform: uppercase;
         }
-        .user-points-lb {
+        .user-points-lb, .user-fines-lb {
           text-align: right;
           display: flex;
           flex-direction: column;
@@ -146,7 +152,13 @@ const LeaderboardView = ({ leaderboard }) => {
           color: var(--primary-cyan);
           font-family: 'Outfit', sans-serif;
         }
-        .points-label {
+        .fines-val {
+          font-size: 1.5rem;
+          font-weight: 900;
+          color: #ff4d4d;
+          font-family: 'Outfit', sans-serif;
+        }
+        .points-label, .fines-label {
           font-size: 0.6rem;
           font-weight: 800;
           color: var(--text-dim);
