@@ -1,151 +1,150 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import MatchCard from '../components/MatchCard';
-import { LayoutGrid, CheckCircle2, Trophy } from 'lucide-react';
+import { LayoutGrid, CheckCircle2, Trophy, Clock, Calendar } from 'lucide-react';
 
 const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatches, onOpenComments }) => {
-  const [activeTab, setActiveTab] = useState('all'); // 'all' or 'predicted'
+  const [activeTab, setActiveTab] = useState('all'); 
 
-  // Lọc trận đấu dựa trên tab đang chọn
-  const filteredMatches = activeTab === 'all' 
-    ? matches 
-    : matches.filter(m => predictions.some(p => p.match_id === m.id));
+  // Hàm chuyển đổi string "HH:mm DD-MM" hoặc tương tự thành Date để so sánh
+  const parseMatchTime = (timeStr) => {
+    if (!timeStr) return new Date(0);
+    try {
+      // Giả sử định dạng: "HH:mm DD-MM" hoặc "DD-MM HH:mm"
+      // Chúng ta sẽ cố gắng tách lấy ngày và tháng
+      const parts = timeStr.split(/[\s-]/);
+      // Ví dụ: ["00:30", "11", "05"]
+      const [time, day, month] = parts;
+      const [hour, min] = time.split(':');
+      // Tạo Date giả lập cho năm 2026
+      return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+    } catch (e) {
+      return new Date(0);
+    }
+  };
 
-  // Nhóm các trận đấu theo Giải đấu (Competition)
-  const groupedByCompetition = filteredMatches.reduce((acc, match) => {
-    const compName = match.competition_name || 'Giải đấu khác';
-    if (!acc[compName]) acc[compName] = {};
-    
-    // Trong mỗi giải đấu, nhóm tiếp theo ngày
-    const [date] = match.match_time ? match.match_time.split(' - ') : ['Sắp tới'];
-    if (!acc[compName][date]) acc[compName][date] = [];
-    
-    acc[compName][date].push(match);
-    return acc;
-  }, {});
+  // Sắp xếp và lọc trận đấu
+  const displayMatches = useMemo(() => {
+    let filtered = activeTab === 'all' 
+      ? matches 
+      : matches.filter(m => predictions.some(p => p.match_id === m.id));
 
-  const competitions = Object.keys(groupedByCompetition).sort();
+    // Sắp xếp theo thời gian GIẢM DẦN (Mới nhất lên đầu)
+    // Nếu muốn TĂNG DẦN (Trận sắp tới gần nhất lên đầu), đảo ngược a và b
+    return [...filtered].sort((a, b) => {
+      const timeA = parseMatchTime(a.match_time);
+      const timeB = parseMatchTime(b.match_time);
+      return timeB - timeA; // Giảm dần
+    });
+  }, [matches, predictions, activeTab]);
+
+  // Nhóm theo ngày để hiển thị tiêu đề ngày
+  const groupedByDate = useMemo(() => {
+    return displayMatches.reduce((acc, match) => {
+      const dateStr = match.match_time ? match.match_time.split(' ')[1] : 'Sắp tới';
+      if (!acc[dateStr]) acc[dateStr] = [];
+      acc[dateStr].push(match);
+      return acc;
+    }, {});
+  }, [displayMatches]);
+
   const predictedCount = predictions.length;
   const totalMatches = matches.length;
 
   return (
     <div className="home-view-bet">
-      {/* Header Info */}
-      <div className="view-header-content" style={{ marginBottom: '30px' }}>
+      <div className="view-header-content">
         <div className="quote-banner">
-          "World Cup is not just about football, it's about the spirit of nations coming together. 2026 will be the biggest festival ever." — Official FIFA
+          "Bóng đá không chỉ là trò chơi, đó là niềm đam mê bất tận." — World Cup 2026 Guru
         </div>
 
         <div className="stats-and-tabs">
-          <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-            <h2 className="font-outfit" style={{ fontSize: '1.6rem', fontWeight: 900, marginBottom: '5px', letterSpacing: '-0.5px' }}>
-              LỊCH THI ĐẤU
-            </h2>
+          <div className="header-main-info">
+            <div className="title-section">
+              <Calendar size={24} color="#00d2ff" />
+              <h2 className="font-outfit">LỊCH THI ĐẤU CHI TIẾT</h2>
+            </div>
             <div className="prediction-counter">
               <CheckCircle2 size={14} color="#00d2ff" />
-              <span>{predictedCount}/{totalMatches} Trận đã dự đoán</span>
+              <span>{predictedCount}/{totalMatches} TRẬN ĐÃ GÁY</span>
             </div>
           </div>
 
           <div className="filter-tabs">
-            <button 
-              className={`filter-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
-              onClick={() => setActiveTab('all')}
-            >
-              <LayoutGrid size={18} />
-              Tất cả trận đấu
+            <button className={`filter-tab-btn ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>
+              <LayoutGrid size={18} /> TẤT CẢ TRẬN ĐẤU
             </button>
-            <button 
-              className={`filter-tab-btn ${activeTab === 'predicted' ? 'active' : ''}`}
-              onClick={() => setActiveTab('predicted')}
-            >
-              <CheckCircle2 size={18} />
-              Trận đã dự đoán
+            <button className={`filter-tab-btn ${activeTab === 'predicted' ? 'active' : ''}`} onClick={() => setActiveTab('predicted')}>
+              <CheckCircle2 size={18} /> ĐÃ DỰ ĐOÁN
             </button>
           </div>
         </div>
       </div>
 
-      <div className="matches-list-bet">
-        {competitions.length > 0 ? competitions.map(compName => (
-          <div key={compName} className="competition-section">
-            <div className="competition-header">
-              <div className="comp-title-box">
-                <Trophy size={16} color="#ffd200" />
-                <span className="comp-name-text">{compName}</span>
-              </div>
-              <div className="comp-line"></div>
-            </div>
-            
-            {Object.keys(groupedByCompetition[compName]).sort().map(date => (
-              <div key={date} className="date-group">
-                <div className="date-sub-header">
-                  <span className="date-text-mini">{date.includes('.') ? `Ngày ${date}` : date}</span>
+      <div className="timeline-container">
+        {displayMatches.length > 0 ? (
+          <div className="matches-timeline">
+            {displayMatches.map((m, idx) => {
+              const pred = predictions.find(p => p.match_id === m.id);
+              
+              // Kiểm tra xem có phải trận đầu tiên của ngày không để hiện nhãn ngày
+              const showDateLabel = idx === 0 || 
+                (m.match_time && displayMatches[idx-1].match_time && 
+                 m.match_time.split(' ')[1] !== displayMatches[idx-1].match_time.split(' ')[1]);
+
+              return (
+                <div key={m.id} className="timeline-item">
+                  {showDateLabel && (
+                    <div className="timeline-date-label">
+                      <Clock size={14} />
+                      <span>{m.match_time ? `NGÀY ${m.match_time.split(' ')[1]}` : 'CHƯA XÁC ĐỊNH'}</span>
+                    </div>
+                  )}
+                  <div className="match-card-wrapper">
+                    <MatchCard 
+                      match={m} 
+                      userPrediction={pred}
+                      onSavePrediction={onSavePrediction}
+                      onRefreshMatches={onRefreshMatches}
+                      onOpenComments={onOpenComments}
+                    />
+                  </div>
                 </div>
-                <div className="date-matches">
-                  {groupedByCompetition[compName][date].map(m => {
-                    const pred = predictions.find(p => p.match_id === m.id);
-                    return (
-                      <MatchCard 
-                        key={m.id} 
-                        match={m} 
-                        userPrediction={pred}
-                        onSavePrediction={onSavePrediction}
-                        onRefreshMatches={onRefreshMatches}
-                        onOpenComments={onOpenComments}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        )) : (
+        ) : (
           <div className="empty-state">
-            {activeTab === 'all' ? (
-              <div className="loading-spinner">
-                <div className="spinner-ring"></div>
-                <p>Đang tải lịch thi đấu...</p>
-              </div>
-            ) : (
-              <div className="no-predictions">
-                <CheckCircle2 size={48} color="#1e293b" />
-                <h3>Bạn chưa dự đoán trận nào</h3>
-                <p>Hãy quay lại tab "Tất cả trận đấu" để bắt đầu gáy!</p>
-                <button className="back-to-all" onClick={() => setActiveTab('all')}>Xem tất cả</button>
-              </div>
-            )}
+            <p>Không có trận đấu nào phù hợp với bộ lọc của bạn.</p>
           </div>
         )}
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .home-view-bet { 
-          width: 100%;
-          max-width: 1200px; 
-          margin-left: 0; 
-          padding: 0 40px 0 40px; 
+        .home-view-bet { width: 100%; max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .quote-banner { border-left: 4px solid #00d2ff; padding: 15px 20px; background: rgba(0, 210, 255, 0.05); border-radius: 0 12px 12px 0; margin-bottom: 30px; font-size: 0.85rem; color: #94a3b8; font-style: italic; }
+        
+        .header-main-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .title-section { display: flex; align-items: center; gap: 12px; }
+        .title-section h2 { margin: 0; font-size: 1.8rem; font-weight: 900; color: white; letter-spacing: -1px; }
+        
+        .prediction-counter { display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 210, 255, 0.1); padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; color: #00d2ff; font-weight: 900; letter-spacing: 1px; border: 1px solid rgba(0, 210, 255, 0.2); }
+        
+        .filter-tabs { display: flex; background: rgba(255, 255, 255, 0.03); padding: 6px; border-radius: 16px; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 40px; width: fit-content; }
+        .filter-tab-btn { display: flex; align-items: center; gap: 10px; padding: 10px 20px; border: none; background: transparent; color: #64748b; font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: 0.3s; border-radius: 12px; }
+        .filter-tab-btn.active { background: #00d2ff; color: #020617; box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); }
+
+        .timeline-container { position: relative; }
+        .matches-timeline { display: flex; flex-direction: column; gap: 20px; }
+        
+        .timeline-date-label { display: flex; align-items: center; gap: 8px; color: #475569; font-weight: 900; font-size: 0.75rem; letter-spacing: 2px; margin: 20px 0 10px 10px; }
+        .match-card-wrapper { transition: transform 0.3s; }
+        .match-card-wrapper:hover { transform: scale(1.01); }
+
+        @media (max-width: 768px) {
+          .home-view-bet { padding: 80px 15px; }
+          .title-section h2 { font-size: 1.4rem; }
+          .filter-tabs { width: 100%; }
         }
-        .quote-banner { border-left: 4px solid #00d2ff; padding: 20px; background: rgba(0, 210, 255, 0.03); borderRadius: 0 12px 12px 0; margin-bottom: 30px; fontSize: 0.85rem; color: #94a3b8; font-style: italic; border: 1px solid rgba(255,255,255,0.05); border-left-width: 4px; }
-        
-        .prediction-counter { display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 210, 255, 0.05); padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; color: #00d2ff; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(0, 210, 255, 0.1); }
-        .filter-tabs { display: flex; background: rgba(255, 255, 255, 0.03); padding: 6px; border-radius: 16px; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.05); margin-top: 10px; }
-        .filter-tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border: none; background: transparent; color: #64748b; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: 0.3s; border-radius: 12px; }
-        .filter-tab-btn.active { background: #00d2ff; color: #020617; box-shadow: 0 4px 20px rgba(0, 210, 255, 0.3); }
-
-        /* Competition Styling */
-        .competition-section { margin-bottom: 40px; }
-        .competition-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-        .comp-title-box { display: flex; align-items: center; gap: 10px; background: rgba(255, 210, 0, 0.1); padding: 8px 18px; border-radius: 12px; border: 1px solid rgba(255, 210, 0, 0.2); }
-        .comp-name-text { font-weight: 900; font-size: 0.85rem; color: #ffd200; text-transform: uppercase; letter-spacing: 1px; }
-        .comp-line { flex: 1; height: 1px; background: linear-gradient(to right, rgba(255, 210, 0, 0.2), transparent); }
-
-        .date-sub-header { margin: 15px 0 10px 10px; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 10px; }
-        .date-text-mini { font-weight: 800; font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .empty-state { padding: 80px 20px; text-align: center; }
-        .loading-spinner { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-        .spinner-ring { width: 40px; height: 40px; border: 3px solid rgba(0, 210, 255, 0.1); border-top-color: #00d2ff; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
       ` }} />
     </div>
   );
