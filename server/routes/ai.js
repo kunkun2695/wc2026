@@ -1,41 +1,55 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('./users');
+const { authenticateUser } = require('../middleware/auth');
 
-// Đây là nơi bạn sẽ cấu hình Gemini hoặc OpenAI vào buổi tối
-// const { GoogleGenerativeAI } = require("@google/generative-ai");
-// const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const OpenAI = require('openai');
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
-router.post('/chat', authenticateToken, async (req, res) => {
+router.post('/chat', authenticateUser, async (req, res) => {
   const { message } = req.body;
   
   if (!message) return res.status(400).json({ error: 'Nội dung trống' });
 
+  // Nếu không có API Key, dùng bộ não giả lập như cũ
+  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-xxxx') {
+    return simulateAiResponse(message, res);
+  }
+
   try {
-    // Giả lập logic xử lý của "Bench Guru"
-    const msg = message.toLowerCase();
-    let reply = "";
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { 
+          role: "system", 
+          content: "Bạn là Bench Guru, một chuyên gia phân tích bóng đá chuyên nghiệp cho World Cup 2026. Bạn am hiểu sâu sắc về chiến thuật, lịch sử và các ngôi sao. Phong cách của bạn là nhiệt huyết, đôi khi có chút hài hước (văn hóa 'gáy' bóng đá), nhưng luôn dựa trên dữ liệu. Trả lời bằng tiếng Việt, ngắn gọn nhưng chất lượng." 
+        },
+        { role: "user", content: message }
+      ],
+      temperature: 0.7,
+      max_tokens: 500
+    });
 
-    if (msg.includes('brazil')) {
-      reply = "Theo dữ liệu mới nhất, **Brazil** đang có phong độ cực cao với chuỗi 4 trận thắng liên tiếp. Tại World Cup 2026, họ vẫn là ứng cử viên số 1. Nếu bạn định chốt kèo tối nay, hãy tin vào những vũ công Samba!";
-    } else if (msg.includes('vô địch') || msg.includes('ai thắng')) {
-      reply = "Dự đoán nhà vô địch sớm là một thử thách, nhưng AI của tôi đang chấm điểm cao cho **Pháp** và **Argentina**. Tuy nhiên, đừng quên các 'ngựa ô' từ Châu Phi nhé!";
-    } else if (msg.includes('vua phá lưới')) {
-      reply = "Cuộc đua **Vua phá lưới** đang gọi tên Haaland và Mbappe. Nhưng với phong độ hiện tại của các cầu thủ trẻ, tôi dự đoán sẽ có một cái tên bất ngờ từ đội tuyển Việt Nam (nếu chúng ta lọt vào vòng trong! 😉)";
-    } else if (msg.includes('lịch sử') || msg.includes('vô địch nhiều nhất')) {
-      reply = "**Brazil** vẫn là 'vị vua' với 5 lần nâng cúp. Nhưng Argentina đang bám đuổi rất gắt sau thành công ở Qatar 2022.";
-    } else {
-      reply = `Chào bạn! Câu hỏi về **"${message}"** rất thú vị. Với tư cách là Trợ lý AI, tôi đánh giá cao sự quan tâm của bạn. Buổi tối nay khi đại ca tích hợp API xịn vào, tôi sẽ trả lời chi tiết hơn gấp 10 lần nhé!`;
-    }
-
-    // Giả lập độ trễ suy nghĩ của AI
-    setTimeout(() => {
-      res.json({ reply });
-    }, 1000);
+    const reply = completion.choices[0].message.content;
+    res.json({ reply });
 
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi hệ thống AI' });
+    console.error('OpenAI Error:', err.message);
+    res.status(500).json({ error: 'Lỗi kết nối AI từ OpenAI' });
   }
 });
+
+// Hàm giả lập (Fallback)
+function simulateAiResponse(message, res) {
+  const msg = message.toLowerCase();
+  let reply = "";
+  if (msg.includes('brazil')) reply = "Brazil vẫn là ứng cử viên số 1 cho World Cup 2026!";
+  else if (msg.includes('pháp')) reply = "Pháp đang sở hữu chiều sâu đội hình đáng nể nhất thế giới.";
+  else reply = `Chào bạn! Bạn hỏi về "${message}" rất hay. Hãy điền API Key OpenAI vào .env để tôi trả lời thông minh hơn nhé!`;
+  
+  setTimeout(() => res.json({ reply }), 1000);
+}
+}
 
 module.exports = router;
