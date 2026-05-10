@@ -8,7 +8,7 @@ import NotificationsDrawer from './components/NotificationsDrawer';
 import HomeView from './views/HomeView';
 import AdminView from './views/AdminView';
 import AuthView from './views/AuthView';
-import TeamsAdminView from './views/TeamsAdminView';
+import TeamsView from './views/TeamsView';
 import StandingsView from './views/StandingsView';
 import LeaderboardView from './views/LeaderboardView';
 import SettingsView from './views/SettingsView';
@@ -385,7 +385,7 @@ const App = () => {
           )}
           {activeTab === 'admin_teams' && (
             <motion.div key="at" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <TeamsAdminView teams={teams} onRefresh={fetchData} />
+              <TeamsView teams={teams} onRefresh={fetchData} />
             </motion.div>
           )}
           {activeTab === 'match_detail' && (
