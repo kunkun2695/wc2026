@@ -91,7 +91,7 @@ const AdminView = () => {
       alert('Mã xác nhận không đúng!');
       return;
     }
-    
+
     if (!confirm('HÀNH ĐỘNG NÀY KHÔNG THỂ HOÀN TÁC! Bạn có chắc chắn muốn xóa toàn bộ dữ liệu bài đăng, tin nhắn và lịch sử không?')) {
       return;
     }
@@ -111,7 +111,7 @@ const AdminView = () => {
         setResetMsg('✅ ' + data.message);
         setShowResetConfirm(false);
         setResetConfirmCode('');
-        setTimeout(() => window.location.reload(), 2000); 
+        setTimeout(() => window.location.reload(), 2000);
       } else {
         setResetMsg('❌ ' + data.error);
       }
@@ -141,22 +141,22 @@ const AdminView = () => {
             <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white', margin: 0 }}>GỬI THÔNG BÁO TOÀN HỆ THỐNG</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <input 
-              type="text" 
-              placeholder="Tiêu đề thông báo..." 
+            <input
+              type="text"
+              placeholder="Tiêu đề thông báo..."
               value={notifTitle}
               onChange={e => setNotifTitle(e.target.value)}
               style={{ width: '100%', padding: '15px', borderRadius: '12px', background: '#000', border: '1px solid #222', color: 'white', fontWeight: 600 }}
             />
-            <textarea 
-              placeholder="Nội dung chi tiết gửi đến hàng nghìn người dùng..." 
+            <textarea
+              placeholder="Nội dung chi tiết gửi đến hàng nghìn người dùng..."
               value={notifBody}
               onChange={e => setNotifBody(e.target.value)}
               style={{ width: '100%', padding: '15px', borderRadius: '12px', background: '#000', border: '1px solid #222', color: 'white', minHeight: '100px', fontWeight: 500 }}
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '0.7rem', color: '#475569' }}>* Tin nhắn sẽ xuất hiện trong trung tâm thông báo.</span>
-              <button 
+              <button
                 onClick={handleBroadcast}
                 disabled={notifLoading || !notifTitle || !notifBody}
                 style={{ padding: '12px 30px', borderRadius: '12px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: '0.2s' }}
@@ -177,19 +177,19 @@ const AdminView = () => {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
-              Thay đổi API Key để Bench Guru có thể hoạt động liên tục. Hệ thống sẽ tự động nhận diện Key và chuyển đổi luồng xử lý.
+              Thay đổi API Key để Guru có thể hoạt động liên tục. Hệ thống sẽ tự động nhận diện Key và chuyển đổi luồng xử lý.
             </p>
             <div style={{ background: '#000', padding: '20px', borderRadius: '16px', border: '1px solid #222' }}>
               <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '10px', letterSpacing: '1px' }}>AI API KEY</label>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <input 
-                  type="password" 
-                  placeholder="Nhập API Key mới..." 
+                <input
+                  type="password"
+                  placeholder="Nhập API Key mới..."
                   value={aiKey}
                   onChange={e => setAiKey(e.target.value)}
                   style={{ flex: 1, minWidth: '200px', padding: '15px', borderRadius: '12px', background: '#0f172a', border: '1px solid #1e293b', color: '#00d2ff', fontFamily: 'monospace' }}
                 />
-                <button 
+                <button
                   onClick={handleSaveAiKey}
                   disabled={configLoading}
                   style={{ padding: '0 25px', borderRadius: '12px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', transition: '0.2s' }}
@@ -211,9 +211,9 @@ const AdminView = () => {
           <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '20px', lineHeight: 1.5 }}>
             Xóa toàn bộ bài viết, tin nhắn và lịch sử dự đoán để bắt đầu một mùa giải mới. Dữ liệu sau khi xóa sẽ <strong>KHÔNG THỂ KHÔI PHỤC</strong>.
           </p>
-          
+
           {!showResetConfirm ? (
-            <button 
+            <button
               onClick={() => setShowResetConfirm(true)}
               style={{ padding: '12px 25px', borderRadius: '12px', background: '#ef4444', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
@@ -226,21 +226,21 @@ const AdminView = () => {
                 Xác nhận mã bảo mật: <code style={{ background: '#000', padding: '4px 8px', color: '#00d2ff', borderRadius: '4px' }}>RESET_WC2026_FINAL</code>
               </p>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={resetConfirmCode}
                   onChange={e => setResetConfirmCode(e.target.value)}
                   placeholder="Nhập mã xác nhận..."
                   style={{ flex: 1, minWidth: '150px', padding: '12px', borderRadius: '10px', background: '#000', border: '1px solid #ef4444', color: 'white' }}
                 />
-                <button 
+                <button
                   onClick={handleResetSystem}
                   disabled={resetLoading}
                   style={{ padding: '0 25px', height: '45px', borderRadius: '10px', background: '#ef4444', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer' }}
                 >
                   {resetLoading ? 'ĐANG XÓA...' : 'XÁC NHẬN'}
                 </button>
-                <button 
+                <button
                   onClick={() => setShowResetConfirm(false)}
                   style={{ padding: '0 20px', height: '45px', borderRadius: '10px', background: '#334155', color: 'white', fontWeight: 700, border: 'none', cursor: 'pointer' }}
                 >

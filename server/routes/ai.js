@@ -9,16 +9,16 @@ router.post('/chat', authenticateUser, async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: 'Nội dung trống' });
 
-  let apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
+  let apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey === 'sk-xxxx' || apiKey === 'AIzaSyCdHbmJwC_LID-iKkDALNoufbodDzsG1XU') {
     // Nếu là key mẫu hoặc key bị lỗi typo chữ I hoa
     if (apiKey === 'AIzaSyCdHbmJwC_LID-iKkDALNoufbodDzsG1XU') {
-       return res.json({ reply: "⚠️ **Thông báo:** API Key hiện tại của bạn bị lỗi đánh máy (Typo). \n\n**Cách khắc phục:**\n1. Mở file `.env`.\n2. Tìm dòng `GEMINI_API_KEY`.\n3. Đổi đoạn `_LID` thành `_LlD` (chữ **l** thường thay vì **I** hoa).\n4. Khởi động lại Server." });
+      return res.json({ reply: "⚠️ **Thông báo:** API Key hiện tại của bạn bị lỗi đánh máy (Typo). \n\n**Cách khắc phục:**\n1. Mở file `.env`.\n2. Tìm dòng `GEMINI_API_KEY`.\n3. Đổi đoạn `_LID` thành `_LlD` (chữ **l** thường thay vì **I** hoa).\n4. Khởi động lại Server." });
     }
   }
 
   if (!apiKey) {
-    return res.json({ reply: "Chào bạn! Tôi là Bench Guru. Hiện tại tôi đang chạy ở chế độ offline (Thiếu API Key). Hãy nhắc Admin cấu hình Gemini API Key nhé!" });
+    return res.json({ reply: "Chào bạn! Tôi là Guru. Hiện tại tôi đang chạy ở chế độ offline (Thiếu API Key). Hãy nhắc Admin cấu hình Gemini API Key nhé!" });
   }
 
   // LẤY DỮ LIỆU NGƯỜI DÙNG ĐỂ LÀM BỐI CẢNH (CONTEXT)
@@ -26,7 +26,7 @@ router.post('/chat', authenticateUser, async (req, res) => {
   try {
     const userResult = await db.query('SELECT username, points FROM users WHERE id = $1', [req.user.id]);
     const userData = userResult.rows[0];
-    
+
     const predResult = await db.query(`
       SELECT 
         COUNT(*) as total,
@@ -46,7 +46,7 @@ router.post('/chat', authenticateUser, async (req, res) => {
   } catch (err) {
     console.error('Lỗi lấy bối cảnh người dùng:', err);
   }
-  
+
   console.log(`[AI DEBUG] Bắt đầu xử lý Chat. Key prefix: ${apiKey.substring(0, 8)}`);
   const fullMessage = message + userContext;
 
@@ -82,17 +82,17 @@ router.post('/chat', authenticateUser, async (req, res) => {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: modelName });
-      
+
       console.log(`[AI DEBUG] Đang gửi yêu cầu tới ${modelName}...`);
       const result = await model.generateContent(fullMessage);
       const response = await result.response;
       const text = response.text();
-      
+
       console.log(`[AI DEBUG] ${modelName} phản hồi THÀNH CÔNG.`);
-      return res.json({ 
+      return res.json({
         reply: text,
-        debug_info: { 
-          model: modelName, 
+        debug_info: {
+          model: modelName,
           method: 'Official Google SDK',
           key_masked: maskKey(apiKey)
         }
@@ -110,7 +110,7 @@ router.post('/chat', authenticateUser, async (req, res) => {
 
   console.log('[AI DEBUG] TẤT CẢ model đều thất bại.');
   // Nếu tất cả các lần thử đều thất bại
-  res.status(500).json({ 
+  res.status(500).json({
     error: "AI tạm thời không khả dụng",
     details: lastError?.message,
     debug_params: {
@@ -161,11 +161,11 @@ router.post('/stream', authenticateUser, async (req, res) => {
     console.log(`[AI STREAM DEBUG] Đang thử Model: ${modelName}...`);
     // Gửi thông tin debug về client để người dùng thấy tiến trình
     res.write(`data: ${JSON.stringify({ text: `\n\n*(Hệ thống: Đang thử kết nối tới ${modelName}...)*\n\n` })}\n\n`);
-    
+
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: modelName });
-      
+
       console.log(`[AI STREAM DEBUG] Đang yêu cầu Stream từ ${modelName}...`);
       const result = await model.generateContentStream(message + userContext);
 
@@ -175,12 +175,12 @@ router.post('/stream', authenticateUser, async (req, res) => {
         res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
         chunkCount++;
       }
-      
+
       console.log(`[AI STREAM DEBUG] Stream THÀNH CÔNG với ${modelName}. Tổng cộng ${chunkCount} chunks.`);
       success = true;
       res.write('data: [DONE]\n\n');
       res.end();
-      break; 
+      break;
     } catch (error) {
       console.error(`[AI STREAM DEBUG] Model ${modelName} LỖI:`, error.message);
       // Gửi lỗi của model này về client

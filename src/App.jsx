@@ -296,7 +296,7 @@ const App = () => {
               <div className="brand-logo-glow" style={{ width: '32px', height: '32px' }}>
                 <Trophy size={18} className="brand-icon" />
               </div>
-              <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>Bench-Bets v2</span>
+              <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>Thôi!</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
@@ -320,7 +320,7 @@ const App = () => {
           <div className="brand-logo-glow">
             <Trophy className="brand-icon" size={24} />
           </div>
-          <h1 className="brand-name">Bench-<span>Bets</span></h1>
+          <h1 className="brand-name">Thôi!-<span>Bets</span></h1>
         </div>
 
         <nav className="nav-menu">

@@ -109,7 +109,7 @@ Tài liệu này lưu lại các tính năng đã hoàn thiện và cấu trúc 
     - **Đồng bộ danh tính (Identity Sync)**: Khắc phục lỗi tin nhắn "không biết của ai" bằng cách sử dụng so sánh tương đối (`==`) cho ID người dùng, giải quyết triệt để sự sai khác kiểu dữ liệu (String vs Number) từ DB.
     - **Seamless UI**: Sửa lỗi "rò rỉ ánh sáng" (Light leakage) và khoảng hở giữa Sidebar và nội dung Chat trên Desktop.
 
-### 10. Tích Hợp Trợ Lý AI "Bench Guru" (10/05/2026 - Chiều Muộn)
+### 10. Tích Hợp Trợ Lý AI "Guru" (10/05/2026 - Chiều Muộn)
 - **AI View (Frontend)**: Phát triển trang Chat chuyên dụng cho AI với hiệu ứng Glassmorphism, Typing indicator (đang gõ) và các nút gợi ý câu hỏi nhanh (Quick suggestions).
 - **AI Engine (Backend)**: Thiết lập Route `/api/ai/chat` hỗ trợ xử lý ngôn ngữ tự nhiên.
 - **Phân tích thông minh**: AI đóng vai chuyên gia World Cup, có khả năng phân tích phong độ Brazil, dự đoán nhà vô địch và tra cứu lịch sử bóng đá.
@@ -123,7 +123,7 @@ Tài liệu này lưu lại các tính năng đã hoàn thiện và cấu trúc 
 ### 12. Chuyển Đổi Sang Google Gemini AI & Kiến Trúc "Nuclear"
 - **Direct REST API Integration**: Chuyển đổi từ SDK sang gọi trực tiếp API Google qua Axios để khắc phục lỗi 404 Model Not Found. Đây là giải pháp ổn định nhất, không phụ thuộc vào thư viện bên ngoài.
 - **Multi-Model Fallback**: Hệ thống thông minh tự động thử lần lượt các mô hình (`gemini-1.5-flash`, `gemini-pro`) để đảm bảo AI luôn phản hồi.
-- **Advanced Diagnostics**: Tích hợp hệ thống "Báo cáo chẩn đoán" chi tiết ngay trên giao diện Chat. Bench Guru sẽ liệt kê chi tiết các lần thử và mã lỗi từ Google để Admin dễ dàng "bắt bệnh".
+- **Advanced Diagnostics**: Tích hợp hệ thống "Báo cáo chẩn đoán" chi tiết ngay trên giao diện Chat. Guru sẽ liệt kê chi tiết các lần thử và mã lỗi từ Google để Admin dễ dàng "bắt bệnh".
 
 ### 13. Đại Tu Giao Diện Di Động & Sửa Lỗi Critical (10/05/2026 - Đêm)
 - **Mobile Navigation 2.0**:

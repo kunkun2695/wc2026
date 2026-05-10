@@ -5,7 +5,7 @@ import API_URL from '../config';
 
 const AiAssistantView = () => {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Xin chào! Tôi là **Bench Guru**. Bạn muốn hỏi gì về World Cup 2026 hôm nay?' }
+    { role: 'assistant', content: 'Xin chào! Tôi là **King Guru**. Bạn muốn hỏi gì về World Cup 2026 hôm nay?' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -20,10 +20,10 @@ const AiAssistantView = () => {
 
     const userMsg = input.trim();
     setInput('');
-    
+
     // 1. Thêm tin nhắn user
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
-    
+
     // 2. Bật trạng thái đang nhập (hiện 3 chấm)
     setIsTyping(true);
 
@@ -92,8 +92,8 @@ const AiAssistantView = () => {
                 });
               }
             }
-          } catch (e) { 
-            console.warn('[AI FRONTEND] Lỗi phân tích cú pháp chunk:', e.message); 
+          } catch (e) {
+            console.warn('[AI FRONTEND] Lỗi phân tích cú pháp chunk:', e.message);
           }
         }
       }
@@ -119,13 +119,13 @@ const AiAssistantView = () => {
             <Zap size={14} fill="currentColor" />
             <span>REAL-TIME ENGINE</span>
           </div>
-          <h2 className="font-outfit">Bench Guru</h2>
+          <h2 className="font-outfit"> Guru</h2>
         </header>
 
         <div className="ai-messages-wrapper">
           <div className="messages-list">
             {messages.map((m, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -140,7 +140,7 @@ const AiAssistantView = () => {
                 </div>
               </motion.div>
             ))}
-            
+
             {/* CHỈ HIỆN 3 CHẤM KHI CHƯA CÓ CHỮ NÀO TRẢ VỀ */}
             {isTyping && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="msg-row ai">
@@ -150,7 +150,7 @@ const AiAssistantView = () => {
                 </div>
               </motion.div>
             )}
-            
+
             <div ref={scrollRef} />
           </div>
         </div>
@@ -162,9 +162,9 @@ const AiAssistantView = () => {
             <button onClick={() => setInput('Dự đoán vô địch')}>⭐ Dự đoán</button>
           </div>
           <div className="ai-input-bar">
-            <input 
-              type="text" 
-              placeholder="Hỏi Bench Guru..." 
+            <input
+              type="text"
+              placeholder="Hỏi Guru..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
@@ -176,7 +176,8 @@ const AiAssistantView = () => {
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .ai-view-container { height: 100%; width: 100%; padding: 30px 40px; background: transparent; display: flex; justify-content: center; overflow: hidden; }
         .ai-chat-card { width: 100%; max-width: 900px; height: 100%; display: flex; flex-direction: column; border-radius: 28px; overflow: hidden; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 30px 60px rgba(0,0,0,0.6); min-height: 0; }
         .ai-header { padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); }
