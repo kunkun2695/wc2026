@@ -82,11 +82,17 @@ Tài liệu này lưu lại các tính năng đã hoàn thiện và cấu trúc 
 - **PWA Ready**: Hỗ trợ cài đặt làm ứng dụng trên iOS/Android với Service Worker và Manifest.
 
 ---
-## 🚀 Định Hướng Nâng Cấp (Roadmap)
-- [x] **Thông báo (Push Notifications)**: Đã hoàn thành.
-- [x] **Bình luận (Comments)**: Đã hoàn thành.
-- [ ] **Giải thưởng (Rewards)**: Hệ thống danh hiệu cho những "Nhà tiên tri" xuất sắc nhất.
-- [x] **Bảo mật**: Chuyển API Key và Secret Key vào file `.env` (Đã hoàn thành).
+### 8. Tối Ưu Hóa Trình Duyệt & Sửa Lỗi Hệ Thống (10/05/2026)
+- **Tái cấu trúc Comment Section**: Di chuyển phần bình luận lên cấp Global (`App.jsx`) để giải quyết lỗi bị che khuất (`stacking context`) do các thẻ `motion.div` gây ra trên trình duyệt máy tính.
+- **Tương thích Safari & iOS**:
+    - Sửa lỗi cú pháp CSS `z-index` sang `zIndex` trong React styles.
+    - Cố định lỗi layout bị co giãn hoặc không nhấn được trên Safari bằng cách thêm `cursor: pointer` và `flex-shrink: 0`.
+    - Hỗ trợ phím Enter để gửi bình luận nhanh trên trình duyệt di động.
+- **Nâng cấp Hệ thống Thông báo**:
+    - **Cấp quyền chủ động**: Chuyển yêu cầu cấp quyền thông báo sang sự kiện nhấn nút (Bell/Toggle) để vượt qua rào cản bảo mật của Safari/iOS.
+    - **PWA Enhancement**: Thêm hướng dẫn và nút "Cho phép ngay" bên trong Drawer để hỗ trợ người dùng iPhone bật thông báo dễ dàng hơn.
+    - **Sửa lỗi Logic Push**: Khắc phục lỗi sai khóa Token (`wc2026_token`) khiến việc đăng ký thông báo với server bị thất bại.
+- **Debug & Feedback**: Thêm các bảng thông báo lỗi (Alert) chi tiết để người dùng biết nguyên nhân khi không bật được thông báo (do thiếu HTTPS hoặc bị chặn quyền).
 
 ---
-*Cập nhật lần cuối: 09/05/2026 - 17:00*
+*Cập nhật lần cuối: 10/05/2026 - 11:00*
