@@ -201,15 +201,30 @@ const ChatView = ({ user }) => {
       <div className="chat-main">
         {selectedChat ? (
           <>
-            <div className="chat-header">
-              <button className="back-btn mobile-only" onClick={() => setSelectedChat(null)}><ChevronLeft size={24} /></button>
+            <div className="chat-header modern-glass">
+              <button className="modern-back-btn" onClick={() => setSelectedChat(null)}>
+                <ChevronLeft size={20} />
+              </button>
               <div className="header-info">
-                <div className="flex items-center gap-3">
-                  {selectedChat.type === 'dm' ? <UserAvatar src={selectedChat.avatar} size={36} /> : <div className="header-icon-circle"><Globe size={18} /></div>}
-                  <div><h3 className="m-0 text-sm md:text-base">{selectedChat.name}</h3><p className="status-online m-0 text-xs">{selectedChat.type === 'public' ? 'Phòng chat chung' : 'Đang trực tuyến'}</p></div>
+                <div className="flex flex-col items-center gap-1">
+                  {selectedChat.type === 'dm' ? (
+                    <UserAvatar src={selectedChat.avatar} size={40} className="header-avatar-glow" />
+                  ) : (
+                    <div className="header-icon-modern"><Globe size={20} /></div>
+                  )}
+                  <div className="text-center">
+                    <h3 className="m-0 text-sm font-black tracking-tight text-white uppercase">{selectedChat.name}</h3>
+                    <div className="flex items-center justify-center gap-1">
+                      <span className="status-dot animate-pulse"></span>
+                      <p className="status-text-modern m-0">{selectedChat.type === 'public' ? 'Phòng cộng đồng' : 'Đang hoạt động'}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="header-actions"><button className="icon-btn"><Search size={18} /></button><button className="icon-btn"><MoreVertical size={18} /></button></div>
+              <div className="header-actions">
+                <button className="modern-action-btn"><Search size={18} /></button>
+                <button className="modern-action-btn"><MoreVertical size={18} /></button>
+              </div>
             </div>
             <div className="messages-container" ref={scrollContainerRef} onScroll={handleScroll}>
               {loadingMore && <div className="load-more-indicator"><div className="spinner-mini" /> Đang tải tin cũ...</div>}
@@ -268,11 +283,59 @@ const ChatView = ({ user }) => {
         .group-item .group-avatar-stack { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #00d2ff, #3a7bd5); display: flex; align-items: center; justify-content: center; color: white; }
         .user-name { font-weight: 800; color: white; font-size: 0.95rem; }
         .user-role { font-size: 0.7rem; color: #475569; text-transform: uppercase; font-weight: 700; }
-        .chat-main { flex: 1; display: flex; flex-direction: column; background: #0a0e17; min-width: 0; }
-        .chat-header { padding: 15px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; background: rgba(10, 14, 23, 0.8); backdrop-filter: blur(10px); }
-        .header-icon-circle { width: 36px; height: 36px; border-radius: 50%; background: rgba(0, 210, 255, 0.1); color: #00d2ff; display: flex; align-items: center; justify-content: center; }
-        .status-online { color: #00ff64 !important; }
-        .messages-container { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 20px; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: #0a0e17; min-width: 0; position: relative; }
+        
+        .chat-header.modern-glass { 
+          padding: 12px 20px; 
+          border-bottom: 1px solid rgba(255,255,255,0.06); 
+          display: flex; 
+          align-items: center; 
+          justify-content: space-between; 
+          background: rgba(15, 23, 42, 0.8); 
+          backdrop-filter: blur(20px) saturate(180%); 
+          z-index: 50;
+          position: sticky;
+          top: 0;
+        }
+
+        .modern-back-btn {
+          width: 38px;
+          height: 38px;
+          border-radius: 12px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .modern-back-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.1); }
+
+        .header-avatar-glow { border: 2px solid #00d2ff; box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
+        .header-icon-modern { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0, 210, 255, 0.2); }
+
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #00ff64; }
+        .status-text-modern { font-size: 0.65rem; color: #00ff64; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+
+        .header-actions { display: flex; gap: 8px; }
+        .modern-action-btn {
+          width: 38px;
+          height: 38px;
+          border-radius: 12px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: #94a3b8;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .modern-action-btn:hover { color: white; background: rgba(255,255,255,0.07); }
+        
+        .messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
         .load-more-indicator { text-align: center; font-size: 0.75rem; color: #475569; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .spinner-mini { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.1); border-top-color: #00d2ff; border-radius: 50%; animation: spin 0.6s linear infinite; }
         .message-wrapper { display: flex; gap: 12px; max-width: 85%; }
