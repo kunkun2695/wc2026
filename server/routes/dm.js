@@ -34,13 +34,17 @@ router.get('/users', authenticateUser, async (req, res) => {
 router.get('/history/:otherId', authenticateUser, async (req, res) => {
   const myId = req.user.id;
   const otherId = req.params.otherId;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = parseInt(req.query.offset) || 0;
+
   try {
     const result = await db.query(`
       SELECT * FROM direct_messages 
       WHERE (sender_id = $1 AND receiver_id = $2) 
          OR (sender_id = $2 AND receiver_id = $1)
-      ORDER BY created_at ASC
-    `, [myId, otherId]);
+      ORDER BY created_at DESC
+      LIMIT $3 OFFSET $4
+    `, [myId, otherId, limit, offset]);
     
     // Đánh dấu đã đọc cho các tin nhắn gửi đến mình
     await db.query(

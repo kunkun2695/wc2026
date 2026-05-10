@@ -5,6 +5,8 @@ const { authenticateUser } = require('../middleware/auth');
 
 // Lấy danh sách tin nhắn chat
 router.get('/', async (req, res) => {
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = parseInt(req.query.offset) || 0;
   try {
     const result = await db.query(`
       SELECT 
@@ -14,9 +16,9 @@ router.get('/', async (req, res) => {
         u.avatar 
       FROM chat_messages m
       JOIN users u ON m.user_id = u.id
-      ORDER BY m.created_at ASC
-      LIMIT 100
-    `);
+      ORDER BY m.created_at DESC
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: 'Lỗi lấy tin nhắn: ' + error.message });
