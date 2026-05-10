@@ -83,6 +83,49 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifMsg, setNotifMsg] = useState('');
 
+  // AI Config States
+  const [aiKey, setAiKey] = useState('');
+  const [configLoading, setConfigLoading] = useState(false);
+  const [configMsg, setConfigMsg] = useState('');
+
+  // Fetch AI Config on Load
+  React.useEffect(() => {
+    const fetchConfig = async () => {
+      const finalApiUrl = API_URL || window.location.origin;
+      try {
+        const token = localStorage.getItem('wc2026_token');
+        const res = await fetch(`${finalApiUrl}/api/config/ai`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) setAiKey(data.apiKey);
+      } catch (err) { console.error('Lỗi lấy cấu hình AI'); }
+    };
+    fetchConfig();
+  }, []);
+
+  const handleSaveAiKey = async () => {
+    if (!aiKey) return;
+    setConfigLoading(true);
+    setConfigMsg('');
+    const finalApiUrl = API_URL || window.location.origin;
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${finalApiUrl}/api/config/ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ apiKey: aiKey })
+      });
+      const data = await res.json();
+      if (res.ok) setConfigMsg('✅ ' + data.message);
+      else setConfigMsg('❌ ' + data.error);
+    } catch (err) {
+      setConfigMsg('❌ Lỗi kết nối');
+    } finally {
+      setConfigLoading(false);
+    }
+  };
+
   const handleBroadcast = async () => {
     if (!notifTitle || !notifBody) return;
     setNotifLoading(true);
@@ -194,6 +237,36 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
               </button>
             </div>
             {notifMsg && <div style={{ fontSize: '0.8rem', fontWeight: 700, color: notifMsg.includes('✅') ? '#00ff64' : '#ff4d4d' }}>{notifMsg}</div>}
+          </div>
+        </section>
+
+        <section style={{ background: '#1a1f2e', padding: '30px', borderRadius: '24px', marginBottom: '40px', border: '1px solid rgba(0,210,255,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <Shield size={20} color="#00d2ff" />
+            <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'white' }}>CÀI ĐẶT HỆ THỐNG (AI)</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div>
+              <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>OPENAI API KEY</label>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input 
+                  type="password" 
+                  placeholder="sk-xxxx..." 
+                  value={aiKey}
+                  onChange={e => setAiKey(e.target.value)}
+                  style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#000', border: '1px solid #222', color: '#00d2ff', fontFamily: 'monospace' }}
+                />
+                <button 
+                  onClick={handleSaveAiKey}
+                  disabled={configLoading}
+                  style={{ padding: '0 25px', borderRadius: '12px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer' }}
+                >
+                  {configLoading ? <RefreshCw size={18} className="animate-spin" /> : 'LƯU KEY'}
+                </button>
+              </div>
+              <p style={{ fontSize: '0.65rem', color: '#555', marginTop: '8px' }}>* Key này dùng cho chuyên gia phân tích Bench Guru. Sau khi lưu sẽ có tác dụng ngay.</p>
+            </div>
+            {configMsg && <div style={{ fontSize: '0.8rem', fontWeight: 700, color: configMsg.includes('✅') ? '#00ff64' : '#ff4d4d' }}>{configMsg}</div>}
           </div>
         </section>
 
