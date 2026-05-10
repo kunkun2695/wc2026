@@ -123,7 +123,7 @@ const AiAssistantView = () => {
           padding: 30px 40px; 
           background: #0a0e17; 
           display: flex;
-          justify-content: flex-start;
+          justify-content: center; /* Căn giữa card */
         }
         .ai-chat-card {
           width: 100%;
@@ -175,8 +175,12 @@ const AiAssistantView = () => {
         .ai-send-btn:disabled { opacity: 0.5; }
 
         @media (max-width: 768px) {
-          .ai-view-container { padding: 80px 15px 120px; }
-          .ai-chat-card { border-radius: 0; border: none; }
+          .ai-view-container { padding: 70px 0 90px; } /* Giảm padding ngang trên mobile */
+          .ai-chat-card { border-radius: 0; border: none; height: 100%; }
+          .msg-row { max-width: 95%; } /* Cho phép tin nhắn rộng hơn trên mobile */
+          .ai-header { padding: 15px 20px; }
+          .ai-messages-wrapper { padding: 15px; }
+          .ai-input-area { padding: 15px; }
         }
       ` }} />
     </div>
