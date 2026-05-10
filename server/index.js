@@ -58,6 +58,10 @@ async function patchDatabase() {
     // Bổ sung cột image_url cho Chat và DM
     await db.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS image_url TEXT`);
     await db.query(`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS image_url TEXT`);
+    
+    // Vá bảng users để hỗ trợ tích lũy điểm
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0`);
+    await db.query(`ALTER TABLE predictions ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0`);
 
     console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội và Chat Image thành công.');
   } catch (err) {
