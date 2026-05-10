@@ -19,6 +19,7 @@ import ChatView from './views/ChatView';
 import SocialView from './views/SocialView';
 import AiAssistantView from './views/AiAssistantView';
 import CommentSection from './components/CommentSection';
+import UserAvatar from './components/UserAvatar';
 import { mockAuth } from './data/mockAuth';
 import API_URL from './config';
 import { subscribeToPush } from './utils/pushNotifications';
@@ -389,10 +390,10 @@ const App = () => {
 
         <div className="sidebar-footer">
           <div className="user-profile-mini">
-            <img 
-              src={user?.avatar || 'https://via.placeholder.com/40'} 
-              alt="avatar" 
+            <UserAvatar 
+              src={user?.avatar} 
               className="user-avatar-mini" 
+              size={36}
             />
             <div className="user-details-mini">
               <div className="user-name-mini">{user?.name || user?.username}</div>

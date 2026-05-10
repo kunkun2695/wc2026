@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Camera, Lock, CheckCircle } from 'lucide-react';
+import UserAvatar from '../components/UserAvatar';
 import { mockAuth } from '../data/mockAuth';
 import API_URL from '../config';
 import { subscribeToPush } from '../utils/pushNotifications';
@@ -28,14 +29,6 @@ const SettingsView = ({ user, onUpdateUser }) => {
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  const renderAvatar = (src) => {
-    const isImage = src?.startsWith('data:image') || src?.startsWith('http');
-    if (isImage) {
-      return <img src={src} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />;
-    }
-    return src;
   };
 
   const handleSave = async (e) => {
@@ -81,7 +74,9 @@ const SettingsView = ({ user, onUpdateUser }) => {
           {/* Avatar Section */}
           <div className="avatar-section">
             <div className="avatar-wrapper">
-              <div className="current-avatar">{renderAvatar(avatar)}</div>
+              <div className="current-avatar">
+                <UserAvatar src={avatar} size={90} />
+              </div>
               <label className="upload-badge">
                 <Camera size={16} />
                 <input type="file" hidden accept="image/*" onChange={handleFileChange} />

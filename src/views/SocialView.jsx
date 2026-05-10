@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Heart, MessageCircle, Share2, Image as ImageIcon, Smile, MoreHorizontal, X } from 'lucide-react';
+import UserAvatar from '../components/UserAvatar';
 
 const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
@@ -24,7 +25,7 @@ const PostCard = ({ post, onLike, onOpenComments }) => {
       className="social-post-card"
     >
       <div className="post-header">
-        <img src={post.avatar || 'https://via.placeholder.com/40'} alt="avatar" className="post-avatar" />
+        <UserAvatar src={post.avatar} size={40} className="post-avatar" />
         <div className="post-meta">
           <div className="post-author">{post.name || post.username}</div>
           <div className="post-time">{new Date(post.created_at).toLocaleString('vi-VN')}</div>
@@ -173,7 +174,7 @@ const SocialView = () => {
         {/* Post Composer */}
         <div className="post-composer-card">
           <div className="composer-header">
-            <img src="https://via.placeholder.com/40" alt="me" className="composer-avatar" />
+            <UserAvatar src={localStorage.getItem('wc2026_user') ? JSON.parse(localStorage.getItem('wc2026_user')).avatar : '👤'} size={40} className="composer-avatar" />
             <textarea 
               placeholder="Bạn đang nghĩ gì về các trận đấu hôm nay?" 
               value={content}
@@ -303,7 +304,7 @@ const SocialView = () => {
                       className="modern-comment-item"
                     >
                       <div className="avatar-wrapper">
-                        <img src={c.avatar || 'https://via.placeholder.com/32'} alt="av" />
+                        <UserAvatar src={c.avatar} size={40} />
                         <div className="online-indicator" />
                       </div>
                       <div className="modern-comment-content">

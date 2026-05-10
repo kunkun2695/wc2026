@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, Check, Trash2, User } from 'lucide-react';
+import UserAvatar from './UserAvatar';
 
 const NotificationsDrawer = ({ notifications, onClose, onMarkAsRead, onDeleteAll, onNotificationClick, onRequestPermission }) => {
   const showEnableButton = 'Notification' in window && Notification.permission !== 'granted';
@@ -53,11 +54,7 @@ const NotificationsDrawer = ({ notifications, onClose, onMarkAsRead, onDeleteAll
               style={{ cursor: 'pointer' }}
             >
               <div className="notif-avatar">
-                {notif.sender_avatar ? (
-                  <img src={notif.sender_avatar} alt="avatar" />
-                ) : (
-                  <div className="avatar-placeholder"><User size={12} /></div>
-                )}
+                <UserAvatar src={notif.sender_avatar} size={36} />
               </div>
               <div className="notif-content">
                 <p className="notif-text">{notif.content}</p>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, MessageSquare, Trash2, X, User } from 'lucide-react';
+import UserAvatar from './UserAvatar';
 import { mockAuth } from '../data/mockAuth';
 import API_URL from '../config';
 
@@ -126,11 +127,7 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
           comments.map((comment) => (
             <div key={comment.id} className={`comment-item ${comment.user_id === currentUser?.id ? 'own' : ''}`}>
               <div className="comment-avatar">
-                {comment.avatar ? (
-                  <img src={comment.avatar} alt="avatar" />
-                ) : (
-                  <div className="avatar-placeholder"><User size={12} /></div>
-                )}
+                <UserAvatar src={comment.avatar} size={32} />
               </div>
               <div className="comment-content-wrapper">
                 <div className="comment-user-info">

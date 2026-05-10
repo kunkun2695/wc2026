@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Medal, Star } from 'lucide-react';
+import UserAvatar from '../components/UserAvatar';
 
 const LeaderboardView = ({ leaderboard }) => {
   return (
@@ -28,14 +29,7 @@ const LeaderboardView = ({ leaderboard }) => {
             </div>
 
             <div className="user-avatar-lb">
-              {(() => {
-                const src = user.avatar;
-                const isImage = src?.startsWith('data:image') || src?.startsWith('http');
-                if (isImage) {
-                  return <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
-                }
-                return <span style={{ fontSize: '1.2rem' }}>{src || '👤'}</span>;
-              })()}
+              <UserAvatar src={user.avatar} size={44} />
             </div>
 
             <div className="user-info-lb">

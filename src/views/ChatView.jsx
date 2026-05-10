@@ -4,6 +4,7 @@ import {
   Send, Users, MessageSquare, Image as ImageIcon, 
   Smile, X, ChevronLeft, MoreVertical, Search
 } from 'lucide-react';
+import UserAvatar from '../components/UserAvatar';
 
 const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
 const EMOJIS = ['⚽', '🏆', '🔥', '👏', '🙌', '😮', '😢', '😍', '🇻🇳', '🤣', '💪', '👇'];
@@ -133,7 +134,7 @@ const ChatView = ({ user }) => {
                 className={`user-item ${selectedUser?.id === u.id ? 'active' : ''}`}
                 onClick={() => setSelectedUser(u)}
               >
-                <img src={u.avatar || 'https://via.placeholder.com/40'} alt="av" />
+                <UserAvatar src={u.avatar} size={44} className="user-item-avatar" />
                 <div className="user-info">
                   <div className="user-name">{u.name || u.username}</div>
                   <div className="user-role">{u.role}</div>
@@ -162,7 +163,7 @@ const ChatView = ({ user }) => {
             return (
               <div key={m.id || i} className={`message-wrapper ${isMe ? 'me' : 'others'}`}>
                 {!isMe && activeMode === 'public' && (
-                  <img src={m.avatar || 'https://via.placeholder.com/32'} alt="av" className="msg-avatar" />
+                  <UserAvatar src={m.avatar} size={32} className="msg-avatar" />
                 )}
                 <div className="message-content">
                   {!isMe && activeMode === 'public' && <div className="msg-author">{m.name || m.username}</div>}
