@@ -43,13 +43,14 @@ const AnnouncementComposer = () => {
   };
 
   return (
-    <div className="glass-card !p-6">
+    <div className="glass-card !p-6" style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label className="text-[10px] font-black text-white/40 uppercase">Tiêu đề thông báo</label>
           <input 
             type="text" 
             className="input-field" 
+            style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: 'white', outline: 'none' }}
             placeholder="Ví dụ: CẬP NHẬT TỈ SỐ MỚI" 
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -58,7 +59,8 @@ const AnnouncementComposer = () => {
         <div className="flex flex-col gap-2">
           <label className="text-[10px] font-black text-white/40 uppercase">Nội dung chi tiết</label>
           <textarea 
-            className="input-field min-h-[100px] py-3" 
+            className="input-field min-h-[100px]" 
+            style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: 'white', outline: 'none', resize: 'vertical' }}
             placeholder="Nhập nội dung bạn muốn gửi đến tất cả thành viên..."
             value={body}
             onChange={(e) => setBody(e.target.value)}
@@ -71,7 +73,8 @@ const AnnouncementComposer = () => {
           <button 
             onClick={handleBroadcast}
             disabled={loading || !title || !body}
-            className="flex items-center gap-2 bg-accent-blue text-black px-6 py-3 rounded-xl font-black uppercase text-xs transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
+            className="flex items-center gap-2 bg-accent-blue text-black px-6 py-3 rounded-xl font-black uppercase text-xs transition-all hover:scale-105 active:scale-95 disabled:opacity-30"
+            style={{ background: '#00d2ff', border: 'none', cursor: 'pointer' }}
           >
             {loading ? <RefreshCw size={14} className="animate-spin" /> : <Megaphone size={14} />}
             {loading ? 'Đang gửi...' : 'Gửi ngay'}
@@ -82,6 +85,7 @@ const AnnouncementComposer = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="mt-2 text-xs font-bold"
+            style={{ color: message.includes('✅') ? '#00ff00' : '#ff4d4d' }}
           >
             {message}
           </motion.div>
@@ -210,11 +214,11 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
           <p className="text-2xl font-black text-white/40">{stats.upcoming}</p>
         </div>
       </div>
-      
+
       {/* Broadcast Notification Section */}
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-4">
-          <Shield className="text-accent-blue" size={20} />
+          <Megaphone className="text-accent-blue" size={20} />
           <span className="text-[10px] font-black text-accent-blue uppercase tracking-[0.3em]">Gửi thông báo toàn quốc</span>
         </div>
         <AnnouncementComposer />
