@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Trophy, Search, Edit3, Settings, 
-  Play, Star, LogOut, Shield, History, Bell
+  Play, Star, LogOut, Shield, History, Bell, MessageSquare
 } from 'lucide-react';
 import NotificationsDrawer from './components/NotificationsDrawer';
 import HomeView from './views/HomeView';
@@ -14,6 +14,7 @@ import LeaderboardView from './views/LeaderboardView';
 import SettingsView from './views/SettingsView';
 import HistoryView from './views/HistoryView';
 import MatchDetailView from './views/MatchDetailView';
+import ChatView from './views/ChatView';
 import CommentSection from './components/CommentSection';
 import { mockAuth } from './data/mockAuth';
 import API_URL from './config';
@@ -292,6 +293,9 @@ const App = () => {
           <button onClick={() => setActiveTab('history')} className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}>
             <History size={18} /> Lịch sử dự đoán
           </button>
+          <button onClick={() => setActiveTab('chat')} className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}>
+            <MessageSquare size={18} /> Phòng Chat
+          </button>
           <button onClick={() => setActiveTab('settings')} className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}>
             <Settings size={18} /> Cài đặt hồ sơ
           </button>
@@ -349,6 +353,11 @@ const App = () => {
               <SettingsView user={user} onUpdateUser={handleUpdateUser} />
             </motion.div>
           )}
+          {activeTab === 'chat' && (
+            <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <ChatView />
+            </motion.div>
+          )}
           {activeTab === 'admin_matches' && (
             <motion.div key="am" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <AdminView 
@@ -392,6 +401,10 @@ const App = () => {
           <button onClick={() => setActiveTab('history')} className={`nav-item-bet ${activeTab === 'history' ? 'active' : ''}`}>
             <History size={20} />
             <span>Lịch sử</span>
+          </button>
+          <button onClick={() => setActiveTab('chat')} className={`nav-item-bet ${activeTab === 'chat' ? 'active' : ''}`}>
+            <MessageSquare size={20} />
+            <span>Chat</span>
           </button>
           <button onClick={() => setActiveTab('settings')} className={`nav-item-bet ${activeTab === 'settings' ? 'active' : ''}`}>
             <Settings size={20} />
