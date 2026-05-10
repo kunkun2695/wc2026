@@ -14,7 +14,7 @@ const formatTime = (dateStr) => {
 };
 
 const ChatView = () => {
-  const [activeTab, setActiveTab] = useState('global'); // 'global' or 'private'
+  const [activeTab, setActiveTab] = useState('global');
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -138,7 +138,7 @@ const ChatView = () => {
           <div className="user-list">
             <h3 className="section-title">Danh sách thành viên</h3>
             {users.length === 0 ? (
-              <p style={{ textAlign: 'center', color: '#888', marginTop: '20px' }}>Chưa có ai trực tuyến.</p>
+              <p className="empty-text">Chưa có ai trực tuyến.</p>
             ) : (
               users.map(u => (
                 <div key={u.id} className="user-item" onClick={() => { setSelectedUser(u); setLoading(true); }}>
@@ -183,13 +183,12 @@ const ChatView = () => {
                 <div className="empty-chat"><Smile size={40} /><p>Bắt đầu gáy thôi!</p></div>
               ) : (
                 messages.map((msg, idx) => {
-                  // Sửa lỗi logic phân biệt người gửi:
                   const isMe = (msg.user_id === currentUser.id) || (msg.sender_id === currentUser.id);
                   return (
                     <motion.div 
                       key={msg.id || idx}
-                      initial={{ opacity: 0, x: isMe ? 20 : -20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       className={`message-row ${isMe ? 'row-me' : 'row-other'}`}
                     >
                       {!isMe && activeTab === 'global' && (
@@ -197,7 +196,7 @@ const ChatView = () => {
                           {msg.avatar ? <img src={msg.avatar} alt="" /> : <User size={14} color="#888" />}
                         </div>
                       )}
-                      <div className="message-content">
+                      <div className="message-content-wrapper">
                         {!isMe && activeTab === 'global' && (
                           <span className="sender-name">{msg.name || msg.username}</span>
                         )}
@@ -214,15 +213,17 @@ const ChatView = () => {
             </div>
 
             <form className="chat-form" onSubmit={handleSendMessage}>
-              <input 
-                type="text" 
-                placeholder="Nhập nội dung..." 
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-              />
-              <button type="submit" disabled={!newMessage.trim() || sending}>
-                <Send size={18} />
-              </button>
+              <div className="input-group">
+                <input 
+                  type="text" 
+                  placeholder="Nhập nội dung..." 
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                />
+                <button type="submit" disabled={!newMessage.trim() || sending}>
+                  <Send size={18} />
+                </button>
+              </div>
             </form>
           </div>
         )}
@@ -235,7 +236,7 @@ const ChatView = () => {
           flex-direction: column;
           gap: 15px;
           padding: 10px;
-          max-width: 800px;
+          max-width: 600px;
           margin: 0 auto;
         }
         .chat-tabs {
@@ -268,52 +269,74 @@ const ChatView = () => {
           flex: 1;
           background: #0d121d;
           border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 20px;
+          border-radius: 24px;
           overflow: hidden;
           display: flex;
           flex-direction: column;
         }
         .user-list { padding: 20px; overflow-y: auto; }
-        .section-title { font-size: 0.75rem; color: #555; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; }
-        .user-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .section-title { font-size: 0.7rem; color: #555; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1.5px; font-weight: 800; }
+        .empty-text { text-align: center; color: #444; margin-top: 30px; font-size: 0.9rem; }
+        .user-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; cursor: pointer; transition: 0.2s; }
         .user-item:hover { background: rgba(255, 255, 255, 0.05); }
-        .user-avatar { width: 40px; height: 40px; background: #1a1f2e; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .user-avatar { width: 44px; height: 44px; background: #1a1f2e; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
         .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .user-name { font-weight: 600; font-size: 0.95rem; }
         .user-role { font-size: 0.7rem; color: #555; }
 
         .chat-container { display: flex; flex-direction: column; height: 100%; }
         .chat-header { padding: 12px 20px; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; gap: 12px; }
-        .header-info { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 0.95rem; }
+        .header-info { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 0.9rem; }
         .mini-avatar { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: #222; border: 1.5px solid var(--primary-cyan); display: flex; align-items: center; justify-content: center; }
-        .back-btn { color: var(--primary-cyan); background: none; border: none; cursor: pointer; display: flex; align-items: center; }
+        .back-btn { color: var(--primary-cyan); background: none; border: none; cursor: pointer; }
 
-        .messages-list { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .message-row { display: flex; gap: 10px; max-width: 85%; }
+        .messages-list { flex: 1; padding: 15px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .message-row { display: flex; gap: 10px; max-width: 90%; }
         .row-me { align-self: flex-end; flex-direction: row-reverse; }
         .row-other { align-self: flex-start; }
-        .msg-avatar { width: 32px; height: 32px; border-radius: 50%; background: #1a1f2e; overflow: hidden; flex-shrink: 0; }
+        .msg-avatar { width: 32px; height: 32px; border-radius: 50%; background: #1a1f2e; overflow: hidden; flex-shrink: 0; margin-top: auto; }
         
-        .message-content { display: flex; flex-direction: column; gap: 3px; }
-        .sender-name { font-size: 0.7rem; color: #555; font-weight: 700; margin: 0 10px; }
-        .message-bubble { padding: 10px 14px; border-radius: 16px; font-size: 0.9rem; position: relative; line-height: 1.4; }
-        .bubble-me { background: var(--primary-cyan); color: #000; border-bottom-right-radius: 4px; font-weight: 500; }
-        .bubble-other { background: rgba(255, 255, 255, 0.08); color: #fff; border-bottom-left-radius: 4px; }
-        .msg-time { font-size: 0.6rem; opacity: 0.5; display: block; margin-top: 4px; }
-        .row-me .msg-time { text-align: right; color: rgba(0,0,0,0.5); }
+        .message-content-wrapper { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+        .sender-name { font-size: 0.65rem; color: #555; font-weight: 800; margin: 0 10px; text-transform: uppercase; }
+        .message-bubble { 
+          padding: 10px 16px; 
+          border-radius: 18px; 
+          font-size: 0.92rem; 
+          line-height: 1.4; 
+          display: inline-block;
+          word-break: break-word;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .bubble-me { 
+          background: #00f3ff; 
+          color: #000; 
+          border-bottom-right-radius: 4px; 
+          font-weight: 500;
+        }
+        .bubble-other { 
+          background: #1a1f2e; 
+          color: #eee; 
+          border-bottom-left-radius: 4px; 
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .msg-time { font-size: 0.6rem; opacity: 0.4; display: block; margin-top: 5px; font-weight: 600; }
+        .row-me .msg-time { text-align: right; color: rgba(0,0,0,0.4); }
 
-        .chat-form { padding: 15px; border-top: 1px solid rgba(255, 255, 255, 0.05); display: flex; gap: 10px; }
-        .chat-form input { flex: 1; background: #1a1f2e; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 12px 16px; color: white; outline: none; font-size: 0.9rem; }
-        .chat-form input:focus { border-color: rgba(0, 243, 255, 0.3); }
-        .chat-form button { background: var(--primary-cyan); color: #000; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
-        .chat-form button:disabled { opacity: 0.3; }
+        .chat-form { padding: 15px 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        .input-group { display: flex; gap: 10px; background: #1a1f2e; padding: 5px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
+        .chat-form input { flex: 1; background: transparent; border: none; padding: 10px 15px; color: white; outline: none; font-size: 0.9rem; }
+        .chat-form button { background: var(--primary-cyan); color: #000; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: 0.2s; }
+        .chat-form button:hover { transform: scale(1.05); }
+        .chat-form button:disabled { opacity: 0.2; }
         
         .chat-loading { display: flex; align-items: center; justify-content: center; height: 100%; }
-        .loader { width: 30px; height: 30px; border: 3px solid rgba(0,243,255,0.1); border-top-color: var(--primary-cyan); border-radius: 50%; animation: spin 1s linear infinite; }
+        .loader { width: 25px; height: 25px; border: 2px solid rgba(0,243,255,0.1); border-top-color: var(--primary-cyan); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
+        .empty-chat { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; opacity: 0.2; color: white; }
+
         @media (max-width: 768px) {
-          .chat-view-wrapper { height: calc(100vh - 140px); padding: 0; gap: 0; }
+          .chat-view-wrapper { height: calc(100vh - 150px); padding: 0; gap: 0; }
           .chat-main-container { border-radius: 0; border: none; }
           .chat-tabs { border-radius: 0; padding: 8px; }
         }
