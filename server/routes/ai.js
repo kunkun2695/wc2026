@@ -86,4 +86,38 @@ router.post('/chat', authenticateUser, async (req, res) => {
   });
 });
 
+// 3. Endpoint Streaming (MỚI) - Phản hồi ngay lập tức
+router.post('/stream', authenticateUser, async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: 'Nội dung trống' });
+
+  let apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+  
+  // Thiết lập header cho Streaming (Server-Sent Events)
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    // Sử dụng model mạnh nhất và nhanh nhất hiện có trong năm 2026
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const result = await model.generateContentStream(message);
+
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      // Gửi từng phần dữ liệu về client
+      res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+    }
+    
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (error) {
+    console.error('Streaming Error:', error);
+    res.write(`data: ${JSON.stringify({ error: 'AI đang bận, thử lại sau nhé!' })}\n\n`);
+    res.end();
+  }
+});
+
 module.exports = router;
