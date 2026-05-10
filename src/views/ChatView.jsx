@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Send, 
-  User,
-  Smile,
-  MessageSquare
-} from 'lucide-react';
+import { MessageSquare, Send, User, Smile, ArrowLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
 const formatTime = (dateStr) => {
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-  } catch (e) {
-    return '';
-  }
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
 };
 
 const ChatView = () => {
@@ -26,7 +24,6 @@ const ChatView = () => {
   const messagesEndRef = useRef(null);
   const currentUser = JSON.parse(localStorage.getItem('wc2026_user') || '{}');
   const token = localStorage.getItem('wc2026_token');
-  const API_URL = import.meta.env.VITE_API_URL;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -140,23 +137,27 @@ const ChatView = () => {
         {activeTab === 'private' && !selectedUser ? (
           <div className="user-list">
             <h3 className="section-title">Chọn người để chat</h3>
-            {users.map(u => (
-              <div key={u.id} className="user-item" onClick={() => { setSelectedUser(u); setLoading(true); }}>
-                <div className="user-avatar">
-                  {u.avatar ? <img src={u.avatar} alt="" /> : <User size={20} />}
+            {users.length === 0 ? (
+              <p style={{ textAlign: 'center', color: '#555', marginTop: '20px' }}>Không có người dùng nào khác trực tuyến.</p>
+            ) : (
+              users.map(u => (
+                <div key={u.id} className="user-item" onClick={() => { setSelectedUser(u); setLoading(true); }}>
+                  <div className="user-avatar">
+                    {u.avatar ? <img src={u.avatar} alt="" /> : <User size={24} color="#555" />}
+                  </div>
+                  <div className="user-info">
+                    <div className="user-name">{u.name || u.username}</div>
+                    <div className="user-role">{u.role === 'admin' ? 'Quản trị viên' : 'Thành viên'}</div>
+                  </div>
                 </div>
-                <div className="user-info">
-                  <div className="user-name">{u.name || u.username}</div>
-                  <div className="user-role">{u.role === 'admin' ? 'Quản trị viên' : 'Thành viên'}</div>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         ) : (
           <div className="chat-container">
             <div className="chat-header">
               {activeTab === 'private' && (
-                <button className="back-btn" onClick={() => setSelectedUser(null)}>←</button>
+                <button className="back-btn" onClick={() => setSelectedUser(null)}><ArrowLeft size={24} /></button>
               )}
               <div className="header-info">
                 {activeTab === 'global' ? (
@@ -167,7 +168,7 @@ const ChatView = () => {
                 ) : (
                   <>
                     <div className="mini-avatar">
-                      {selectedUser?.avatar ? <img src={selectedUser.avatar} alt="" /> : <User size={14} />}
+                      {selectedUser?.avatar ? <img src={selectedUser.avatar} alt="" /> : <User size={14} color="#888" />}
                     </div>
                     <span>Chat với {selectedUser?.name || selectedUser?.username}</span>
                   </>
@@ -184,7 +185,7 @@ const ChatView = () => {
               ) : messages.length === 0 ? (
                 <div className="empty-chat">
                   <Smile size={48} />
-                  <p>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
+                  <p>Chưa có tin nhắn nào. Hãy bắt đầu!</p>
                 </div>
               ) : (
                 messages.map((msg, idx) => {
@@ -198,7 +199,7 @@ const ChatView = () => {
                     >
                       {!isMe && activeTab === 'global' && (
                         <div className="msg-avatar">
-                          {msg.avatar ? <img src={msg.avatar} alt="" /> : <User size={16} />}
+                          {msg.avatar ? <img src={msg.avatar} alt="" /> : <User size={16} color="#888" />}
                         </div>
                       )}
                       <div className="message-content">
@@ -233,85 +234,96 @@ const ChatView = () => {
       </div>
 
       <style>{`
-          border-radius: 12px;
-        }
-        .chat-title { font-weight: 800; font-size: 1.1rem; }
-        .chat-subtitle { font-size: 0.75rem; color: #888; }
-        .status-badge {
-          background: rgba(0, 255, 136, 0.1);
-          color: #00ff88;
-          font-size: 0.7rem;
-          padding: 4px 10px;
-          border-radius: 20px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .status-dot { width: 6px; height: 6px; background: #00ff88; border-radius: 50%; animation: pulse 2s infinite; }
-        
-        .chat-messages-area {
-          flex: 1;
-          overflow-y: auto;
-          padding: 20px;
+        .chat-view-wrapper {
+          height: calc(100vh - 120px);
           display: flex;
           flex-direction: column;
-          gap: 15px;
+          gap: 20px;
+          padding: 15px;
+          max-width: 1000px;
+          margin: 0 auto;
         }
-        .empty-chat { text-align: center; padding: 50px 0; color: #555; }
-        
-        .message-wrapper { display: flex; }
-        .is-me { justify-content: flex-end; }
-        .message-content-group { display: flex; gap: 12px; max-width: 85%; }
-        .is-me .message-content-group { flex-direction: row-reverse; }
-        
-        .message-avatar img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border-color); }
-        .avatar-placeholder { width: 32px; height: 32px; background: #222; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #555; }
-        
-        .message-body { display: flex; flex-direction: column; gap: 4px; }
-        .is-me .message-body { align-items: flex-end; }
-        .message-info { display: flex; gap: 8px; align-items: center; }
-        .sender-name { font-size: 0.75rem; font-weight: 700; color: #aaa; }
-        .send-time { font-size: 0.65rem; color: #555; }
-        
-        .message-bubble { padding: 10px 16px; border-radius: 16px; font-size: 0.9rem; line-height: 1.4; }
-        .bubble-other { background: rgba(255, 255, 255, 0.05); color: #ddd; border-top-left-radius: 2px; }
-        .bubble-me { background: var(--primary-cyan); color: #000; font-weight: 600; border-top-right-radius: 2px; box-shadow: 0 4px 15px rgba(0, 243, 255, 0.2); }
-        
-        .chat-input-area { padding: 20px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border-color); }
-        .login-warning { text-align: center; color: #ff4d4d; font-size: 0.8rem; background: rgba(255, 77, 77, 0.1); padding: 10px; border-radius: 10px; }
-        
-        .chat-form { display: flex; gap: 10px; }
-        .chat-form input {
-          flex: 1;
+        .chat-tabs {
+          display: flex;
           background: rgba(255, 255, 255, 0.05);
-          border: 1px solid var(--border-color);
-          padding: 12px 20px;
-          border-radius: 12px;
-          color: white;
-          outline: none;
+          padding: 6px;
+          border-radius: 16px;
+          gap: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .chat-form input:focus { border-color: var(--primary-cyan); }
-        .chat-form button {
-          background: var(--primary-cyan);
-          color: black;
-          width: 45px;
-          height: 45px;
+        .tab-btn {
+          flex: 1;
+          padding: 12px;
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: 0.3s;
+          gap: 10px;
+          font-weight: 700;
+          color: #888;
+          transition: all 0.3s;
+          border: none;
+          background: transparent;
+          cursor: pointer;
         }
-        .chat-form button:hover { transform: scale(1.05); filter: brightness(1.1); }
-        
-        @keyframes pulse {
-          0% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.5); opacity: 0.5; }
-          100% { transform: scale(1); opacity: 1; }
+        .tab-btn.active {
+          background: var(--primary-cyan);
+          color: #000;
+          box-shadow: 0 4px 15px rgba(0, 243, 255, 0.3);
         }
+        .chat-main-container {
+          flex: 1;
+          background: rgba(13, 18, 29, 0.75);
+          backdrop-filter: blur(25px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 24px;
+          overflow: hidden;
+          position: relative;
+        }
+        .user-list { padding: 25px; height: 100%; overflow-y: auto; }
+        .section-title { font-size: 0.8rem; color: var(--primary-cyan); text-transform: uppercase; margin-bottom: 20px; letter-spacing: 2px; font-weight: 800; }
+        .user-item { display: flex; align-items: center; gap: 18px; padding: 15px; border-radius: 16px; cursor: pointer; transition: 0.2s; margin-bottom: 8px; }
+        .user-item:hover { background: rgba(255, 255, 255, 0.05); transform: translateX(5px); }
+        .user-avatar { width: 50px; height: 50px; background: #222; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.1); }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-name { font-weight: 700; font-size: 1rem; }
+        .user-role { font-size: 0.75rem; color: #666; }
 
+        .chat-container { display: flex; flex-direction: column; height: 100%; }
+        .chat-header { padding: 18px 25px; background: rgba(255, 255, 255, 0.03); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; gap: 15px; }
+        .header-info { display: flex; align-items: center; gap: 12px; font-weight: 800; }
+        .mini-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: #333; border: 2px solid var(--primary-cyan); display: flex; align-items: center; justify-content: center; }
+        .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .back-btn { color: var(--primary-cyan); background: none; border: none; cursor: pointer; }
+
+        .messages-list { flex: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .message-row { display: flex; gap: 12px; max-width: 80%; }
+        .row-me { align-self: flex-end; flex-direction: row-reverse; }
+        .row-other { align-self: flex-start; }
+        .msg-avatar { width: 36px; height: 36px; border-radius: 50%; background: #222; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        .message-content { display: flex; flex-direction: column; gap: 5px; }
+        .sender-name { font-size: 0.75rem; color: #666; font-weight: 700; margin: 0 10px; }
+        .message-bubble { padding: 12px 18px; border-radius: 20px; font-size: 0.95rem; position: relative; line-height: 1.5; }
+        .bubble-me { background: var(--primary-cyan); color: #000; border-bottom-right-radius: 4px; font-weight: 500; }
+        .bubble-other { background: rgba(255, 255, 255, 0.1); color: #fff; border-bottom-left-radius: 4px; }
+        .msg-time { font-size: 0.65rem; opacity: 0.5; display: block; margin-top: 5px; }
+        .row-me .msg-time { text-align: right; color: rgba(0,0,0,0.5); }
+
+        .chat-form { padding: 20px 25px; border-top: 1px solid rgba(255, 255, 255, 0.05); display: flex; gap: 12px; }
+        .chat-form input { flex: 1; background: rgba(26, 31, 46, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 14px 20px; color: white; outline: none; }
+        .chat-form input:focus { border-color: var(--primary-cyan); }
+        .chat-form button { background: var(--primary-cyan); color: #000; width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
+        .chat-form button:disabled { opacity: 0.4; }
+        
+        .chat-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 15px; }
+        .loader { width: 40px; height: 40px; border: 3px solid rgba(0,243,255,0.1); border-top-color: var(--primary-cyan); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
         @media (max-width: 768px) {
-          .chat-container { height: calc(100vh - 200px); border-radius: 0; border-left: none; border-right: none; }
+          .chat-view-wrapper { height: calc(100vh - 160px); padding: 0; gap: 0; }
+          .chat-main-container { border-radius: 0; border: none; }
+          .chat-tabs { border-radius: 0; border: none; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
         }
       `}</style>
     </div>
