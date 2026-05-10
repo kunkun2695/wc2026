@@ -159,6 +159,9 @@ router.post('/stream', authenticateUser, async (req, res) => {
 
   for (const modelName of modelsToTry) {
     console.log(`[AI STREAM DEBUG] Đang thử Model: ${modelName}...`);
+    // Gửi thông tin debug về client để người dùng thấy tiến trình
+    res.write(`data: ${JSON.stringify({ text: `\n\n*(Hệ thống: Đang thử kết nối tới ${modelName}...)*\n\n` })}\n\n`);
+    
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: modelName });
@@ -180,6 +183,8 @@ router.post('/stream', authenticateUser, async (req, res) => {
       break; 
     } catch (error) {
       console.error(`[AI STREAM DEBUG] Model ${modelName} LỖI:`, error.message);
+      // Gửi lỗi của model này về client
+      res.write(`data: ${JSON.stringify({ text: `\n\n*(Hệ thống: ${modelName} lỗi: ${error.message})*\n\n` })}\n\n`);
       lastError = error;
       if (error.message.includes('API key') || error.message.includes('403') || error.message.includes('401')) {
         break;
@@ -190,7 +195,7 @@ router.post('/stream', authenticateUser, async (req, res) => {
 
   if (!success) {
     console.log('[AI STREAM DEBUG] TẤT CẢ model stream đều thất bại.');
-    res.write(`data: ${JSON.stringify({ error: `AI lỗi: ${lastError?.message || 'Hết lượt thử'}` })}\n\n`);
+    res.write(`data: ${JSON.stringify({ error: `AI lỗi cuối cùng: ${lastError?.message || 'Hết lượt thử'}` })}\n\n`);
     res.end();
   }
 });
