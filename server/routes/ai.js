@@ -36,11 +36,17 @@ router.post('/chat', authenticateUser, async (req, res) => {
     }
   }
 
-  // 2. Xử lý Google Gemini bằng SDK chính thức (Tốt hơn Axios)
   const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
   let lastError = null;
+  let attemptedModels = [];
+
+  const maskKey = (key) => {
+    if (!key) return "N/A";
+    return key.substring(0, 8) + "..." + key.substring(key.length - 4);
+  };
 
   for (const modelName of modelsToTry) {
+    attemptedModels.push(modelName);
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: modelName });
@@ -50,11 +56,14 @@ router.post('/chat', authenticateUser, async (req, res) => {
       
       return res.json({ 
         reply: text,
-        debug_info: { model: modelName, method: 'Official Google SDK' }
+        debug_info: { 
+          model: modelName, 
+          method: 'Official Google SDK',
+          key_masked: maskKey(apiKey)
+        }
       });
     } catch (err) {
       lastError = err;
-      // Nếu lỗi là do API Key thì dừng luôn không thử model khác
       if (err.message.includes('API key') || err.message.includes('403') || err.message.includes('401')) {
         break;
       }
@@ -65,8 +74,15 @@ router.post('/chat', authenticateUser, async (req, res) => {
   // Nếu tất cả các lần thử đều thất bại
   res.status(500).json({ 
     error: "AI tạm thời không khả dụng",
-    details: [lastError?.message],
-    suggestion: "Có vẻ như API Key của bạn chưa được cấp quyền cho các model này hoặc bị giới hạn vùng địa lý. Hãy thử tạo lại Key mới tại Google AI Studio."
+    details: lastError?.message,
+    debug_params: {
+      attempted_models: attemptedModels,
+      current_key: maskKey(apiKey),
+      env_gemini_key: maskKey(process.env.GEMINI_API_KEY),
+      env_openai_key: maskKey(process.env.OPENAI_API_KEY),
+      error_message: lastError?.message
+    },
+    suggestion: "Có vẻ như API Key của bạn bị lỗi hoặc chưa được cấp quyền cho các model này. Kiểm tra lại file .env (chú ý typo l thường và I hoa)."
   });
 });
 
