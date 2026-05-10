@@ -18,7 +18,7 @@ const PostCard = ({ post, onLike, onOpenComments, onDelete, currentUser }) => {
     onLike(post.id);
   };
 
-  const isOwner = currentUser && (post.user_id === currentUser.id);
+  const isOwner = currentUser && (String(post.user_id) === String(currentUser.id));
   const isAdmin = currentUser && (currentUser.role === 'admin');
 
   return (
