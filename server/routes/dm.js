@@ -18,6 +18,19 @@ const authenticateUser = (req, res, next) => {
   }
 };
 
+// Lấy số lượng tin nhắn chưa đọc
+router.get('/unread-count', authenticateUser, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT COUNT(*)::int as unread_count FROM direct_messages WHERE receiver_id = $1 AND is_read = FALSE',
+      [req.user.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi lấy số tin nhắn chưa đọc' });
+  }
+});
+
 // Lấy danh sách TOÀN BỘ thành viên để chat (trừ bản thân)
 router.get('/users', authenticateUser, async (req, res) => {
   try {

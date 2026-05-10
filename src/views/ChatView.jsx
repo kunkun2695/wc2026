@@ -51,38 +51,48 @@ const ChatView = () => {
   }, [activeTab, selectedUser]);
 
   const fetchUsers = async () => {
+    const finalApiUrl = API_URL || window.location.origin;
     try {
-      const res = await fetch(`${API_URL}/api/dm/users`, {
+      console.log('Đang lấy danh sách từ:', `${finalApiUrl}/api/dm/users`);
+      const res = await fetch(`${finalApiUrl}/api/dm/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (Array.isArray(data)) {
         setUsers(data.filter(u => u.id !== currentUser.id));
+      } else {
+        console.error('Dữ liệu user không phải mảng:', data);
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error('Lỗi fetchUsers:', err);
+    }
   };
 
   const fetchGlobalMessages = async () => {
+    const finalApiUrl = API_URL || window.location.origin;
     try {
-      const res = await fetch(`${API_URL}/api/chat`);
+      const res = await fetch(`${finalApiUrl}/api/chat`);
       const data = await res.json();
       if (Array.isArray(data)) setMessages(data);
       setLoading(false);
     } catch (err) {
+      console.error('Lỗi fetchGlobalMessages:', err);
       setLoading(false);
     }
   };
 
   const fetchPrivateMessages = async () => {
     if (!selectedUser) return;
+    const finalApiUrl = API_URL || window.location.origin;
     try {
-      const res = await fetch(`${API_URL}/api/dm/history/${selectedUser.id}`, {
+      const res = await fetch(`${finalApiUrl}/api/dm/history/${selectedUser.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (Array.isArray(data)) setMessages(data);
       setLoading(false);
     } catch (err) {
+      console.error('Lỗi fetchPrivateMessages:', err);
       setLoading(false);
     }
   };
@@ -92,13 +102,14 @@ const ChatView = () => {
     if (!newMessage.trim() || sending) return;
 
     setSending(true);
+    const finalApiUrl = API_URL || window.location.origin;
     const endpoint = activeTab === 'global' ? '/api/chat' : '/api/dm/send';
     const body = activeTab === 'global' 
       ? { content: newMessage } 
       : { receiver_id: selectedUser.id, content: newMessage };
 
     try {
-      const res = await fetch(`${API_URL}${endpoint}`, {
+      const res = await fetch(`${finalApiUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,9 +121,12 @@ const ChatView = () => {
       if (res.ok) {
         setNewMessage('');
         activeTab === 'global' ? fetchGlobalMessages() : fetchPrivateMessages();
+      } else {
+        const errorData = await res.json();
+        console.error('Lỗi gửi tin nhắn từ server:', errorData);
       }
     } catch (err) {
-      console.error('Lỗi gửi tin nhắn');
+      console.error('Lỗi kết nối khi gửi tin nhắn:', err);
     } finally {
       setSending(false);
     }
