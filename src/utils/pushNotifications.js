@@ -40,7 +40,7 @@ export async function subscribeToPush() {
       }
 
       // Gửi subscription tới backend
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('wc2026_token');
       if (!token) return;
 
       await fetch(`${API_URL}/api/notifications/subscribe`, {
