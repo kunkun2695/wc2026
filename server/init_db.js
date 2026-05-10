@@ -7,6 +7,7 @@ async function init() {
   const scripts = [
     'setup_chat.js',
     'setup_dm.js',
+    'add_notifications_table.js',
     // Sau này bạn có thêm bảng nào thì cứ thêm tên file vào đây
   ];
 
