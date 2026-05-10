@@ -91,6 +91,7 @@ const ChatView = ({ user }) => {
         },
         body: JSON.stringify(body)
       });
+      const data = await res.json();
       if (res.ok) {
         setContent('');
         setImage(null);

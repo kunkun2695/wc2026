@@ -37,8 +37,8 @@ router.post('/chat', authenticateUser, async (req, res) => {
 
   try {
     if (ai.type === 'gemini') {
-      // Danh sách các model để thử theo thứ tự ưu tiên
       const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
+      let attemptLogs = [];
       let lastError = null;
 
       for (const modelName of modelsToTry) {
@@ -46,15 +46,28 @@ router.post('/chat', authenticateUser, async (req, res) => {
           const model = ai.getModel(modelName);
           const result = await model.generateContent(message);
           const response = await result.response;
-          return res.json({ reply: response.text() });
+          return res.json({ 
+            reply: response.text(),
+            debug_info: { model_used: modelName, attempts: attemptLogs } 
+          });
         } catch (err) {
-          console.error(`Thử model ${modelName} thất bại:`, err.message);
+          const errorDetail = `Model ${modelName}: [${err.name}] ${err.message}`;
+          console.error(errorDetail);
+          attemptLogs.push(errorDetail);
           lastError = err;
-          if (err.message.includes('404')) continue; // Nếu 404 thì thử cái tiếp theo
-          break; // Nếu lỗi khác (như 401) thì dừng luôn
+          
+          // Nếu lỗi là do Vùng (Region) hoặc Key không quyền, thường sẽ có mã 400 hoặc 403
+          if (err.message.includes('404') || err.message.includes('not found')) continue; 
+          break; 
         }
       }
-      throw lastError; // Nếu thử hết mà vẫn lỗi thì ném lỗi ra ngoài
+      
+      // Nếu thất bại hoàn toàn, trả về lịch sử các lần thử
+      return res.status(500).json({ 
+        error: "AI tạm thời không khả dụng",
+        details: attemptLogs,
+        suggestion: "Hãy kiểm tra API Key tại Google AI Studio và đảm bảo Vùng (Region) của bạn được hỗ trợ."
+      });
     } else {
       const completion = await ai.client.chat.completions.create({
         model: "gpt-3.5-turbo",

@@ -40,7 +40,14 @@ const AiAssistantView = () => {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
       } else {
         const errorText = data.error || 'Lỗi không xác định';
-        setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ **Lỗi từ hệ thống:** ${errorText}. Vui lòng kiểm tra lại cấu hình Admin hoặc Token đăng nhập.` }]);
+        const debugInfo = data.details 
+          ? `\n\n**Chi tiết các lần thử:**\n${data.details.join('\n')}\n\n💡 **Gợi ý:** ${data.suggestion}`
+          : '';
+        
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: `⚠️ **Lỗi từ hệ thống:** ${errorText}${debugInfo}` 
+        }]);
       }
     } catch (err) {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Lỗi kết nối rồi đại ca ơi! Kiểm tra lại mạng nhé.' }]);
