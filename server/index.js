@@ -116,8 +116,22 @@ app.use((req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🚀 SERVER ĐANG CHẠY TẠI: http://localhost:${PORT}`);
+// Start Server
+app.listen(PORT, async () => {
+  console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+  
+  // Tự động nạp API Key từ Database khi khởi động
+  try {
+    const db = require('./config/db');
+    const result = await db.query("SELECT value FROM system_config WHERE key = 'OPENAI_API_KEY'");
+    if (result.rows[0]?.value) {
+      process.env.OPENAI_API_KEY = result.rows[0].value;
+      console.log('✅ Đã nạp OpenAI API Key từ Database.');
+    }
+  } catch (err) {
+    console.log('ℹ️ Chưa có cấu hình API Key trong Database.');
+  }
+  
   console.log(`🌐 TRUY CẬP LAN: http://192.168.1.101:${PORT}`);
   console.log('✅ Đã kích hoạt Module: Teams, Matches, Users');
   

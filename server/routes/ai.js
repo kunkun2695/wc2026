@@ -42,7 +42,8 @@ router.post('/chat', authenticateUser, async (req, res) => {
 
   } catch (err) {
     console.error('OpenAI Error:', err.message);
-    res.status(500).json({ error: 'Lỗi kết nối AI từ OpenAI' });
+    const errorMessage = err.response?.data?.error?.message || err.message || 'Lỗi không xác định từ OpenAI';
+    res.status(500).json({ error: `OpenAI: ${errorMessage}` });
   }
 });
 
