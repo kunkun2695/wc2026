@@ -23,7 +23,39 @@ async function patchDatabase() {
     // Vá bảng matches để hỗ trợ phân loại giải đấu
     await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS competition_name TEXT DEFAULT 'Cúp C1 Châu Âu'`);
     
-    console.log('✅ [DB Fix] Đã cập nhật bảng notifications và matches thành công.');
+    // Tạo bảng posts cho mạng xã hội thu nhỏ
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS posts (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        image_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Tạo bảng post_likes
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS post_likes (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
+        UNIQUE(user_id, post_id)
+      )
+    `);
+
+    // Tạo bảng post_comments
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS post_comments (
+        id SERIAL PRIMARY KEY,
+        post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches và mạng xã hội thành công.');
   } catch (err) {
     console.error('⚠️ [DB Fix Error]', err.message);
   }
@@ -39,6 +71,7 @@ const commentsRoutes = require('./routes/comments');
 const { router: notificationsRoutes } = require('./routes/notifications');
 const chatRoutes = require('./routes/chat');
 const dmRoutes = require('./routes/dm');
+const postsRoutes = require('./routes/posts');
 
 const app = express();
 const PORT = process.env.PORT || 5005;
@@ -60,6 +93,7 @@ app.use('/api/comments', commentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/dm', dmRoutes);
+app.use('/api/posts', postsRoutes);
 
 // Serve Static Files
 const distPath = path.join(__dirname, '../dist');

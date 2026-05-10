@@ -60,7 +60,13 @@ const syncMatches = async () => {
       const homeScore = m.score.fullTime.home ?? 0;
       const awayScore = m.score.fullTime.away ?? 0;
       const status = m.status === 'FINISHED' ? 'FT' : (m.status === 'IN_PLAY' ? 'LIVE' : 'UPCOMING');
-      const matchTime = new Date(m.utcDate).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }).replace(',', ' -');
+      const matchTime = new Date(m.utcDate).toLocaleString('vi-VN', { 
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour: '2-digit', 
+        minute: '2-digit', 
+        day: '2-digit', 
+        month: '2-digit' 
+      }).replace(',', ' -');
       const competition = m.competition?.name || 'International';
 
       if (matchCheck.rows.length > 0) {
