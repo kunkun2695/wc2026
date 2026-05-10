@@ -120,45 +120,58 @@ router.post('/stream', authenticateUser, async (req, res) => {
   if (!message) return res.status(400).json({ error: 'Nội dung trống' });
 
   let apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
-  
-  // Thiết lập header cho Streaming (Server-Sent Events)
+  if (!apiKey) return res.status(500).json({ error: 'Thiếu API Key' });
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
+  const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+  let success = false;
+  let lastError = null;
+
+  // Lấy bối cảnh người dùng
+  let userContext = "";
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    // Sử dụng model mạnh nhất và nhanh nhất hiện có trong năm 2026
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const userResult = await db.query('SELECT username, points FROM users WHERE id = $1', [req.user.id]);
+    const userData = userResult.rows[0];
+    const predResult = await db.query(`
+      SELECT COUNT(*) as total,
+      COUNT(CASE WHEN p.prediction = (CASE WHEN m.team1_score > m.team2_score THEN '1' WHEN m.team1_score < m.team2_score THEN '2' ELSE 'X' END) AND m.status = 'FT' THEN 1 END) as won,
+      COUNT(CASE WHEN p.prediction != (CASE WHEN m.team1_score > m.team2_score THEN '1' WHEN m.team1_score < m.team2_score THEN '2' ELSE 'X' END) AND m.status = 'FT' THEN 1 END) as lost
+      FROM predictions p JOIN matches m ON p.match_id = m.id WHERE p.user_id = $1
+    `, [req.user.id]);
+    const stats = predResult.rows[0];
+    userContext = `\n\n[Dữ liệu người dùng: Tên ${userData.username}, Điểm ${userData.points}, Thắng ${stats.won}, Thua ${stats.lost}]. Hãy trả lời dựa trên thông tin này nếu cần.`;
+  } catch (e) {}
 
-    // Lấy context cho stream tương tự chat thường
-    let userContext = "";
+  for (const modelName of modelsToTry) {
     try {
-      const userResult = await db.query('SELECT username, points FROM users WHERE id = $1', [req.user.id]);
-      const userData = userResult.rows[0];
-      const predResult = await db.query(`
-        SELECT COUNT(*) as total,
-        COUNT(CASE WHEN p.prediction = (CASE WHEN m.team1_score > m.team2_score THEN '1' WHEN m.team1_score < m.team2_score THEN '2' ELSE 'X' END) AND m.status = 'FT' THEN 1 END) as won,
-        COUNT(CASE WHEN p.prediction != (CASE WHEN m.team1_score > m.team2_score THEN '1' WHEN m.team1_score < m.team2_score THEN '2' ELSE 'X' END) AND m.status = 'FT' THEN 1 END) as lost
-        FROM predictions p JOIN matches m ON p.match_id = m.id WHERE p.user_id = $1
-      `, [req.user.id]);
-      const stats = predResult.rows[0];
-      userContext = `\n\n[Dữ liệu người dùng: Tên ${userData.username}, Điểm ${userData.points}, Thắng ${stats.won}, Thua ${stats.lost}]. Hãy trả lời dựa trên thông tin này nếu cần.`;
-    } catch (e) {}
+      const genAI = new GoogleGenerativeAI(apiKey.trim());
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContentStream(message + userContext);
 
-    const result = await model.generateContentStream(message + userContext);
-
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
-      // Gửi từng phần dữ liệu về client
-      res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+      }
+      
+      success = true;
+      res.write('data: [DONE]\n\n');
+      res.end();
+      break; 
+    } catch (error) {
+      console.error(`Streaming Error with ${modelName}:`, error.message);
+      lastError = error;
+      if (error.message.includes('API key') || error.message.includes('403') || error.message.includes('401')) {
+        break;
+      }
+      continue;
     }
-    
-    res.write('data: [DONE]\n\n');
-    res.end();
-  } catch (error) {
-    console.error('Streaming Error:', error);
-    res.write(`data: ${JSON.stringify({ error: 'AI đang bận, thử lại sau nhé!' })}\n\n`);
+  }
+
+  if (!success) {
+    res.write(`data: ${JSON.stringify({ error: `AI lỗi: ${lastError?.message || 'Hết lượt thử'}` })}\n\n`);
     res.end();
   }
 });

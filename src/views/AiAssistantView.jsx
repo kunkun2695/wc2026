@@ -69,6 +69,11 @@ const AiAssistantView = () => {
 
           try {
             const data = JSON.parse(cleanLine);
+            if (data.error) {
+              setIsTyping(false);
+              setMessages(prev => [...prev, { role: 'assistant', content: `❌ **Lỗi:** ${data.error}` }]);
+              break;
+            }
             if (data.text) {
               if (!hasStarted) {
                 // CHỮ ĐẦU TIÊN XUẤT HIỆN: Ẩn 3 chấm và tạo khung tin nhắn
