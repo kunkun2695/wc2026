@@ -3,9 +3,7 @@ const router = express.Router();
 const { authenticateUser } = require('../middleware/auth');
 
 const OpenAI = require('openai');
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 router.post('/chat', authenticateUser, async (req, res) => {
   const { message } = req.body;
@@ -49,7 +47,6 @@ function simulateAiResponse(message, res) {
   else reply = `Chào bạn! Bạn hỏi về "${message}" rất hay. Hãy điền API Key OpenAI vào .env để tôi trả lời thông minh hơn nhé!`;
   
   setTimeout(() => res.json({ reply }), 1000);
-}
 }
 
 module.exports = router;
