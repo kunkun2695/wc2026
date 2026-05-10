@@ -150,9 +150,18 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
           placeholder="Nhập nội dung gáy..." 
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              handleSend(e);
+            }
+          }}
           disabled={sending}
         />
-        <button type="submit" disabled={sending || !newComment.trim()}>
+        <button 
+          type="submit" 
+          disabled={sending || !newComment.trim()}
+          onClick={handleSend}
+        >
           <Send size={18} />
         </button>
       </form>
@@ -197,6 +206,7 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
           display: flex;
           align-items: center;
           justify-content: center;
+          cursor: pointer;
         }
         .comment-list {
           flex: 1;
@@ -292,6 +302,7 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
           color: #ff4d4d;
           opacity: 0;
           transition: opacity 0.2s;
+          cursor: pointer;
         }
         .comment-item:hover .delete-comment-btn {
           opacity: 1;
@@ -307,6 +318,8 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
           gap: 10px;
           border-top: 1px solid rgba(255,255,255,0.1);
           padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+          flex-shrink: 0;
+          width: 100%;
         }
         .comment-input-area input {
           flex: 1;
@@ -316,6 +329,9 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
           padding: 12px 16px;
           color: white;
           font-size: 0.9rem;
+          outline: none;
+          -webkit-appearance: none;
+          appearance: none;
         }
         .comment-input-area button {
           width: 48px;
@@ -328,6 +344,8 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
           align-items: center;
           justify-content: center;
           transition: transform 0.2s;
+          cursor: pointer;
+          flex-shrink: 0;
         }
         .comment-input-area button:disabled {
           background: #444;
