@@ -290,58 +290,91 @@ const App = () => {
         </div>
       </header>
 
-      {/* Sidebar Bench-Bets Style */}
-      <aside className="sidebar">
-        <div className="sidebar-logo" style={{ marginBottom: '30px', padding: '0 10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Trophy size={24} color="var(--primary-cyan)" />
-            <h1 className="font-outfit" style={{ fontSize: '1.4rem', fontWeight: 800 }}>Bench-Bets</h1>
+      {/* Sidebar - Modern Professional Version */}
+      <aside className={`sidebar ${activeTab === 'notifications' ? 'sidebar-minimized' : ''}`}>
+        <div className="sidebar-brand">
+          <div className="brand-logo-glow">
+            <Trophy className="brand-icon" size={24} />
           </div>
+          <h1 className="brand-name">Bench-<span>Bets</span></h1>
         </div>
 
         <nav className="nav-menu">
-          <button onClick={() => setActiveTab('home')} className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}>
-            <Home size={18} /> Trang chủ
-          </button>
-          <button onClick={() => setActiveTab('leaderboard')} className={`nav-item ${activeTab === 'leaderboard' ? 'active' : ''}`}>
-            <Star size={18} /> Bảng xếp hạng
-          </button>
-          <button onClick={() => setActiveTab('social')} className={`nav-item ${activeTab === 'social' ? 'active' : ''}`}>
-            <Users size={18} /> Cộng đồng
-          </button>
-          <button onClick={() => setActiveTab('history')} className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}>
-            <History size={18} /> Lịch sử dự đoán
-          </button>
-          <button onClick={() => setActiveTab('chat')} className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}>
-            <MessageSquare size={18} /> Phòng Chat
-            {unreadChatCount > 0 && <span className="notif-count-badge">{unreadChatCount}</span>}
-          </button>
-          <button onClick={() => setActiveTab('settings')} className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}>
-            <Settings size={18} /> Cài đặt hồ sơ
-          </button>
+          <div className="nav-group">
+            <div className="nav-label">TRANG CHỦ</div>
+            <button onClick={() => setActiveTab('home')} className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <Home size={18} className="nav-icon" /> <span>Trang chủ</span>
+            </button>
+            <button onClick={() => setActiveTab('leaderboard')} className={`nav-item ${activeTab === 'leaderboard' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <Star size={18} className="nav-icon" /> <span>Bảng xếp hạng</span>
+            </button>
+            <button onClick={() => setActiveTab('social')} className={`nav-item ${activeTab === 'social' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <Users size={18} className="nav-icon" /> <span>Cộng đồng</span>
+            </button>
+            <button onClick={() => setActiveTab('chat')} className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <div className="icon-badge-wrapper">
+                <MessageSquare size={18} className="nav-icon" />
+                {unreadChatCount > 0 && <span className="icon-badge">{unreadChatCount}</span>}
+              </div>
+              <span>Phòng Chat</span>
+            </button>
+          </div>
+
+          <div className="nav-group">
+            <div className="nav-label">CÁ NHÂN</div>
+            <button onClick={() => setActiveTab('history')} className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <History size={18} className="nav-icon" /> <span>Lịch sử dự đoán</span>
+            </button>
+            <button onClick={() => setActiveTab('settings')} className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <Settings size={18} className="nav-icon" /> <span>Cài đặt hồ sơ</span>
+            </button>
+            <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className={`nav-item ${showNotifications ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <div className="icon-badge-wrapper">
+                <Bell size={18} className="nav-icon" />
+                {notifications.some(n => !n.is_read) && <span className="icon-badge">{notifications.filter(n => !n.is_read).length}</span>}
+              </div>
+              <span>Thông báo</span>
+            </button>
+          </div>
 
           {user?.role === 'admin' && (
-            <>
-              <div style={{ margin: '20px 0', borderTop: '1px solid var(--border-color)' }}></div>
-              <div style={{ margin: '10px 0', fontSize: '0.65rem', color: '#555', padding: '0 16px', fontWeight: 800 }}>QUẢN TRỊ VIÊN</div>
+            <div className="nav-group admin-section">
+              <div className="nav-label">QUẢN TRỊ VIÊN</div>
               <button onClick={() => setActiveTab('admin_matches')} className={`nav-item ${activeTab === 'admin_matches' ? 'active' : ''}`}>
-                <Edit3 size={18} /> Quản lý trận đấu
+                <div className="active-indicator" />
+                <Edit3 size={18} className="nav-icon" /> <span>Quản lý trận đấu</span>
               </button>
               <button onClick={() => setActiveTab('admin_teams')} className={`nav-item ${activeTab === 'admin_teams' ? 'active' : ''}`}>
-                <Settings size={18} /> Quản lý đội bóng
+                <div className="active-indicator" />
+                <Shield size={18} className="nav-icon" /> <span>Quản lý đội bóng</span>
               </button>
-            </>
+            </div>
           )}
-
-          <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className={`nav-item ${showNotifications ? 'active' : ''}`}>
-            <Bell size={18} /> Thông báo
-            {notifications.some(n => !n.is_read) && <span className="notif-count-badge">{notifications.filter(n => !n.is_read).length}</span>}
-          </button>
-
-          <button onClick={handleLogout} className="nav-item" style={{ marginTop: 'auto', color: '#ff4d4d' }}>
-            <LogOut size={18} /> Đăng xuất
-          </button>
         </nav>
+
+        <div className="sidebar-footer">
+          <div className="user-profile-mini">
+            <img 
+              src={user?.avatar || 'https://via.placeholder.com/40'} 
+              alt="avatar" 
+              className="user-avatar-mini" 
+            />
+            <div className="user-details-mini">
+              <div className="user-name-mini">{user?.name || user?.username}</div>
+              <div className="user-role-mini">{user?.role === 'admin' ? 'Administrator' : 'Betting Expert'}</div>
+            </div>
+            <button onClick={handleLogout} className="logout-icon-btn" title="Đăng xuất">
+              <LogOut size={16} />
+            </button>
+          </div>
+        </div>
       </aside>
 
       {/* Main Content Area */}
@@ -427,10 +460,6 @@ const App = () => {
             <Users size={20} />
             <span>Cộng đồng</span>
           </button>
-          <button onClick={() => setActiveTab('history')} className={`nav-item-bet ${activeTab === 'history' ? 'active' : ''}`}>
-            <History size={20} />
-            <span>Lịch sử</span>
-          </button>
           <button onClick={() => setActiveTab('chat')} className={`nav-item-bet ${activeTab === 'chat' ? 'active' : ''}`} style={{ position: 'relative' }}>
             <MessageSquare size={20} />
             <span>Chat</span>
@@ -440,12 +469,6 @@ const App = () => {
             <Settings size={20} />
             <span>Cài đặt</span>
           </button>
-          {user?.role === 'admin' && (
-            <button onClick={() => setActiveTab('admin_matches')} className={`nav-item-bet ${activeTab === 'admin_matches' ? 'active' : ''}`}>
-              <Shield size={20} />
-              <span>Admin</span>
-            </button>
-          )}
         </div>
       </nav>
 
@@ -491,79 +514,92 @@ const App = () => {
       </AnimatePresence>
 
       <style>{`
-        .mobile-header {
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          background: #0d121d;
-          border-bottom: 1px solid var(--border-color);
-          z-index: 2000;
-          padding-top: env(safe-area-inset-top, 20px);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        .app-layout { display: flex; min-height: 100vh; background: #0a0e17; }
+        
+        .sidebar {
+          width: 280px; height: 100vh; background: #0f172a; border-right: 1px solid rgba(255,255,255,0.03);
+          display: flex; flex-direction: column; position: sticky; top: 0; z-index: 1000;
+          transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .mobile-header-content {
-          height: 60px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 20px;
+        
+        .sidebar-brand {
+          padding: 30px 25px; display: flex; align-items: center; gap: 15px;
+          border-bottom: 1px solid rgba(255,255,255,0.02);
         }
-        .mobile-logout-btn {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid var(--border-color);
-          color: #ff4d4d;
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+        .brand-logo-glow {
+          width: 42px; height: 42px; background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+          border-radius: 12px; display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
         }
-        .mobile-notif-btn {
-          background: rgba(58, 134, 255, 0.1);
-          border: 1px solid rgba(58, 134, 255, 0.2);
-          color: #3b82f6;
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
+        .brand-icon { color: white; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); }
+        .brand-name { font-size: 1.4rem; font-weight: 900; color: white; letter-spacing: -0.5px; margin: 0; }
+        .brand-name span { color: #00d2ff; }
+
+        .nav-menu { flex: 1; padding: 25px 12px; overflow-y: auto; }
+        .nav-group { margin-bottom: 25px; }
+        .nav-label { 
+          font-size: 0.65rem; color: #475569; font-weight: 800; letter-spacing: 1.5px;
+          margin-bottom: 12px; padding-left: 15px;
         }
-        .notif-badge-mini {
-          position: absolute;
-          top: -2px;
-          right: -2px;
-          width: 8px;
-          height: 8px;
-          background: #ff4d4d;
-          border-radius: 50%;
-          border: 2px solid #0d121d;
+
+        .nav-item {
+          width: 100%; border: none; background: transparent; padding: 12px 15px;
+          border-radius: 12px; display: flex; align-items: center; gap: 12px;
+          color: #94a3b8; cursor: pointer; transition: 0.2s; position: relative;
+          margin-bottom: 4px; font-weight: 600; font-size: 0.9rem;
+          text-align: left;
         }
-        .notif-count-badge {
-          background: #ff4d4d;
-          color: white;
-          font-size: 0.6rem;
-          font-weight: 900;
-          padding: 2px 6px;
-          border-radius: 10px;
-          margin-left: auto;
+        .nav-item:hover { color: #f1f5f9; background: rgba(255,255,255,0.03); }
+        .nav-item.active { 
+          background: linear-gradient(90deg, rgba(0, 210, 255, 0.08), transparent);
+          color: #00d2ff; font-weight: 700;
         }
-        .notif-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.5);
-          backdrop-filter: blur(4px);
-          z-index: 4900;
+        .active-indicator {
+          position: absolute; left: 0; top: 25%; height: 50%; width: 3px;
+          background: #00d2ff; border-radius: 0 4px 4px 0; opacity: 0; transition: 0.3s;
+          box-shadow: 0 0 10px #00d2ff;
         }
+        .nav-item.active .active-indicator { opacity: 1; }
+        .nav-icon { transition: 0.2s; opacity: 0.7; }
+        .nav-item.active .nav-icon { opacity: 1; filter: drop-shadow(0 0 5px rgba(0,210,255,0.4)); }
+
+        .icon-badge-wrapper { position: relative; }
+        .icon-badge {
+          position: absolute; top: -8px; right: -8px; background: #ef4444;
+          color: white; font-size: 9px; font-weight: 900; min-width: 16px; height: 16px;
+          border-radius: 8px; display: flex; align-items: center; justify-content: center;
+          border: 2px solid #0f172a;
+        }
+
+        .sidebar-footer { padding: 20px 12px; border-top: 1px solid rgba(255,255,255,0.02); }
+        .user-profile-mini {
+          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+          padding: 10px; border-radius: 16px; display: flex; align-items: center; gap: 10px;
+        }
+        .user-avatar-mini { width: 36px; height: 36px; border-radius: 10px; border: 1.5px solid rgba(0,210,255,0.2); object-fit: cover; }
+        .user-details-mini { flex: 1; min-width: 0; }
+        .user-name-mini { color: #f1f5f9; font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-role-mini { color: #475569; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; }
+        
+        .logout-icon-btn {
+          background: rgba(239, 68, 68, 0.08); border: none; color: #f87171;
+          width: 30px; height: 30px; border-radius: 8px; display: flex;
+          align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
+        }
+        .logout-icon-btn:hover { background: #ef4444; color: white; }
+
+        .main-content { flex: 1; min-width: 0; position: relative; }
+
+        .mobile-header { display: none; }
+        .notif-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 4900; }
+
         @media (max-width: 1024px) {
-          .mobile-header { display: block; }
-          .main-content { 
-            padding-top: calc(90px + env(safe-area-inset-top, 20px)); 
-            padding-bottom: 130px;
+          .sidebar { display: none; }
+          .main-content { padding-bottom: 100px; }
+          .mobile-header {
+            display: block; position: fixed; top: 0; left: 0; right: 0;
+            background: #0f172a; z-index: 2000; border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-top: env(safe-area-inset-top, 20px);
           }
         }
       `}</style>
