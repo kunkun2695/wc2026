@@ -19,7 +19,11 @@ async function patchDatabase() {
     await db.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS url VARCHAR(255) DEFAULT '/'`);
     // Chuyển content cũ sang message nếu cần
     await db.query(`UPDATE notifications SET message = content WHERE message IS NULL AND content IS NOT NULL`).catch(() => {});
-    console.log('✅ [DB Fix] Đã cập nhật bảng notifications thành công.');
+    
+    // Vá bảng matches để hỗ trợ phân loại giải đấu
+    await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS competition_name TEXT DEFAULT 'Cúp C1 Châu Âu'`);
+    
+    console.log('✅ [DB Fix] Đã cập nhật bảng notifications và matches thành công.');
   } catch (err) {
     console.error('⚠️ [DB Fix Error]', err.message);
   }
