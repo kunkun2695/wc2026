@@ -67,7 +67,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             >
               <div className="btn-flag-mini"><FlagIcon flag={t1.flag} /></div>
             </button>
-            <span className="vote-percent">{Math.round((match.home_votes / (match.total_votes || 1)) * 100)}%</span>
+            <span className="vote-percent">{Math.round((Number(match.home_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
           </div>
           <div className="choice-col">
             <button 
@@ -77,7 +77,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             >
               HÒA
             </button>
-            <span className="vote-percent">{Math.round((match.draw_votes / (match.total_votes || 1)) * 100)}%</span>
+            <span className="vote-percent">{Math.round((Number(match.draw_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
           </div>
           <div className="choice-col">
             <button 
@@ -87,7 +87,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             >
               <div className="btn-flag-mini"><FlagIcon flag={t2.flag} /></div>
             </button>
-            <span className="vote-percent">{Math.round((match.away_votes / (match.total_votes || 1)) * 100)}%</span>
+            <span className="vote-percent">{Math.round((Number(match.away_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
           </div>
         </div>
 

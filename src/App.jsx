@@ -276,13 +276,18 @@ const App = () => {
       <header className="mobile-header">
         <div className="mobile-header-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Trophy size={22} color="var(--primary-cyan)" />
-            <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.2rem' }}>Bench-Bets</span>
+            <div className="brand-logo-glow" style={{ width: '32px', height: '32px' }}>
+              <Trophy size={18} className="brand-icon" />
+            </div>
+            <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>Bench-Bets</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
-              <Bell size={20} />
-              {notifications.some(n => !n.is_read) && <span className="notif-badge-mini"></span>}
+              <Bell size={18} />
+              {notifications.some(n => !n.is_read) && <span className="notif-badge-mini" style={{ top: '6px', right: '6px' }}></span>}
+            </button>
+            <button onClick={() => setActiveTab('settings')} className="mobile-notif-btn">
+              <Settings size={18} />
             </button>
             <button onClick={handleLogout} className="mobile-logout-btn">
               <LogOut size={18} />
@@ -456,7 +461,6 @@ const App = () => {
         </AnimatePresence>
       </main>
 
-      {/* Mobile Nav */}
       <nav className="mobile-nav-container">
         <div className="bottom-nav-bet">
           <button onClick={() => setActiveTab('home')} className={`nav-item-bet ${activeTab === 'home' ? 'active' : ''}`}>
@@ -464,8 +468,12 @@ const App = () => {
             <span>Trận đấu</span>
           </button>
           <button onClick={() => setActiveTab('leaderboard')} className={`nav-item-bet ${activeTab === 'leaderboard' ? 'active' : ''}`}>
-            <Star size={20} />
+            <Trophy size={20} />
             <span>Xếp hạng</span>
+          </button>
+          <button onClick={() => setActiveTab('ai')} className={`nav-item-bet ${activeTab === 'ai' ? 'active' : ''}`}>
+            <Sparkles size={20} color={activeTab === 'ai' ? '#00d2ff' : 'currentColor'} />
+            <span>Trợ lý AI</span>
           </button>
           <button onClick={() => setActiveTab('social')} className={`nav-item-bet ${activeTab === 'social' ? 'active' : ''}`}>
             <Users size={20} />
@@ -475,10 +483,6 @@ const App = () => {
             <MessageSquare size={20} />
             <span>Chat</span>
             {unreadChatCount > 0 && <span className="notif-badge-mini" style={{ top: '5px', right: '15px' }}></span>}
-          </button>
-          <button onClick={() => setActiveTab('settings')} className={`nav-item-bet ${activeTab === 'settings' ? 'active' : ''}`}>
-            <Settings size={20} />
-            <span>Cài đặt</span>
           </button>
         </div>
       </nav>
