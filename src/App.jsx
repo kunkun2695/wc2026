@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Trophy, Search, Edit3, Settings, 
-  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users
+  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles
 } from 'lucide-react';
 import NotificationsDrawer from './components/NotificationsDrawer';
 import HomeView from './views/HomeView';
@@ -16,13 +16,14 @@ import HistoryView from './views/HistoryView';
 import MatchDetailView from './views/MatchDetailView';
 import ChatView from './views/ChatView';
 import SocialView from './views/SocialView';
+import AiAssistantView from './views/AiAssistantView';
 import CommentSection from './components/CommentSection';
 import { mockAuth } from './data/mockAuth';
 import API_URL from './config';
 import { subscribeToPush } from './utils/pushNotifications';
 
 const App = () => {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, chat, history, settings, admin_matches, admin_teams, ai
   const [user, setUser] = useState(null);
   const [teams, setTeams] = useState([]);
   const [matches, setMatches] = useState([]);
@@ -322,6 +323,11 @@ const App = () => {
               </div>
               <span>Phòng Chat</span>
             </button>
+            <button onClick={() => setActiveTab('ai')} className={`nav-item ${activeTab === 'ai' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <Sparkles size={18} className="nav-icon" color="#00d2ff" /> 
+              <span style={{ color: activeTab === 'ai' ? '#00d2ff' : 'inherit' }}>Trợ lý AI</span>
+            </button>
           </div>
 
           <div className="nav-group">
@@ -409,6 +415,11 @@ const App = () => {
           {activeTab === 'chat' && (
             <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <ChatView user={user} />
+            </motion.div>
+          )}
+          {activeTab === 'ai' && (
+            <motion.div key="ai" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <AiAssistantView />
             </motion.div>
           )}
           {activeTab === 'social' && (

@@ -76,6 +76,7 @@ const { router: notificationsRoutes } = require('./routes/notifications');
 const chatRoutes = require('./routes/chat');
 const dmRoutes = require('./routes/dm');
 const postsRoutes = require('./routes/posts');
+const aiRoutes = require('./routes/ai');
 
 const app = express();
 const PORT = process.env.PORT || 5005;
@@ -99,6 +100,7 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/dm', dmRoutes);
 app.use('/api/posts', postsRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Serve Static Files
 const distPath = path.join(__dirname, '../dist');

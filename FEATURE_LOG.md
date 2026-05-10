@@ -109,5 +109,11 @@ Tài liệu này lưu lại các tính năng đã hoàn thiện và cấu trúc 
     - **Đồng bộ danh tính (Identity Sync)**: Khắc phục lỗi tin nhắn "không biết của ai" bằng cách sử dụng so sánh tương đối (`==`) cho ID người dùng, giải quyết triệt để sự sai khác kiểu dữ liệu (String vs Number) từ DB.
     - **Seamless UI**: Sửa lỗi "rò rỉ ánh sáng" (Light leakage) và khoảng hở giữa Sidebar và nội dung Chat trên Desktop.
 
+### 10. Tích Hợp Trợ Lý AI "Bench Guru" (10/05/2026 - Chiều Muộn)
+- **AI View (Frontend)**: Phát triển trang Chat chuyên dụng cho AI với hiệu ứng Glassmorphism, Typing indicator (đang gõ) và các nút gợi ý câu hỏi nhanh (Quick suggestions).
+- **AI Engine (Backend)**: Thiết lập Route `/api/ai/chat` hỗ trợ xử lý ngôn ngữ tự nhiên.
+- **Phân tích thông minh**: AI đóng vai chuyên gia World Cup, có khả năng phân tích phong độ Brazil, dự đoán nhà vô địch và tra cứu lịch sử bóng đá.
+- **Kiến trúc sẵn sàng**: Cấu trúc backend đã được tối ưu để bạn có thể cắm trực tiếp **Gemini API** hoặc **OpenAI API** vào ngay trong buổi tối.
+
 ---
-*Cập nhật lần cuối: 10/05/2026 - 15:05*
+*Cập nhật lần cuối: 10/05/2026 - 15:10*
