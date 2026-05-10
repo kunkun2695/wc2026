@@ -298,6 +298,16 @@ body {
   .mobile-nav-container { display: flex; }
 }
 
+.notif-badge-mini {
+  position: absolute;
+  background: #ef4444;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid #0d121d;
+  box-shadow: 0 0 5px #ef4444;
+}
+
 /* Match Card Enhancements */
 .score-input-box {
   width: 44px;

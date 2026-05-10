@@ -68,9 +68,21 @@ const App = () => {
         headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
       });
       const data = await res.json();
-      setUnreadChatCount(data.count || 0);
+      setUnreadChatCount(data.unread_count || 0);
     } catch (err) {}
   };
+
+  // Poll for notifications and counts every 10s
+  useEffect(() => {
+    const token = mockAuth.getToken();
+    if (!token) return;
+    
+    const interval = setInterval(() => {
+      fetchUnreadChatCount();
+      fetchNotifications();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchData = async () => {
     try {
