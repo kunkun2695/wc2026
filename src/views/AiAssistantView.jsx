@@ -177,13 +177,22 @@ const AiAssistantView = () => {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .ai-view-container { height: 100%; width: 100%; padding: 30px 40px; background: #020617; display: flex; justify-content: center; overflow: hidden; }
-        .ai-chat-card { width: 100%; max-width: 900px; height: 100%; display: flex; flex-direction: column; border-radius: 28px; overflow: hidden; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 30px 60px rgba(0,0,0,0.6); min-height: 0; }
+        .ai-view-container { height: 100%; width: 100%; padding: 30px 40px; background: transparent; display: flex; justify-content: center; overflow: hidden; }
+        .ai-chat-card { width: 100%; max-width: 900px; height: 100%; display: flex; flex-direction: column; border-radius: 28px; overflow: hidden; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 30px 60px rgba(0,0,0,0.6); min-height: 0; }
         .ai-header { padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .ai-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 210, 255, 0.1); color: #00d2ff; padding: 4px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px; }
         .ai-header h2 { margin: 0; font-size: 1.4rem; font-weight: 900; color: white; }
 
-        .ai-messages-wrapper { flex: 1; overflow-y: auto; padding: 25px; background: rgba(0,0,0,0.1); }
+        .ai-messages-wrapper { 
+          flex: 1; 
+          overflow-y: auto; 
+          padding: 25px; 
+          background: rgba(0,0,0,0.1); 
+          background-image: url('../assets/chat-bg.png');
+          background-repeat: repeat;
+          background-size: 380px;
+          background-attachment: local;
+        }
         .messages-list { display: flex; flex-direction: column; gap: 20px; }
         .msg-row { display: flex; gap: 15px; max-width: 90%; }
         .msg-row.user { align-self: flex-end; flex-direction: row-reverse; }

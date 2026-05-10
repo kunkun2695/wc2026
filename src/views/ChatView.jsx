@@ -271,7 +271,7 @@ const ChatView = ({ user, onToggleHeader }) => {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .chat-view-container { display: flex; height: 100%; background: #0a0e17; width: 100%; overflow: hidden; position: relative; }
+        .chat-view-container { display: flex; height: 100%; background: transparent; width: 100%; overflow: hidden; position: relative; }
         .chat-sidebar { width: 320px; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px); flex-shrink: 0; }
         .sidebar-header-unified { padding: 20px; }
         .sidebar-header-unified h2 { font-size: 1.5rem; font-weight: 900; color: white; margin-bottom: 15px; }
@@ -288,7 +288,7 @@ const ChatView = ({ user, onToggleHeader }) => {
         .group-item .group-avatar-stack { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #00d2ff, #3a7bd5); display: flex; align-items: center; justify-content: center; color: white; }
         .user-name { font-weight: 800; color: white; font-size: 0.95rem; }
         .user-role { font-size: 0.7rem; color: #475569; text-transform: uppercase; font-weight: 700; }
-        .chat-main { flex: 1; display: flex; flex-direction: column; background: #0a0e17; min-width: 0; min-height: 0; position: relative; overflow: hidden; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: transparent; min-width: 0; min-height: 0; position: relative; overflow: hidden; }
         
         .chat-header.modern-glass { 
           padding: 12px 20px; 
@@ -340,7 +340,22 @@ const ChatView = ({ user, onToggleHeader }) => {
         }
         .modern-action-btn:hover { color: white; background: rgba(255,255,255,0.07); }
         
-        .messages-container { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; min-height: 0; -webkit-overflow-scrolling: touch; }
+        .messages-container { 
+          flex: 1; 
+          overflow-y: auto; 
+          overflow-x: hidden; 
+          padding: 20px; 
+          display: flex; 
+          flex-direction: column; 
+          gap: 16px; 
+          scroll-behavior: smooth; 
+          min-height: 0; 
+          -webkit-overflow-scrolling: touch;
+          background-image: url('../assets/chat-bg.png');
+          background-repeat: repeat;
+          background-size: 380px;
+          background-attachment: local;
+        }
         .load-more-indicator { text-align: center; font-size: 0.75rem; color: #475569; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .spinner-mini { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.1); border-top-color: #00d2ff; border-radius: 50%; animation: spin 0.6s linear infinite; }
         .message-wrapper { display: flex; gap: 12px; max-width: 85%; }

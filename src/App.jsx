@@ -569,10 +569,11 @@ const App = () => {
       </AnimatePresence>
 
       <style>{`
-        .app-layout { display: flex; min-height: 100vh; background: #0a0e17; }
+        .app-layout { display: flex; min-height: 100vh; background: transparent; }
         
         .sidebar {
-          width: 280px; height: 100vh; background: #0f172a; border-right: 1px solid rgba(255,255,255,0.03);
+          width: 280px; height: 100vh; background: rgba(15, 23, 42, 0.7); border-right: 1px solid rgba(255,255,255,0.03);
+          backdrop-filter: blur(20px);
           display: flex; flex-direction: column; position: sticky; top: 0; z-index: 1000;
           transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -652,6 +653,7 @@ const App = () => {
           overflow: ${activeTab === 'chat' || activeTab === 'ai' ? 'hidden' : 'auto'};
           display: flex;
           flex-direction: column;
+          background: transparent;
         }
 
         .mobile-header { display: none; }
