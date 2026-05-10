@@ -445,8 +445,9 @@ const SocialView = () => {
         }
         .social-feed-max { 
           width: 100%;
-          max-width: 900px; 
-          margin: 0 auto; 
+          max-width: 1200px; 
+          margin-left: 0;
+          padding-left: 40px;
         }
         
         .post-composer-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 20px; margin-bottom: 30px; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }

@@ -63,10 +63,10 @@ const LeaderboardView = ({ leaderboard }) => {
 
       <style jsx>{`
         .leaderboard-container {
-          max-width: 900px;
-          margin: 0 auto;
+          max-width: 1200px;
+          margin-left: 0;
           padding-bottom: 100px;
-          padding: 0 5vw;
+          padding-left: 40px;
         }
         .page-header-lb {
           text-align: center;

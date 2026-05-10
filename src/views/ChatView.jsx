@@ -228,9 +228,22 @@ const ChatView = ({ user }) => {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .chat-view-container { display: flex; height: 100vh; background: #0a0e17; padding-top: 60px; overflow: hidden; }
+        .chat-view-container { 
+          display: flex; 
+          height: 100vh; 
+          background: #0a0e17; 
+          overflow: hidden; 
+          width: 100%;
+        }
         
-        .chat-sidebar { width: 320px; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px); }
+        .chat-sidebar { 
+          width: 320px; 
+          border-right: 1px solid rgba(255,255,255,0.05); 
+          display: flex; 
+          flex-direction: column; 
+          background: rgba(15, 23, 42, 0.5); 
+          backdrop-filter: blur(20px); 
+        }
         .sidebar-tabs { display: flex; padding: 15px; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .tab-btn { flex: 1; background: rgba(255,255,255,0.03); border: none; color: #888; padding: 10px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
         .tab-btn.active { background: rgba(0, 210, 255, 0.1); color: #00d2ff; border: 1px solid rgba(0, 210, 255, 0.2); }
@@ -284,7 +297,8 @@ const ChatView = ({ user }) => {
         .send-btn:hover { transform: scale(1.1); background: #33e0ff; }
         .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
+          .chat-view-container { padding-top: 60px; }
           .chat-sidebar { width: 100%; position: absolute; inset: 60px 0 0; z-index: 20; transform: translateX(0); transition: 0.3s; }
           .chat-main { position: absolute; inset: 60px 0 0; z-index: 21; transform: translateX(100%); transition: 0.3s; }
           .chat-main.show { transform: translateX(0); }

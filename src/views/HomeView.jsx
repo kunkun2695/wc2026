@@ -119,7 +119,12 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .home-view-bet { max-width: 900px; margin: 0 auto; padding: 0 10px; }
+        .home-view-bet { 
+          width: 100%;
+          max-width: 1200px; 
+          margin-left: 0; 
+          padding: 0 40px 0 40px; 
+        }
         .quote-banner { border-left: 4px solid #00d2ff; padding: 20px; background: rgba(0, 210, 255, 0.03); borderRadius: 0 12px 12px 0; margin-bottom: 30px; fontSize: 0.85rem; color: #94a3b8; font-style: italic; border: 1px solid rgba(255,255,255,0.05); border-left-width: 4px; }
         
         .prediction-counter { display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 210, 255, 0.05); padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; color: #00d2ff; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(0, 210, 255, 0.1); }
