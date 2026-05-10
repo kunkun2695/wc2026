@@ -1,7 +1,7 @@
 import React from 'react';
 import MatchCard from '../components/MatchCard';
 
-const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatches }) => {
+const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatches, onOpenComments }) => {
   // Nhóm các trận đấu theo ngày
   const groupedMatches = matches.reduce((acc, match) => {
     const [date] = match.match_time ? match.match_time.split(' - ') : ['Sắp tới'];
@@ -48,6 +48,7 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
                   userPrediction={pred}
                   onSavePrediction={onSavePrediction}
                   onRefreshMatches={onRefreshMatches}
+                  onOpenComments={onOpenComments}
                 />
               );
             })}

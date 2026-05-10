@@ -14,6 +14,7 @@ import LeaderboardView from './views/LeaderboardView';
 import SettingsView from './views/SettingsView';
 import HistoryView from './views/HistoryView';
 import MatchDetailView from './views/MatchDetailView';
+import CommentSection from './components/CommentSection';
 import { mockAuth } from './data/mockAuth';
 import API_URL from './config';
 import { subscribeToPush } from './utils/pushNotifications';
@@ -30,6 +31,7 @@ const App = () => {
   const [selectedMatchId, setSelectedMatchId] = useState(null);
   const [lastNotifId, setLastNotifId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [commentMatch, setCommentMatch] = useState(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -224,6 +226,10 @@ const App = () => {
 
   if (!user) return <AuthView onLogin={(u) => setUser(u)} />;
 
+  const handleOpenComments = (match) => {
+    setCommentMatch(match);
+  };
+
   return (
     <div className="app-layout">
       {/* Mobile Header */}
@@ -302,6 +308,7 @@ const App = () => {
                 predictions={predictions} 
                 onSavePrediction={savePrediction} 
                 onRefreshMatches={fetchData}
+                onOpenComments={handleOpenComments}
               />
             </motion.div>
           )}
@@ -393,6 +400,25 @@ const App = () => {
               onMarkAsRead={markNotificationsAsRead}
               onDeleteAll={deleteAllNotifications}
               onNotificationClick={handleNotificationClick}
+            />
+          </>
+        )}
+
+        {commentMatch && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="notif-overlay"
+              style={{ zIndex: 5900 }}
+              onClick={() => setCommentMatch(null)}
+            />
+            <CommentSection 
+              matchId={commentMatch.id}
+              matchTitle={`${commentMatch.team1_name} vs ${commentMatch.team2_name}`}
+              onClose={() => setCommentMatch(null)}
+              onCommentChange={fetchData}
             />
           </>
         )}

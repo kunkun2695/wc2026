@@ -171,7 +171,7 @@ const CommentSection = ({ matchId, matchTitle, onClose, onCommentChange, isInlin
           height: 70vh;
           border-top: 1px solid rgba(255,255,255,0.1);
           border-radius: 24px 24px 0 0;
-          z-index: 3000;
+          z-index: 7000;
           box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
           max-width: 600px;
           margin: 0 auto;

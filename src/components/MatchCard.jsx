@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Edit3, Zap, Check, MessageSquare } from 'lucide-react';
 import { mockAuth } from '../data/mockAuth';
-import CommentSection from './CommentSection';
-import { AnimatePresence } from 'framer-motion';
 
 const FlagIcon = ({ flag }) => {
   const isUrl = flag?.startsWith('http') || flag?.includes('.');
@@ -13,10 +11,9 @@ const FlagIcon = ({ flag }) => {
   return <span>{flag}</span>;
 };
 
-const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, onRefreshMatches }) => {
+const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, onRefreshMatches, onOpenComments }) => {
   const [selectedChoice, setSelectedChoice] = useState(null); // '1' (Home), 'X' (Draw), '2' (Away)
   const [isSaving, setIsSaving] = useState(false);
-  const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
     if (userPrediction) {
@@ -114,7 +111,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
 
         <button 
           className="gay-btn"
-          onClick={() => setShowComments(true)}
+          onClick={() => onOpenComments(match)}
         >
           <MessageSquare size={12} /> GÁY NGAY ({match.comment_count || 0})
         </button>
@@ -247,36 +244,9 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
       ` }} />
 
-      <AnimatePresence>
-        {showComments && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              className="comment-overlay"
-              onClick={() => setShowComments(false)}
-            />
-            <CommentSection 
-              matchId={match.id} 
-              matchTitle={`${t1.name} vs ${t2.name}`}
-              onClose={() => setShowComments(false)} 
-              onCommentChange={onRefreshMatches}
-            />
-          </>
-        )}
-      </AnimatePresence>
-
       <style dangerouslySetInnerHTML={{ __html: `
         .comment-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0,0,0,0.7);
-          backdrop-filter: blur(4px);
-          z-index: 2900;
+          display: none;
         }
       ` }} />
 
