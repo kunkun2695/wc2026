@@ -8,7 +8,7 @@ import {
 const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
 const EMOJIS = ['⚽', '🏆', '🔥', '👏', '🙌', '😮', '😢', '😍', '🇻🇳', '🤣', '💪', '👇'];
 
-const ChatView = () => {
+const ChatView = ({ user }) => {
   const [activeMode, setActiveMode] = useState('public'); // 'public' or 'dm'
   const [publicMessages, setPublicMessages] = useState([]);
   const [dmUsers, setDmUsers] = useState([]);
@@ -20,7 +20,7 @@ const ChatView = () => {
   const [loading, setLoading] = useState(true);
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  const currentUser = JSON.parse(localStorage.getItem('wc2026_user') || '{}');
+  const currentUser = user || JSON.parse(localStorage.getItem('wc2026_user') || '{}');
 
   useEffect(() => {
     fetchPublicMessages();
@@ -122,16 +122,16 @@ const ChatView = () => {
 
         {activeMode === 'dm' && (
           <div className="user-list">
-            {dmUsers.map(user => (
+            {dmUsers.map(u => (
               <div 
-                key={user.id} 
-                className={`user-item ${selectedUser?.id === user.id ? 'active' : ''}`}
-                onClick={() => setSelectedUser(user)}
+                key={u.id} 
+                className={`user-item ${selectedUser?.id === u.id ? 'active' : ''}`}
+                onClick={() => setSelectedUser(u)}
               >
-                <img src={user.avatar || 'https://via.placeholder.com/40'} alt="av" />
+                <img src={u.avatar || 'https://via.placeholder.com/40'} alt="av" />
                 <div className="user-info">
-                  <div className="user-name">{user.name || user.username}</div>
-                  <div className="user-role">{user.role}</div>
+                  <div className="user-name">{u.name || u.username}</div>
+                  <div className="user-role">{u.role}</div>
                 </div>
               </div>
             ))}
@@ -153,7 +153,7 @@ const ChatView = () => {
 
         <div className="messages-container">
           {(activeMode === 'public' ? publicMessages : dmMessages).map((m, i) => {
-            const isMe = m.user_id === currentUser.id || m.sender_id === currentUser.id;
+            const isMe = (m.user_id == currentUser.id) || (m.sender_id == currentUser.id);
             return (
               <div key={m.id || i} className={`message-wrapper ${isMe ? 'me' : 'others'}`}>
                 {!isMe && activeMode === 'public' && (

@@ -235,9 +235,12 @@ const SocialView = () => {
               <p>Đang tải bảng tin...</p>
             </div>
           ) : (
-            posts.map(post => (
-              <PostCard key={post.id} post={post} onLike={handleLike} onOpenComments={openComments} />
-            ))
+            posts.length > 0 ? posts.map(post => {
+              const isMe = post.user_id == currentUser.id;
+              return (
+                <PostCard key={post.id} post={post} onLike={handleLike} onOpenComments={openComments} />
+              )
+            }) : null
           )}
         </div>
       </div>

@@ -408,7 +408,7 @@ const App = () => {
           )}
           {activeTab === 'chat' && (
             <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ChatView />
+              <ChatView user={user} />
             </motion.div>
           )}
           {activeTab === 'social' && (
