@@ -1,13 +1,29 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
-const { authenticateToken } = require('../index'); // Giả sử middleware này đã có
+const jwt = require('jsonwebtoken');
 
-// Lấy danh sách thành viên để chat (trừ bản thân)
-router.get('/users', async (req, res) => {
+const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
+
+// Middleware xác thực nội bộ cho DM
+const authenticateUser = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token provided' });
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(403).json({ error: 'Unauthorized' });
+  }
+};
+
+// Lấy danh sách TOÀN BỘ thành viên để chat (trừ bản thân)
+router.get('/users', authenticateUser, async (req, res) => {
   try {
     const result = await db.query(
-      'SELECT id, username, name, avatar, role FROM users ORDER BY name ASC'
+      'SELECT id, username, name, avatar, role FROM users WHERE id != $1 ORDER BY name ASC',
+      [req.user.id]
     );
     res.json(result.rows);
   } catch (err) {
@@ -16,7 +32,7 @@ router.get('/users', async (req, res) => {
 });
 
 // Lấy tin nhắn giữa mình và một người khác
-router.get('/history/:otherId', async (req, res) => {
+router.get('/history/:otherId', authenticateUser, async (req, res) => {
   const myId = req.user.id;
   const otherId = req.params.otherId;
   try {
@@ -27,7 +43,7 @@ router.get('/history/:otherId', async (req, res) => {
       ORDER BY created_at ASC
     `, [myId, otherId]);
     
-    // Đánh dấu đã đọc
+    // Đánh dấu đã đọc cho các tin nhắn gửi đến mình
     await db.query(
       'UPDATE direct_messages SET is_read = TRUE WHERE receiver_id = $1 AND sender_id = $2',
       [myId, otherId]
@@ -40,9 +56,14 @@ router.get('/history/:otherId', async (req, res) => {
 });
 
 // Gửi tin nhắn riêng
-router.post('/send', async (req, res) => {
+router.post('/send', authenticateUser, async (req, res) => {
   const { receiver_id, content } = req.body;
   const sender_id = req.user.id;
+
+  if (!content || !receiver_id) {
+    return res.status(400).json({ error: 'Thiếu thông tin tin nhắn' });
+  }
+
   try {
     const result = await db.query(
       'INSERT INTO direct_messages (sender_id, receiver_id, content) VALUES ($1, $2, $3) RETURNING *',
@@ -54,8 +75,8 @@ router.post('/send', async (req, res) => {
   }
 });
 
-// Lấy số tin nhắn chưa đọc
-router.get('/unread-count', async (req, res) => {
+// Lấy tổng số tin nhắn chưa đọc
+router.get('/unread-count', authenticateUser, async (req, res) => {
   try {
     const result = await db.query(
       'SELECT COUNT(*) FROM direct_messages WHERE receiver_id = $1 AND is_read = FALSE',
