@@ -10,57 +10,61 @@ const getAIClient = () => {
   let apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
   if (!apiKey || apiKey === 'sk-xxxx') return { type: 'none' };
   
-  apiKey = apiKey.trim(); // Tự động xóa khoảng trắng thừa
+  apiKey = apiKey.trim();
   
-  // Nếu là key của Google (thường không bắt đầu bằng sk-)
   if (!apiKey.startsWith('sk-')) {
     const genAI = new GoogleGenerativeAI(apiKey);
-    return { type: 'gemini', client: genAI.getGenerativeModel({ model: "gemini-1.5-flash" }) };
+    // Trả về một đối tượng có khả năng thử nhiều model
+    return { 
+      type: 'gemini', 
+      genAI,
+      getModel: (name) => genAI.getGenerativeModel({ model: name })
+    };
   }
   
-  // Nếu là key của OpenAI
   return { type: 'openai', client: new OpenAI({ apiKey }) };
 };
 
 router.post('/chat', authenticateUser, async (req, res) => {
   const { message } = req.body;
-  
   if (!message) return res.status(400).json({ error: 'Nội dung trống' });
 
   const ai = getAIClient();
 
-  // Nếu không có API Key, dùng bộ não giả lập
   if (ai.type === 'none') {
-    return simulateAiResponse(message, res);
+    return res.json({ reply: "Chào bạn! Tôi là Bench Guru. Hiện tại tôi đang chạy ở chế độ offline (Thiếu API Key). Hãy nhắc Admin cấu hình Gemini API Key để tôi có thể phân tích sâu hơn nhé!" });
   }
 
   try {
     if (ai.type === 'gemini') {
-      const prompt = `Bạn là Bench Guru, một chuyên gia phân tích bóng đá chuyên nghiệp cho World Cup 2026. 
-      Bạn am hiểu sâu sắc về chiến thuật, lịch sử và các ngôi sao. 
-      Phong cách của bạn là nhiệt huyết, đôi khi có chút hài hước (văn hóa 'gáy' bóng đá), nhưng luôn dựa trên dữ liệu. 
-      Trả lời bằng tiếng Việt, ngắn gọn nhưng chất lượng.
-      
-      Người dùng hỏi: ${message}`;
-      
-      const result = await ai.client.generateContent(prompt);
-      const response = await result.response;
-      const reply = response.text();
-      return res.json({ reply });
+      // Danh sách các model để thử theo thứ tự ưu tiên
+      const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
+      let lastError = null;
+
+      for (const modelName of modelsToTry) {
+        try {
+          const model = ai.getModel(modelName);
+          const result = await model.generateContent(message);
+          const response = await result.response;
+          return res.json({ reply: response.text() });
+        } catch (err) {
+          console.error(`Thử model ${modelName} thất bại:`, err.message);
+          lastError = err;
+          if (err.message.includes('404')) continue; // Nếu 404 thì thử cái tiếp theo
+          break; // Nếu lỗi khác (như 401) thì dừng luôn
+        }
+      }
+      throw lastError; // Nếu thử hết mà vẫn lỗi thì ném lỗi ra ngoài
     } else {
-      // Logic OpenAI cũ
       const completion = await ai.client.chat.completions.create({
         model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: "Bạn là Bench Guru, chuyên gia bóng đá World Cup 2026." },
-          { role: "user", content: message }
-        ]
+        messages: [{ role: "user", content: message }],
       });
       res.json({ reply: completion.choices[0].message.content });
     }
-  } catch (err) {
-    console.error('AI Error:', err.message);
-    res.status(500).json({ error: `AI: ${err.message}` });
+  } catch (error) {
+    console.error('AI Error:', error);
+    res.status(500).json({ error: `AI: [${error.name}]: ${error.message}. Vui lòng kiểm tra lại cấu hình Admin hoặc Token đăng nhập.` });
   }
 });
 
