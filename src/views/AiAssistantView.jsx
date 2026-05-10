@@ -5,7 +5,7 @@ import API_URL from '../config';
 
 const AiAssistantView = () => {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Xin chào! Tôi là **Bench Guru**, trợ lý AI chuyên về World Cup 2026. Tôi đang sử dụng công nghệ **Streaming** mới nhất để phản hồi bạn ngay lập tức. Bạn muốn hỏi gì về giải đấu năm nay?' }
+    { role: 'assistant', content: 'Xin chào! Tôi là **Bench Guru**. Tôi đã sẵn sàng hỗ trợ bạn với tốc độ tối đa. Bạn muốn hỏi gì về World Cup 2026?' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -21,10 +21,7 @@ const AiAssistantView = () => {
     const userMsg = input.trim();
     setInput('');
     
-    // Thêm tin nhắn của user vào danh sách
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
-    
-    // Chuẩn bị tin nhắn trống của AI để hứng stream
     setMessages(prev => [...prev, { role: 'assistant', content: '', isStreaming: true }]);
     setIsTyping(true);
 
@@ -43,52 +40,46 @@ const AiAssistantView = () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let accumulatedText = '';
+      let buffer = ''; // Bộ nhớ đệm để xử lý các dòng dữ liệu dở dang
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
+        buffer += decoder.decode(value, { stream: true });
         
-        // SSE format is "data: {...}\n\n"
-        const lines = chunk.split('\n');
+        // Tách các dòng theo định dạng SSE (data: ...)
+        let lines = buffer.split('\n\n');
+        buffer = lines.pop(); // Giữ lại dòng cuối cùng có thể chưa hoàn chỉnh
+
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.slice(6).trim();
-            if (dataStr === '[DONE]') {
-              // Kết thúc stream
+          const cleanLine = line.replace(/^data: /, '').trim();
+          if (!cleanLine) continue;
+          
+          if (cleanLine === '[DONE]') {
+            setMessages(prev => {
+              const newMsgs = [...prev];
+              const last = newMsgs[newMsgs.length - 1];
+              if (last) last.isStreaming = false;
+              return newMsgs;
+            });
+            continue;
+          }
+
+          try {
+            const data = JSON.parse(cleanLine);
+            if (data.text) {
+              accumulatedText += data.text;
               setMessages(prev => {
                 const newMsgs = [...prev];
                 const last = newMsgs[newMsgs.length - 1];
-                if (last) last.isStreaming = false;
+                if (last) last.content = accumulatedText;
                 return newMsgs;
               });
-              break;
             }
-
-            try {
-              const data = JSON.parse(dataStr);
-              if (data.text) {
-                accumulatedText += data.text;
-                // Cập nhật tin nhắn cuối cùng với text mới
-                setMessages(prev => {
-                  const newMsgs = [...prev];
-                  const last = newMsgs[newMsgs.length - 1];
-                  if (last) last.content = accumulatedText;
-                  return newMsgs;
-                });
-              } else if (data.error) {
-                accumulatedText = `⚠️ ${data.error}`;
-                setMessages(prev => {
-                  const newMsgs = [...prev];
-                  const last = newMsgs[newMsgs.length - 1];
-                  if (last) last.content = accumulatedText;
-                  return newMsgs;
-                });
-              }
-            } catch (e) {
-              // Parse lỗi hoặc chunk không hoàn chỉnh, bỏ qua
-            }
+          } catch (e) {
+            // Nếu JSON không hợp lệ do gói tin bị cắt, ta bỏ qua và đợi gói tiếp theo
+            console.warn('Bỏ qua gói tin lỗi:', cleanLine);
           }
         }
       }
@@ -109,6 +100,7 @@ const AiAssistantView = () => {
   };
 
   const formatText = (text) => {
+    if (!text) return '';
     return text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\n/g, '<br/>');
@@ -116,14 +108,13 @@ const AiAssistantView = () => {
 
   return (
     <div className="ai-view-container">
-      <div className="ai-chat-card glass-panel">
+      <div className="ai-chat-card">
         <header className="ai-header">
           <div className="ai-badge">
             <Zap size={14} fill="currentColor" />
-            <span>REAL-TIME STREAMING</span>
+            <span>GEMINI 2.5 STREAMING</span>
           </div>
-          <h2 className="font-outfit">Bench Guru <span className="beta-tag">STREAM</span></h2>
-          <p>Phản hồi tức thì với công nghệ Gemini 2.5</p>
+          <h2 className="font-outfit">Bench Guru</h2>
         </header>
 
         <div className="ai-messages-wrapper">
@@ -144,7 +135,7 @@ const AiAssistantView = () => {
                 </div>
               </motion.div>
             ))}
-            {isTyping && messages[messages.length-1]?.content === '' && (
+            {isTyping && (!messages[messages.length-1]?.content) && (
               <div className="msg-row ai">
                 <div className="msg-icon pulse"><Bot size={18} /></div>
                 <div className="typing-indicator-modern">
@@ -158,14 +149,14 @@ const AiAssistantView = () => {
 
         <div className="ai-input-area">
           <div className="suggestions-row">
-            <button onClick={() => setInput('Phân tích trận Brazil tối nay')}>🔍 Phân tích Brazil</button>
-            <button onClick={() => setInput('Ai là vua phá lưới?')}>🏆 Vua phá lưới</button>
-            <button onClick={() => setInput('Dự đoán đội vô địch')}>⭐ Dự đoán</button>
+            <button onClick={() => setInput('Phân tích Brazil')}>🔍 Brazil</button>
+            <button onClick={() => setInput('Vua phá lưới')}>🏆 Vua phá lưới</button>
+            <button onClick={() => setInput('Dự đoán vô địch')}>⭐ Dự đoán</button>
           </div>
           <div className="ai-input-bar">
             <input 
               type="text" 
-              placeholder="Hỏi Bench Guru bất cứ điều gì..." 
+              placeholder="Hỏi Bench Guru..." 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
@@ -180,51 +171,42 @@ const AiAssistantView = () => {
       <style dangerouslySetInnerHTML={{ __html: `
         .ai-view-container { height: 100vh; padding: 30px 40px; background: #020617; display: flex; justify-content: center; }
         .ai-chat-card { width: 100%; max-width: 900px; height: 100%; display: flex; flex-direction: column; border-radius: 28px; overflow: hidden; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
-        .ai-header { padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.03); }
-        .ai-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 210, 0, 0.1); color: #ffd200; padding: 4px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 12px; border: 1px solid rgba(255, 210, 0, 0.2); }
-        .ai-header h2 { margin: 0; font-size: 1.6rem; font-weight: 900; color: white; }
-        .ai-header p { margin: 5px 0 0; color: #64748b; font-size: 0.85rem; font-weight: 500; }
+        .ai-header { padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .ai-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 210, 255, 0.1); color: #00d2ff; padding: 4px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px; }
+        .ai-header h2 { margin: 0; font-size: 1.4rem; font-weight: 900; color: white; }
 
-        .ai-messages-wrapper { flex: 1; overflow-y: auto; padding: 30px; background: rgba(0,0,0,0.15); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
-        .messages-list { display: flex; flex-direction: column; gap: 25px; }
-        .msg-row { display: flex; gap: 15px; max-width: 85%; }
+        .ai-messages-wrapper { flex: 1; overflow-y: auto; padding: 25px; background: rgba(0,0,0,0.1); }
+        .messages-list { display: flex; flex-direction: column; gap: 20px; }
+        .msg-row { display: flex; gap: 15px; max-width: 90%; }
         .msg-row.user { align-self: flex-end; flex-direction: row-reverse; }
-        
-        .msg-icon { width: 40px; height: 40px; border-radius: 14px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: #64748b; flex-shrink: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .msg-icon { width: 36px; height: 36px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: #64748b; flex-shrink: 0; }
         .msg-row.ai .msg-icon { background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: white; }
-        .msg-row.user .msg-icon { background: rgba(255,255,255,0.1); color: white; }
         
-        .msg-bubble-ai { padding: 16px 20px; border-radius: 22px; font-size: 0.95rem; line-height: 1.7; position: relative; }
+        .msg-bubble-ai { padding: 14px 18px; border-radius: 20px; font-size: 0.95rem; line-height: 1.6; position: relative; }
         .msg-row.ai .msg-bubble-ai { background: rgba(30, 41, 59, 0.7); color: #cbd5e1; border-top-left-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
         .msg-row.user .msg-bubble-ai { background: #00d2ff; color: #020617; border-top-right-radius: 4px; font-weight: 600; }
         
-        .streaming-cursor { display: inline-block; width: 2px; height: 1.2em; background: #00d2ff; margin-left: 4px; vertical-align: middle; animation: blink 0.8s infinite; }
+        .streaming-cursor { display: inline-block; width: 2px; height: 1em; background: #00d2ff; margin-left: 4px; vertical-align: middle; animation: blink 0.8s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        .typing-indicator-modern { display: flex; gap: 5px; padding: 18px 25px; background: rgba(255,255,255,0.03); border-radius: 22px; border-top-left-radius: 4px; }
-        .typing-indicator-modern span { width: 7px; height: 7px; background: #00d2ff; border-radius: 50%; animation: bounce 1.2s infinite; }
+        .typing-indicator-modern { display: flex; gap: 4px; padding: 12px 18px; background: rgba(255,255,255,0.03); border-radius: 18px; border-top-left-radius: 4px; }
+        .typing-indicator-modern span { width: 6px; height: 6px; background: #00d2ff; border-radius: 50%; animation: bounce 1s infinite; }
         .typing-indicator-modern span:nth-child(2) { animation-delay: 0.2s; }
         .typing-indicator-modern span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); opacity: 0.3; } 50% { transform: translateY(-8px); opacity: 1; } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-        .ai-input-area { padding: 20px 30px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(15, 23, 42, 0.8); }
-        .suggestions-row { display: flex; gap: 12px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .suggestions-row::-webkit-scrollbar { display: none; }
-        .suggestions-row button { white-space: nowrap; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; padding: 8px 16px; border-radius: 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .suggestions-row button:hover { background: rgba(0, 210, 255, 0.15); color: #00d2ff; border-color: #00d2ff; transform: translateY(-2px); }
+        .ai-input-area { padding: 15px 25px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(15, 23, 42, 0.8); }
+        .suggestions-row { display: flex; gap: 10px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+        .suggestions-row button { white-space: nowrap; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; padding: 6px 12px; border-radius: 12px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
 
-        .ai-input-bar { display: flex; gap: 15px; align-items: center; background: rgba(0,0,0,0.3); padding: 10px 12px 10px 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); }
-        .ai-input-bar input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 1rem; }
-        .ai-send-btn { background: #00d2ff; color: #020617; border: none; width: 44px; height: 44px; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
-        .ai-send-btn:disabled { opacity: 0.4; }
+        .ai-input-bar { display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 10px 8px 18px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
+        .ai-input-bar input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 0.95rem; }
+        .ai-send-btn { background: #00d2ff; color: #020617; border: none; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
         @media (max-width: 768px) {
           .ai-view-container { padding: 70px 0 90px; }
-          .ai-chat-card { border-radius: 0; border: none; height: 100%; }
+          .ai-chat-card { border-radius: 0; border: none; }
           .msg-row { max-width: 95%; }
-          .ai-header { padding: 15px 20px; }
-          .ai-messages-wrapper { padding: 20px 15px; }
-          .ai-input-area { padding: 15px; }
         }
       ` }} />
     </div>
