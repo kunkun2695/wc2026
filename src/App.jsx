@@ -27,6 +27,7 @@ import { subscribeToPush } from './utils/pushNotifications';
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, chat, history, settings, admin_matches, admin_teams, admin_system, ai, bracket
+  const [hideHeader, setHideHeader] = useState(false);
   const [user, setUser] = useState(null);
   const [teams, setTeams] = useState([]);
   const [matches, setMatches] = useState([]);
@@ -287,29 +288,31 @@ const App = () => {
 
   return (
     <div className="app-layout">
-      {/* Mobile Header */}
-      <header className="mobile-header">
-        <div className="mobile-header-content">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div className="brand-logo-glow" style={{ width: '32px', height: '32px' }}>
-              <Trophy size={18} className="brand-icon" />
+      {/* Mobile Header - Conditionally hidden */}
+      {!hideHeader && (
+        <header className="mobile-header">
+          <div className="mobile-header-content">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="brand-logo-glow" style={{ width: '32px', height: '32px' }}>
+                <Trophy size={18} className="brand-icon" />
+              </div>
+              <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>Bench-Bets</span>
             </div>
-            <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>Bench-Bets</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
+                <Bell size={18} />
+                {notifications.some(n => !n.is_read) && <span className="notif-badge-mini" style={{ top: '6px', right: '6px' }}></span>}
+              </button>
+              <button onClick={() => setActiveTab('settings')} className="mobile-notif-btn">
+                <Settings size={18} />
+              </button>
+              <button onClick={handleLogout} className="mobile-logout-btn">
+                <LogOut size={18} />
+              </button>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
-              <Bell size={18} />
-              {notifications.some(n => !n.is_read) && <span className="notif-badge-mini" style={{ top: '6px', right: '6px' }}></span>}
-            </button>
-            <button onClick={() => setActiveTab('settings')} className="mobile-notif-btn">
-              <Settings size={18} />
-            </button>
-            <button onClick={handleLogout} className="mobile-logout-btn">
-              <LogOut size={18} />
-            </button>
-          </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Sidebar - Modern Professional Version */}
       <aside className={`sidebar ${activeTab === 'notifications' ? 'sidebar-minimized' : ''}`}>
@@ -442,7 +445,7 @@ const App = () => {
           )}
           {activeTab === 'chat' && (
             <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ChatView user={user} />
+              <ChatView user={user} onToggleHeader={setHideHeader} />
             </motion.div>
           )}
           {activeTab === 'ai' && (
@@ -654,9 +657,10 @@ const App = () => {
         @media (max-width: 1024px) {
           .sidebar { display: none; }
           .main-content { 
-            padding-top: calc(60px + env(safe-area-inset-top, 0px)); 
+            padding-top: ${hideHeader ? '0' : 'calc(60px + env(safe-area-inset-top, 0px))'}; 
             padding-bottom: 80px; 
             height: 100vh;
+            overflow: ${hideHeader ? 'hidden' : 'auto'};
           }
           .mobile-header {
             display: block; position: fixed; top: 0; left: 0; right: 0;

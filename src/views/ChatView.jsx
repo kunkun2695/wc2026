@@ -10,7 +10,7 @@ import API_URL from '../config';
 const EMOJIS = ['⚽', '🏆', '🔥', '👏', '🙌', '😮', '😢', '😍', '🇻🇳', '🤣', '💪', '👇'];
 const PAGE_SIZE = 30;
 
-const ChatView = ({ user }) => {
+const ChatView = ({ user, onToggleHeader }) => {
   const [messages, setMessages] = useState([]);
   const [dmUsers, setDmUsers] = useState([]);
   // On mobile, start with null to show list. On desktop, start with public.
@@ -34,6 +34,11 @@ const ChatView = ({ user }) => {
   }, []);
 
   useEffect(() => {
+    // Notify App.jsx to hide/show header on mobile
+    if (onToggleHeader && isMobile) {
+      onToggleHeader(!!selectedChat);
+    }
+
     if (!selectedChat) return;
     setMessages([]);
     setOffset(0);
