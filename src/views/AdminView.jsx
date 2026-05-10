@@ -242,16 +242,20 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
 
         <section style={{ background: '#1a1f2e', padding: '30px', borderRadius: '24px', marginBottom: '40px', border: '1px solid rgba(0,210,255,0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <Shield size={20} color="#00d2ff" />
-            <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'white' }}>CÀI ĐẶT HỆ THỐNG (AI)</h3>
+            <Sparkles size={20} color="#00d2ff" />
+            <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'white' }}>CÀI ĐẶT HỆ THỐNG AI (GEMINI / OPENAI)</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
+              Hệ thống hiện ưu tiên sử dụng <strong>Google Gemini (Miễn phí)</strong>. 
+              Bạn có thể lấy Key miễn phí tại: <a href="https://aistudio.google.com/app/apikey" target="_blank" style={{ color: '#00d2ff', textDecoration: 'underline' }}>Google AI Studio</a>.
+            </p>
             <div>
-              <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>OPENAI API KEY</label>
+              <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>API KEY (GEMINI HOẶC OPENAI)</label>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <input 
                   type="password" 
-                  placeholder="sk-xxxx..." 
+                  placeholder="Dán API Key của bạn vào đây..." 
                   value={aiKey}
                   onChange={e => setAiKey(e.target.value)}
                   style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#000', border: '1px solid #222', color: '#00d2ff', fontFamily: 'monospace' }}
@@ -261,7 +265,7 @@ const AdminView = ({ matches, onUpdateScore, onSync }) => {
                   disabled={configLoading}
                   style={{ padding: '0 25px', borderRadius: '12px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer' }}
                 >
-                  {configLoading ? <RefreshCw size={18} className="animate-spin" /> : 'LƯU KEY'}
+                  {configLoading ? <RefreshCw size={18} className="animate-spin" /> : 'LƯU CẤU HÌNH AI'}
                 </button>
               </div>
               <p style={{ fontSize: '0.65rem', color: '#555', marginTop: '8px' }}>* Key này dùng cho chuyên gia phân tích Bench Guru. Sau khi lưu sẽ có tác dụng ngay.</p>

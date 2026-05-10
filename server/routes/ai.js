@@ -3,12 +3,21 @@ const router = express.Router();
 const { authenticateUser } = require('../middleware/auth');
 
 const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Khởi tạo hàm lấy Client OpenAI một cách an toàn
-const getOpenAIClient = () => {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || apiKey === 'sk-xxxx') return null;
-  return new OpenAI({ apiKey });
+// Khởi tạo hàm lấy Client AI một cách an toàn
+const getAIClient = () => {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
+  if (!apiKey || apiKey === 'sk-xxxx') return { type: 'none' };
+  
+  // Nếu là key của Google (thường không bắt đầu bằng sk-)
+  if (!apiKey.startsWith('sk-')) {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    return { type: 'gemini', client: genAI.getGenerativeModel({ model: "gemini-1.5-flash" }) };
+  }
+  
+  // Nếu là key của OpenAI
+  return { type: 'openai', client: new OpenAI({ apiKey }) };
 };
 
 router.post('/chat', authenticateUser, async (req, res) => {
@@ -16,34 +25,40 @@ router.post('/chat', authenticateUser, async (req, res) => {
   
   if (!message) return res.status(400).json({ error: 'Nội dung trống' });
 
-  const openai = getOpenAIClient();
+  const ai = getAIClient();
 
-  // Nếu không có API Key hoặc lỗi khởi tạo, dùng bộ não giả lập
-  if (!openai) {
+  // Nếu không có API Key, dùng bộ não giả lập
+  if (ai.type === 'none') {
     return simulateAiResponse(message, res);
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { 
-          role: "system", 
-          content: "Bạn là Bench Guru, một chuyên gia phân tích bóng đá chuyên nghiệp cho World Cup 2026. Bạn am hiểu sâu sắc về chiến thuật, lịch sử và các ngôi sao. Phong cách của bạn là nhiệt huyết, đôi khi có chút hài hước (văn hóa 'gáy' bóng đá), nhưng luôn dựa trên dữ liệu. Trả lời bằng tiếng Việt, ngắn gọn nhưng chất lượng." 
-        },
-        { role: "user", content: message }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    });
-
-    const reply = completion.choices[0].message.content;
-    res.json({ reply });
-
+    if (ai.type === 'gemini') {
+      const prompt = `Bạn là Bench Guru, một chuyên gia phân tích bóng đá chuyên nghiệp cho World Cup 2026. 
+      Bạn am hiểu sâu sắc về chiến thuật, lịch sử và các ngôi sao. 
+      Phong cách của bạn là nhiệt huyết, đôi khi có chút hài hước (văn hóa 'gáy' bóng đá), nhưng luôn dựa trên dữ liệu. 
+      Trả lời bằng tiếng Việt, ngắn gọn nhưng chất lượng.
+      
+      Người dùng hỏi: ${message}`;
+      
+      const result = await ai.client.generateContent(prompt);
+      const response = await result.response;
+      const reply = response.text();
+      return res.json({ reply });
+    } else {
+      // Logic OpenAI cũ
+      const completion = await ai.client.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: "Bạn là Bench Guru, chuyên gia bóng đá World Cup 2026." },
+          { role: "user", content: message }
+        ]
+      });
+      res.json({ reply: completion.choices[0].message.content });
+    }
   } catch (err) {
-    console.error('OpenAI Error:', err.message);
-    const errorMessage = err.response?.data?.error?.message || err.message || 'Lỗi không xác định từ OpenAI';
-    res.status(500).json({ error: `OpenAI: ${errorMessage}` });
+    console.error('AI Error:', err.message);
+    res.status(500).json({ error: `AI: ${err.message}` });
   }
 });
 
