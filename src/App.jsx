@@ -82,8 +82,30 @@ const App = () => {
   };
 
   const requestNotificationPermission = async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      await Notification.requestPermission();
+    if (!('Notification' in window)) {
+      console.warn('Trình duyệt không hỗ trợ thông báo.');
+      // alert('Trình duyệt của bạn không hỗ trợ thông báo đẩy. Trên iPhone, bạn cần thêm ứng dụng vào Màn hình chính (Add to Home Screen) để sử dụng tính năng này.');
+      return;
+    }
+
+    if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+      console.warn('Thông báo yêu cầu HTTPS.');
+      // alert('Thông báo đẩy yêu cầu kết nối bảo mật (HTTPS). Vui lòng sử dụng HTTPS hoặc localhost.');
+      return;
+    }
+
+    if (Notification.permission === 'default') {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          console.log('Đã cấp quyền thông báo');
+          subscribeToPush();
+        }
+      } catch (err) {
+        console.error('Lỗi yêu cầu quyền thông báo:', err);
+      }
+    } else if (Notification.permission === 'denied') {
+      // alert('Bạn đã chặn thông báo. Vui lòng bật lại trong cài đặt trình duyệt.');
     }
   };
 
@@ -400,6 +422,7 @@ const App = () => {
               onMarkAsRead={markNotificationsAsRead}
               onDeleteAll={deleteAllNotifications}
               onNotificationClick={handleNotificationClick}
+              onRequestPermission={requestNotificationPermission}
             />
           </>
         )}

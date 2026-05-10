@@ -2,7 +2,9 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, Check, Trash2, User } from 'lucide-react';
 
-const NotificationsDrawer = ({ notifications, onClose, onMarkAsRead, onDeleteAll, onNotificationClick }) => {
+const NotificationsDrawer = ({ notifications, onClose, onMarkAsRead, onDeleteAll, onNotificationClick, onRequestPermission }) => {
+  const showEnableButton = 'Notification' in window && Notification.permission !== 'granted';
+
   return (
     <motion.div 
       initial={{ x: 400 }} 
@@ -26,6 +28,15 @@ const NotificationsDrawer = ({ notifications, onClose, onMarkAsRead, onDeleteAll
           <Trash2 size={14} /> Xóa hết
         </button>
       </div>
+
+      {showEnableButton && (
+        <div className="enable-notif-banner">
+          <p>Bật thông báo để không bỏ lỡ gáy!</p>
+          <button onClick={onRequestPermission} className="enable-btn">
+            CHO PHÉP NGAY
+          </button>
+        </div>
+      )}
 
       <div className="notif-list">
         {notifications.length === 0 ? (
@@ -109,6 +120,34 @@ const NotificationsDrawer = ({ notifications, onClose, onMarkAsRead, onDeleteAll
         }
         .action-btn:hover { background: rgba(255,255,255,0.1); color: white; }
         .action-btn.delete:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        
+        .enable-notif-banner {
+          background: linear-gradient(135deg, #3a86ff 0%, #00d2ff 100%);
+          margin: 10px 20px;
+          padding: 15px;
+          border-radius: 12px;
+          color: black;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          align-items: center;
+          text-align: center;
+        }
+        .enable-notif-banner p {
+          font-size: 0.75rem;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+        .enable-btn {
+          background: black;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-size: 0.7rem;
+          font-weight: 900;
+          cursor: pointer;
+        }
         
         .notif-list {
           flex: 1;
