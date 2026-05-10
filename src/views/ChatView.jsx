@@ -5,8 +5,8 @@ import {
   Smile, X, ChevronLeft, MoreVertical, Search
 } from 'lucide-react';
 import UserAvatar from '../components/UserAvatar';
+import API_URL from '../config';
 
-const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
 const EMOJIS = ['⚽', '🏆', '🔥', '👏', '🙌', '😮', '😢', '😍', '🇻🇳', '🤣', '💪', '👇'];
 
 const ChatView = ({ user }) => {

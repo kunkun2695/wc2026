@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Send, Bot, User, RefreshCw, Zap } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
+import API_URL from '../config';
 
 const AiAssistantView = () => {
   const [messages, setMessages] = useState([

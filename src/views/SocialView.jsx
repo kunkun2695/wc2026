@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Heart, MessageCircle, Share2, Image as ImageIcon, Smile, MoreHorizontal, X } from 'lucide-react';
 import UserAvatar from '../components/UserAvatar';
-
-const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
+import API_URL from '../config';
 
 // Danh sách Emoji phổ biến để anh em nhanh chóng chọn
 const EMOJIS = ['⚽', '🏆', '🔥', '👏', '🙌', '😮', '😢', '😍', '🇻🇳', '🤣', '💪', '👇'];

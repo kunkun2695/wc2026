@@ -19,6 +19,19 @@ const callGeminiAPI = async (apiKey, modelName, message) => {
   throw new Error('Cấu trúc phản hồi từ Google không hợp lệ');
 };
 
+const getErrorMessage = (err) => {
+  if (err.response) {
+    const data = err.response.data;
+    if (data.error) {
+      if (data.error.message.includes('API key not valid')) return 'API Key không hợp lệ hoặc đã hết hạn.';
+      if (data.error.status === 'PERMISSION_DENIED') return 'API Key không có quyền truy cập Gemini API.';
+      return data.error.message;
+    }
+    return JSON.stringify(data);
+  }
+  return err.message;
+};
+
 router.post('/chat', authenticateUser, async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: 'Nội dung trống' });
@@ -44,7 +57,7 @@ router.post('/chat', authenticateUser, async (req, res) => {
   }
 
   // Xử lý Google Gemini bằng cách thử trực tiếp API
-  const modelsToTry = ["gemini-1.5-flash", "gemini-pro"];
+  const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-pro"];
   let attemptLogs = [];
 
   for (const modelName of modelsToTry) {
@@ -55,10 +68,13 @@ router.post('/chat', authenticateUser, async (req, res) => {
         debug_info: { model: modelName, method: 'Direct REST API' }
       });
     } catch (err) {
-      const errMsg = err.response ? JSON.stringify(err.response.data) : err.message;
+      const errMsg = getErrorMessage(err);
       attemptLogs.push(`Model ${modelName}: ${errMsg}`);
-      if (errMsg.includes('404')) continue;
-      break;
+      
+      // Nếu là lỗi Key không hợp lệ thì không cần thử model khác
+      if (errMsg.includes('API Key không hợp lệ')) break;
+      
+      continue;
     }
   }
 
