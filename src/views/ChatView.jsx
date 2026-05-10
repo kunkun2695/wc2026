@@ -16,188 +16,223 @@ const formatTime = (dateStr) => {
 };
 
 const ChatView = () => {
+  const [activeTab, setActiveTab] = useState('global'); // 'global' or 'private'
   const [messages, setMessages] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
   const currentUser = JSON.parse(localStorage.getItem('wc2026_user') || '{}');
   const token = localStorage.getItem('wc2026_token');
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const fetchMessages = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat`);
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setMessages(data);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    if (activeTab === 'global') {
+      fetchGlobalMessages();
+      const interval = setInterval(fetchGlobalMessages, 3000);
+      return () => clearInterval(interval);
+    } else if (activeTab === 'private') {
+      fetchUsers();
+      if (selectedUser) {
+        fetchPrivateMessages();
+        const interval = setInterval(fetchPrivateMessages, 3000);
+        return () => clearInterval(interval);
       }
+    }
+  }, [activeTab, selectedUser]);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/dm/users`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setUsers(data.filter(u => u.id !== currentUser.id));
+      }
+    } catch (err) {}
+  };
+
+  const fetchGlobalMessages = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/chat`);
+      const data = await res.json();
+      if (Array.isArray(data)) setMessages(data);
       setLoading(false);
-    } catch (error) {
-      console.error('Lỗi lấy tin nhắn:', error);
+    } catch (err) {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 3000); // Polling mỗi 3s
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const fetchPrivateMessages = async () => {
+    if (!selectedUser) return;
+    try {
+      const res = await fetch(`${API_URL}/api/dm/history/${selectedUser.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setMessages(data);
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+    }
+  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || sending) return;
 
     setSending(true);
+    const endpoint = activeTab === 'global' ? '/api/chat' : '/api/dm/send';
+    const body = activeTab === 'global' 
+      ? { content: newMessage } 
+      : { receiver_id: selectedUser.id, content: newMessage };
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat`, {
+      const res = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ content: newMessage })
+        body: JSON.stringify(body)
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setMessages([...messages, data]);
+      if (res.ok) {
         setNewMessage('');
-      } else {
-        alert('Gửi tin nhắn thất bại. Vui lòng đăng nhập lại.');
+        activeTab === 'global' ? fetchGlobalMessages() : fetchPrivateMessages();
       }
-    } catch (error) {
-      console.error('Lỗi gửi tin nhắn:', error);
+    } catch (err) {
+      console.error('Lỗi gửi tin nhắn');
     } finally {
       setSending(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full" style={{ padding: '50px 0' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="chat-container">
-      {/* Header */}
-      <div className="chat-header">
-        <div className="flex items-center gap-3">
-          <div className="header-icon-box">
-            <MessageSquare size={20} color="var(--primary-cyan)" />
-          </div>
-          <div>
-            <h2 className="chat-title">Phòng Chat Tổng</h2>
-            <p className="chat-subtitle">Kết nối fan bóng đá toàn cầu</p>
-          </div>
-        </div>
-        <div className="status-badge">
-          <span className="status-dot"></span>
-          Trực tuyến
-        </div>
+    <div className="chat-view-wrapper">
+      <div className="chat-tabs">
+        <button 
+          className={`tab-btn ${activeTab === 'global' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('global'); setSelectedUser(null); setMessages([]); }}
+        >
+          <MessageSquare size={18} /> Global Chat
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'private' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('private'); setMessages([]); }}
+        >
+          <User size={18} /> Chat Riêng
+        </button>
       </div>
 
-      {/* Messages Area */}
-      <div className="chat-messages-area">
-        {messages.length === 0 ? (
-          <div className="empty-chat">
-            <Smile size={48} color="#333" />
-            <p>Chưa có tin nhắn nào. Hãy là người đầu tiên!</p>
-          </div>
-        ) : (
-          messages.map((msg, idx) => {
-            const isMe = msg.user_id === currentUser.id;
-            return (
-              <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                key={msg.id || idx}
-                className={`message-wrapper ${isMe ? 'is-me' : ''}`}
-              >
-                <div className="message-content-group">
-                  <div className="message-avatar">
-                    {msg.avatar ? (
-                      <img src={msg.avatar} alt={msg.name} />
-                    ) : (
-                      <div className="avatar-placeholder">
-                        <User size={16} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="message-body">
-                    <div className="message-info">
-                      <span className="sender-name">{msg.name || msg.username}</span>
-                      <span className="send-time">
-                        {formatTime(msg.created_at)}
-                      </span>
-                    </div>
-                    <div className={`message-bubble ${isMe ? 'bubble-me' : 'bubble-other'}`}>
-                      {msg.content}
-                    </div>
-                  </div>
+      <div className="chat-main-container">
+        {activeTab === 'private' && !selectedUser ? (
+          <div className="user-list">
+            <h3 className="section-title">Chọn người để chat</h3>
+            {users.map(u => (
+              <div key={u.id} className="user-item" onClick={() => { setSelectedUser(u); setLoading(true); }}>
+                <div className="user-avatar">
+                  {u.avatar ? <img src={u.avatar} alt="" /> : <User size={20} />}
                 </div>
-              </motion.div>
-            );
-          })
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input Area */}
-      <div className="chat-input-area">
-        {!token ? (
-          <div className="login-warning">
-            Bạn cần đăng nhập để gửi tin nhắn
+                <div className="user-info">
+                  <div className="user-name">{u.name || u.username}</div>
+                  <div className="user-role">{u.role === 'admin' ? 'Quản trị viên' : 'Thành viên'}</div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <form onSubmit={handleSendMessage} className="chat-form">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Nhập tin nhắn..."
-              disabled={sending}
-            />
-            <button type="submit" disabled={sending || !newMessage.trim()}>
-              <Send size={18} />
-            </button>
-          </form>
+          <div className="chat-container">
+            <div className="chat-header">
+              {activeTab === 'private' && (
+                <button className="back-btn" onClick={() => setSelectedUser(null)}>←</button>
+              )}
+              <div className="header-info">
+                {activeTab === 'global' ? (
+                  <>
+                    <MessageSquare size={20} color="var(--primary-cyan)" />
+                    <span>Phòng Chat Thế Giới 2026</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="mini-avatar">
+                      {selectedUser?.avatar ? <img src={selectedUser.avatar} alt="" /> : <User size={14} />}
+                    </div>
+                    <span>Chat với {selectedUser?.name || selectedUser?.username}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="messages-list">
+              {loading ? (
+                <div className="chat-loading">
+                  <div className="loader"></div>
+                  <p>Đang tải tin nhắn...</p>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="empty-chat">
+                  <Smile size={48} />
+                  <p>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
+                </div>
+              ) : (
+                messages.map((msg, idx) => {
+                  const isMe = msg.sender_id === currentUser.id || msg.username === currentUser.username;
+                  return (
+                    <motion.div 
+                      key={msg.id || idx}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`message-row ${isMe ? 'row-me' : 'row-other'}`}
+                    >
+                      {!isMe && activeTab === 'global' && (
+                        <div className="msg-avatar">
+                          {msg.avatar ? <img src={msg.avatar} alt="" /> : <User size={16} />}
+                        </div>
+                      )}
+                      <div className="message-content">
+                        {activeTab === 'global' && !isMe && (
+                          <span className="sender-name">{msg.name || msg.username}</span>
+                        )}
+                        <div className={`message-bubble ${isMe ? 'bubble-me' : 'bubble-other'}`}>
+                          {msg.content}
+                          <span className="msg-time">{formatTime(msg.created_at)}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <form className="chat-form" onSubmit={handleSendMessage}>
+              <input 
+                type="text" 
+                placeholder="Nhập tin nhắn..." 
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+              />
+              <button type="submit" disabled={!newMessage.trim() || sending}>
+                {sending ? <div className="btn-loader"></div> : <Send size={20} />}
+              </button>
+            </form>
+          </div>
         )}
       </div>
 
       <style>{`
-        .chat-container {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid var(--border-color);
-          border-radius: 20px;
-          height: calc(100vh - 180px);
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          backdrop-filter: blur(10px);
-        }
-        .chat-header {
-          padding: 15px 20px;
-          background: rgba(255, 255, 255, 0.02);
-          border-bottom: 1px solid var(--border-color);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .header-icon-box {
-          background: rgba(58, 134, 255, 0.1);
-          padding: 10px;
           border-radius: 12px;
         }
         .chat-title { font-weight: 800; font-size: 1.1rem; }

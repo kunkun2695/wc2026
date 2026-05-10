@@ -33,6 +33,7 @@ const App = () => {
   const [lastNotifId, setLastNotifId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [commentMatch, setCommentMatch] = useState(null);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -45,15 +46,29 @@ const App = () => {
       }
       await fetchData();
       fetchNotifications();
+      fetchUnreadChatCount();
     };
     checkSession();
 
     // Auto-fetch notifications every 30 seconds
     const interval = setInterval(() => {
-      if (mockAuth.getCurrentUser()) fetchNotifications();
+      if (mockAuth.getCurrentUser()) {
+        fetchNotifications();
+        fetchUnreadChatCount();
+      }
     }, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchUnreadChatCount = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/dm/unread-count`, {
+        headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
+      });
+      const data = await res.json();
+      setUnreadChatCount(data.count || 0);
+    } catch (err) {}
+  };
 
   const fetchData = async () => {
     try {
@@ -260,7 +275,7 @@ const App = () => {
         <div className="mobile-header-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Trophy size={22} color="var(--primary-cyan)" />
-            <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.2rem' }}>Bench-Bets v2</span>
+            <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.2rem' }}>Bench-Bets</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
@@ -279,7 +294,7 @@ const App = () => {
         <div className="sidebar-logo" style={{ marginBottom: '30px', padding: '0 10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Trophy size={24} color="var(--primary-cyan)" />
-            <h1 className="font-outfit" style={{ fontSize: '1.4rem', fontWeight: 800 }}>Bench-Bets v2</h1>
+            <h1 className="font-outfit" style={{ fontSize: '1.4rem', fontWeight: 800 }}>Bench-Bets</h1>
           </div>
         </div>
 
@@ -295,6 +310,7 @@ const App = () => {
           </button>
           <button onClick={() => setActiveTab('chat')} className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}>
             <MessageSquare size={18} /> Phòng Chat
+            {unreadChatCount > 0 && <span className="notif-count-badge">{unreadChatCount}</span>}
           </button>
           <button onClick={() => setActiveTab('settings')} className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}>
             <Settings size={18} /> Cài đặt hồ sơ
@@ -402,9 +418,10 @@ const App = () => {
             <History size={20} />
             <span>Lịch sử</span>
           </button>
-          <button onClick={() => setActiveTab('chat')} className={`nav-item-bet ${activeTab === 'chat' ? 'active' : ''}`}>
+          <button onClick={() => setActiveTab('chat')} className={`nav-item-bet ${activeTab === 'chat' ? 'active' : ''}`} style={{ position: 'relative' }}>
             <MessageSquare size={20} />
             <span>Chat</span>
+            {unreadChatCount > 0 && <span className="notif-badge-mini" style={{ top: '5px', right: '15px' }}></span>}
           </button>
           <button onClick={() => setActiveTab('settings')} className={`nav-item-bet ${activeTab === 'settings' ? 'active' : ''}`}>
             <Settings size={20} />

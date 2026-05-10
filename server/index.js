@@ -17,6 +17,7 @@ const predictionsRoutes = require('./routes/predictions');
 const commentsRoutes = require('./routes/comments');
 const { router: notificationsRoutes } = require('./routes/notifications');
 const chatRoutes = require('./routes/chat');
+const dmRoutes = require('./routes/dm');
 
 const app = express();
 const PORT = process.env.PORT || 5005;
