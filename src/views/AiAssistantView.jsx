@@ -209,7 +209,26 @@ const AiAssistantView = () => {
 
         .ai-input-bar { display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 10px 8px 18px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
         .ai-input-bar input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 0.95rem; }
-        .ai-send-btn { background: #00d2ff; color: #020617; border: none; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .ai-send-btn { 
+          background: linear-gradient(135deg, #00d2ff, #3a7bd5); 
+          color: white; 
+          border: none; 
+          width: 42px; 
+          height: 42px; 
+          border-radius: 12px; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          cursor: pointer; 
+          transition: all 0.3s;
+          box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+          flex-shrink: 0;
+        }
+        .ai-send-btn:hover:not(:disabled) { 
+          transform: translateY(-2px); 
+          box-shadow: 0 6px 20px rgba(0, 210, 255, 0.4);
+        }
+        .ai-send-btn:disabled { opacity: 0.4; filter: grayscale(1); }
 
         @media (max-width: 768px) {
           .ai-view-container { padding: 0; }

@@ -364,8 +364,28 @@ const ChatView = ({ user, onToggleHeader }) => {
         .emoji-picker-mini { position: absolute; bottom: 60px; left: 0; background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
         .emoji-picker-mini button { font-size: 1.4rem; padding: 6px; background: none; border: none; cursor: pointer; border-radius: 8px; transition: 0.2s; }
         .emoji-picker-mini button:hover { background: rgba(255,255,255,0.05); transform: scale(1.1); }
-        .send-btn { background: #00d2ff; color: black; border: none; width: 42px; height: 42px; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .send-btn:disabled { opacity: 0.5; }
+        .send-btn { 
+          background: linear-gradient(135deg, #00d2ff, #3a7bd5); 
+          color: white; 
+          border: none; 
+          width: 44px; 
+          height: 44px; 
+          border-radius: 14px; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          cursor: pointer; 
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+          flex-shrink: 0;
+        }
+        .send-btn:hover:not(:disabled) { 
+          transform: translateY(-2px) scale(1.05); 
+          box-shadow: 0 6px 20px rgba(0, 210, 255, 0.4);
+          filter: brightness(1.1);
+        }
+        .send-btn:active:not(:disabled) { transform: scale(0.95); }
+        .send-btn:disabled { opacity: 0.4; filter: grayscale(1); cursor: not-allowed; }
         .spinner-chat { width: 40px; height: 40px; border: 4px solid rgba(0, 210, 255, 0.1); border-top-color: #00d2ff; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
