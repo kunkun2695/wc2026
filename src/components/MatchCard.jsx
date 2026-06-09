@@ -197,6 +197,8 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
 
       <style dangerouslySetInnerHTML={{ __html: `
         .match-card-bet {
+          display: flex;
+          flex-direction: column;
           background: rgba(15, 23, 42, 0.45);
           backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.06);
