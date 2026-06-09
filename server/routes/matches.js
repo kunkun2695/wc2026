@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/db');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const { updateBracket } = require('../services/bracketService');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
@@ -73,6 +74,7 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
 
     if (status === 'FT') {
       await calculateMatchPoints(id, team1_score, team2_score);
+      await updateBracket();
     }
 
     res.json(result.rows[0]);

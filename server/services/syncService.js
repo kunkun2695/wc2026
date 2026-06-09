@@ -1,6 +1,7 @@
 const axios = require('axios');
 const db = require('../config/db');
 const { sendPushNotification } = require('../routes/notifications');
+const { updateBracket } = require('./bracketService');
 
 const FOOTBALL_DATA_API_KEY = '545cbd97d6964d96bdc65580d348674b';
 
@@ -78,6 +79,7 @@ const syncMatches = async () => {
         );
         if (status === 'FT' && oldStatus !== 'FT') {
           await calculateMatchPoints(matchId, homeScore, awayScore);
+          await updateBracket();
         }
       } else {
         const newMatch = await db.query(
@@ -86,6 +88,7 @@ const syncMatches = async () => {
         );
         if (status === 'FT') {
           await calculateMatchPoints(newMatch.rows[0].id, homeScore, awayScore);
+          await updateBracket();
         }
       }
       synced++;
