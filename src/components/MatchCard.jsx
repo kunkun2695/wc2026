@@ -272,8 +272,10 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 20px;
+          margin: 0 auto 20px auto;
           gap: 10px;
+          width: 100%;
+          max-width: 420px;
         }
         
         .scoreboard-team {
@@ -285,7 +287,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
         
         .scoreboard-team.left {
-          justify-content: flex-start;
+          justify-content: flex-end;
         }
         
         .scoreboard-team.right {
