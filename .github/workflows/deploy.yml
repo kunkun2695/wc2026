@@ -31,3 +31,17 @@ jobs:
           build-args: |
             VITE_API_URL=https://estrip.fun
             VITE_VAPID_PUBLIC_KEY=BE_cpojus2_nYd4aTJdzHTL-b9f-Csp5RTBez_2cmyB96lkrJN3AW-GBuDNOr7L9sTug9kmNmZud0Y6e90TbUj0
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd C:\Users\ADMIN\Documents\wc2026
+            docker pull longtran26/wc2026:latest
+            docker-compose down
+            docker rm -f wc2026-app-1
+            docker-compose up -d
