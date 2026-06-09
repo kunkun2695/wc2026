@@ -62,7 +62,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
     <motion.div 
       initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }} 
-      className={`match-card-bet ${match.status === 'LIVE' ? 'is-live' : ''}`}
+      className={`match-card-premium ${match.status === 'LIVE' ? 'is-live' : ''}`}
     >
       {/* Time & Status Badge */}
       <div className="match-badge-top">
@@ -118,9 +118,10 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
               className={`choice-btn-v2 ${selectedChoice === '1' ? 'active-1' : ''}`}
               onClick={() => handleSave('1')}
               disabled={match.status !== 'UPCOMING' || isPredicted}
+              title={`${t1.name} thắng`}
             >
               <div className="btn-team-flag"><FlagIcon flag={t1.flag} /></div>
-              <span>1</span>
+              <span className="btn-choice-text">{t1.name}</span>
             </button>
             <div className="vote-bar-bg">
               <motion.div 
@@ -155,9 +156,10 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
               className={`choice-btn-v2 ${selectedChoice === '2' ? 'active-2' : ''}`}
               onClick={() => handleSave('2')}
               disabled={match.status !== 'UPCOMING' || isPredicted}
+              title={`${t2.name} thắng`}
             >
               <div className="btn-team-flag"><FlagIcon flag={t2.flag} /></div>
-              <span>2</span>
+              <span className="btn-choice-text">{t2.name}</span>
             </button>
             <div className="vote-bar-bg">
               <motion.div 
@@ -196,7 +198,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
       )}
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .match-card-bet {
+        .match-card-premium {
           display: flex;
           flex-direction: column;
           background: rgba(15, 23, 42, 0.45);
@@ -208,12 +210,12 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           position: relative;
           transition: all 0.3s ease;
         }
-        .match-card-bet:hover {
+        .match-card-premium:hover {
           border-color: rgba(0, 210, 255, 0.35);
           box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
           transform: translateY(-2px);
         }
-        .match-card-bet.is-live {
+        .match-card-premium.is-live {
           border-color: rgba(239, 68, 68, 0.3);
         }
         
@@ -361,12 +363,41 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           gap: 10px;
           width: 100%;
           margin-bottom: 16px;
+          background: linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(30, 41, 59, 0.4) 100%);
+          border: 1px solid rgba(0, 210, 255, 0.15);
+          padding: 10px;
+          border-radius: 18px;
+          box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+          backdrop-filter: blur(8px);
+          position: relative;
+          overflow: hidden;
         }
+        
+        .choice-grid-v2::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle, rgba(0, 210, 255, 0.08) 0%, transparent 60%);
+          pointer-events: none;
+          animation: backgroundRotate 15s linear infinite;
+          z-index: 0;
+        }
+        
+        @keyframes backgroundRotate {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
         .choice-col {
           flex: 1;
           display: flex;
           flex-direction: column;
           gap: 8px;
+          position: relative;
+          z-index: 1;
         }
         
         .choice-btn-v2 {
@@ -383,16 +414,19 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           font-size: 0.85rem;
           cursor: pointer;
           transition: all 0.2s ease;
+          padding: 0 8px;
         }
         .choice-btn-v2:hover:not(:disabled) {
           background: rgba(255, 255, 255, 0.05);
           border-color: rgba(255, 255, 255, 0.15);
           transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
+        
         .choice-btn-v2-draw-label {
           font-size: 0.75rem;
           font-weight: 800;
-          color: rgba(255, 255, 255, 0.4);
+          color: rgba(255, 255, 255, 0.5);
           letter-spacing: 0.5px;
         }
         
@@ -400,19 +434,19 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(58, 134, 255, 0.2));
           border-color: #00d2ff;
           color: #00d2ff;
-          box-shadow: 0 0 15px rgba(0, 210, 255, 0.15);
+          box-shadow: 0 0 15px rgba(0, 210, 255, 0.25);
         }
         .choice-btn-v2.active-X {
           background: linear-gradient(135deg, rgba(255, 77, 77, 0.2), rgba(239, 68, 68, 0.2));
           border-color: #ff4d4d;
           color: #ff4d4d;
-          box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+          box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);
         }
         .choice-btn-v2.active-2 {
           background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(16, 185, 129, 0.2));
           border-color: #34d399;
           color: #34d399;
-          box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+          box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
         }
         
         .btn-team-flag {
@@ -422,6 +456,17 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           justify-content: center;
           width: 18px;
           height: 18px;
+          flex-shrink: 0;
+        }
+        
+        .btn-choice-text {
+          font-size: 0.75rem;
+          font-weight: 800;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 65px;
+          display: inline-block;
         }
         
         .vote-bar-bg {
@@ -529,6 +574,10 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           }
           .choice-grid-v2 {
             gap: 8px;
+          }
+          .btn-choice-text {
+            max-width: 50px;
+            font-size: 0.7rem;
           }
         }
       ` }} />
