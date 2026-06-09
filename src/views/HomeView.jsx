@@ -99,9 +99,12 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
               const pred = predictions.find(p => p.match_id === m.id);
               
               // Improved date detection
-              const matchDate = m.match_time ? (m.match_time.includes(' - ') ? m.match_time.split(' - ')[1] : m.match_time.split(' ')[1]) : 'Sắp tới';
-              const prevMatchDate = idx > 0 && displayMatches[idx-1].match_time ? 
-                (displayMatches[idx-1].match_time.includes(' - ') ? displayMatches[idx-1].match_time.split(' - ')[1] : displayMatches[idx-1].match_time.split(' ')[1]) : null;
+              const getMatchDate = (timeStr) => {
+                if (!timeStr) return 'Sắp tới';
+                return timeStr.includes(' - ') ? timeStr.split(' - ')[0] : (timeStr.split(' ')[1] || timeStr);
+              };
+              const matchDate = getMatchDate(m.match_time);
+              const prevMatchDate = idx > 0 ? getMatchDate(displayMatches[idx-1].match_time) : null;
 
               const showDateLabel = idx === 0 || matchDate !== prevMatchDate;
 

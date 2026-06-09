@@ -298,7 +298,7 @@ const App = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
                 <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
-                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.0.1</span>
+                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.0.2</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -325,7 +325,7 @@ const App = () => {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
             <h1 className="brand-name">KizzBugs</h1>
-            <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.0.1</span>
+            <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.0.2</span>
           </div>
         </div>
 
@@ -668,7 +668,7 @@ const App = () => {
         @media (max-width: 1024px) {
           .sidebar { display: none; }
           .main-content { 
-            padding-top: ${hideHeader ? 'env(safe-area-inset-top, 20px)' : 'calc(60px + env(safe-area-inset-top, 0px))'}; 
+            padding-top: ${hideHeader ? 'env(safe-area-inset-top, 20px)' : 'calc(60px + env(safe-area-inset-top, 20px))'}; 
             padding-bottom: 80px; 
             height: 100vh;
             height: 100dvh;

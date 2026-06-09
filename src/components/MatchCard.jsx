@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Edit3, Zap, Check, MessageSquare, Clock, MapPin, Users } from 'lucide-react';
-import { mockAuth } from '../data/mockAuth';
+import { Edit3, Check, MessageSquare, Clock, Users } from 'lucide-react';
 
 const FlagIcon = ({ flag }) => {
   const isUrl = flag?.startsWith('http') || flag?.includes('.');
@@ -28,9 +27,17 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
 
   // Improved time parsing: handle space or " - " separators
   const matchTimeStr = match.match_time || '00:00 01-01';
-  const parts = matchTimeStr.includes(' - ') ? matchTimeStr.split(' - ') : matchTimeStr.split(' ');
-  const timePart = parts[0] || '00:00';
-  const venue = match.venue || 'International Stadium';
+  let timePart = '00:00';
+  let datePart = '01-01';
+  if (matchTimeStr.includes(' - ')) {
+    const parts = matchTimeStr.split(' - ');
+    datePart = parts[0] || '01-01';
+    timePart = parts[1] || '00:00';
+  } else {
+    const parts = matchTimeStr.split(' ');
+    timePart = parts[0] || '00:00';
+    datePart = parts[1] || '01-01';
+  }
 
   const handleSave = async (choice) => {
     if (isPredicted) return;
@@ -74,109 +81,111 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         )}
       </div>
 
-      <div className="match-card-grid">
-        <div className="match-team left">
+      {/* Scoreboard Section */}
+      <div className="match-scoreboard">
+        <div className="scoreboard-team left">
           <div className="team-flag-round">
             <FlagIcon flag={t1.flag} />
-            <motion.div 
-              className="flag-glow" 
-              animate={{ opacity: [0.2, 0.4, 0.2] }} 
-              transition={{ duration: 3, repeat: Infinity }}
-            />
           </div>
           <span className="team-name-label">{t1.name}</span>
         </div>
 
-        <div className="match-center-bet-v3">
-          <div className="choice-grid-v2">
-            <div className="choice-col">
-              <button 
-                className={`choice-btn-v2 ${selectedChoice === '1' ? 'active-1' : ''}`}
-                onClick={() => handleSave('1')}
-                disabled={match.status !== 'UPCOMING' || isPredicted}
-              >
-                <div className="btn-flag-mini"><FlagIcon flag={t1.flag} /></div>
-              </button>
-              <div className="vote-bar-bg">
-                <motion.div 
-                  className="vote-bar-fill home" 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.round((Number(match.home_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%` }}
-                />
-              </div>
-              <span className="vote-percent">{Math.round((Number(match.home_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
+        <div className="scoreboard-middle">
+          {match.status === 'UPCOMING' ? (
+            <span className="vs-label">VS</span>
+          ) : (
+            <div className="score-display-premium">
+              <span>{t1.score}</span>
+              <span className="score-divider">:</span>
+              <span>{t2.score}</span>
             </div>
+          )}
+        </div>
 
-            <div className="choice-col">
-              <button 
-                className={`choice-btn-v2 draw ${selectedChoice === 'X' ? 'active-X' : ''}`}
-                onClick={() => handleSave('X')}
-                disabled={match.status !== 'UPCOMING' || isPredicted}
-              >
-                HÒA
-              </button>
-              <div className="vote-bar-bg">
-                <motion.div 
-                  className="vote-bar-fill draw" 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.round((Number(match.draw_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%` }}
-                />
-              </div>
-              <span className="vote-percent">{Math.round((Number(match.draw_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
-            </div>
+        <div className="scoreboard-team right">
+          <div className="team-flag-round">
+            <FlagIcon flag={t2.flag} />
+          </div>
+          <span className="team-name-label">{t2.name}</span>
+        </div>
+      </div>
 
-            <div className="choice-col">
-              <button 
-                className={`choice-btn-v2 ${selectedChoice === '2' ? 'active-2' : ''}`}
-                onClick={() => handleSave('2')}
-                disabled={match.status !== 'UPCOMING' || isPredicted}
-              >
-                <div className="btn-flag-mini"><FlagIcon flag={t2.flag} /></div>
-              </button>
-              <div className="vote-bar-bg">
-                <motion.div 
-                  className="vote-bar-fill away" 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.round((Number(match.away_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%` }}
-                />
-              </div>
-              <span className="vote-percent">{Math.round((Number(match.away_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
+      {/* Betting / Prediction Section */}
+      <div className="match-betting-section">
+        <div className="choice-grid-v2">
+          <div className="choice-col">
+            <button 
+              className={`choice-btn-v2 ${selectedChoice === '1' ? 'active-1' : ''}`}
+              onClick={() => handleSave('1')}
+              disabled={match.status !== 'UPCOMING' || isPredicted}
+            >
+              <div className="btn-team-flag"><FlagIcon flag={t1.flag} /></div>
+              <span>1</span>
+            </button>
+            <div className="vote-bar-bg">
+              <motion.div 
+                className="vote-bar-fill home" 
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.round((Number(match.home_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%` }}
+              />
             </div>
+            <span className="vote-percent">{Math.round((Number(match.home_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
           </div>
 
-          <div className="match-footer-info">
-            <div className="total-votes-label">
-              <Users size={10} /> {match.total_votes || 0} PHIẾU
+          <div className="choice-col">
+            <button 
+              className={`choice-btn-v2 draw ${selectedChoice === 'X' ? 'active-X' : ''}`}
+              onClick={() => handleSave('X')}
+              disabled={match.status !== 'UPCOMING' || isPredicted}
+            >
+              <span className="choice-btn-v2-draw-label">HÒA</span>
+            </button>
+            <div className="vote-bar-bg">
+              <motion.div 
+                className="vote-bar-fill draw" 
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.round((Number(match.draw_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%` }}
+              />
             </div>
-            
-            {(match.status === 'FT' || match.status === 'LIVE') && (
-              <div className="score-display-v2">
-                {match.team1_score} : {match.team2_score}
-              </div>
-            )}
+            <span className="vote-percent">{Math.round((Number(match.draw_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
+          </div>
+
+          <div className="choice-col">
+            <button 
+              className={`choice-btn-v2 ${selectedChoice === '2' ? 'active-2' : ''}`}
+              onClick={() => handleSave('2')}
+              disabled={match.status !== 'UPCOMING' || isPredicted}
+            >
+              <div className="btn-team-flag"><FlagIcon flag={t2.flag} /></div>
+              <span>2</span>
+            </button>
+            <div className="vote-bar-bg">
+              <motion.div 
+                className="vote-bar-fill away" 
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.round((Number(match.away_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%` }}
+              />
+            </div>
+            <span className="vote-percent">{Math.round((Number(match.away_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
+          </div>
+        </div>
+
+        {/* Footer actions inside card */}
+        <div className="betting-footer">
+          <div className="total-votes-label">
+            <Users size={12} />
+            <span>{match.total_votes || 0} PHIẾU</span>
           </div>
 
           {isPredicted && match.status === 'UPCOMING' && (
             <div className="voted-tag">
-              <Check size={12} /> ĐÃ DỰ ĐOÁN
+              <Check size={10} /> ĐÃ DỰ ĐOÁN
             </div>
           )}
 
           <button className="gay-btn-v2" onClick={() => onOpenComments(match)}>
             <MessageSquare size={14} /> GÁY NGAY ({match.comment_count || 0})
           </button>
-        </div>
-
-        <div className="match-team right">
-          <div className="team-flag-round">
-            <FlagIcon flag={t2.flag} />
-            <motion.div 
-              className="flag-glow" 
-              animate={{ opacity: [0.2, 0.4, 0.2] }} 
-              transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-            />
-          </div>
-          <span className="team-name-label">{t2.name}</span>
         </div>
       </div>
 
@@ -188,19 +197,18 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
 
       <style dangerouslySetInnerHTML={{ __html: `
         .match-card-bet {
-          background: rgba(15, 23, 42, 0.6);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 24px;
+          background: rgba(15, 23, 42, 0.45);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 20px;
           padding: 20px;
           margin-bottom: 16px;
           position: relative;
-          overflow: hidden;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.3s ease;
         }
         .match-card-bet:hover {
-          border-color: rgba(0, 210, 255, 0.3);
-          box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+          border-color: rgba(0, 210, 255, 0.35);
+          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
           transform: translateY(-2px);
         }
         .match-card-bet.is-live {
@@ -211,21 +219,20 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 15px;
+          margin-bottom: 18px;
         }
         
         .time-badge {
           display: flex;
           align-items: center;
           gap: 6px;
-          background: rgba(0, 210, 255, 0.1);
+          background: rgba(0, 210, 255, 0.08);
           color: #00d2ff;
-          padding: 6px 12px;
-          border-radius: 12px;
-          font-size: 0.85rem;
+          padding: 4px 10px;
+          border-radius: 8px;
+          font-size: 0.75rem;
           font-weight: 800;
-          letter-spacing: 0.5px;
-          border: 1px solid rgba(0, 210, 255, 0.2);
+          border: 1px solid rgba(0, 210, 255, 0.15);
         }
         
         .live-badge {
@@ -252,203 +259,275 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
         
         .finished-badge {
-          color: rgba(255,255,255,0.4);
+          color: rgba(255, 255, 255, 0.3);
           font-size: 0.7rem;
-          font-weight: 900;
+          font-weight: 800;
         }
 
-        .match-card-grid {
-          display: grid;
-          grid-template-columns: 1fr 2fr 1fr;
-          align-items: center;
-          gap: 15px;
-        }
-        
-        .match-team {
+        .match-scoreboard {
           display: flex;
-          flex-direction: column;
           align-items: center;
+          justify-content: space-between;
+          margin-bottom: 20px;
           gap: 10px;
         }
         
+        .scoreboard-team {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .scoreboard-team.left {
+          justify-content: flex-start;
+        }
+        
+        .scoreboard-team.right {
+          justify-content: flex-end;
+          flex-direction: row-reverse;
+        }
+        
         .team-flag-round {
-          width: 64px;
-          height: 64px;
+          width: 44px;
+          height: 44px;
           background: rgba(255, 255, 255, 0.03);
-          border: 2px solid rgba(255, 255, 255, 0.1);
-          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 2rem;
+          font-size: 1.6rem;
+          flex-shrink: 0;
           position: relative;
-          padding: 10px;
-        }
-        .flag-glow {
-          position: absolute;
-          inset: -5px;
-          background: radial-gradient(circle, rgba(0, 210, 255, 0.2) 0%, transparent 70%);
-          z-index: -1;
-          border-radius: 24px;
         }
         
         .team-name-label {
-          font-size: 0.85rem;
-          font-weight: 800;
+          font-size: 1rem;
+          font-weight: 700;
           color: white;
-          text-align: center;
-          max-width: 100px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
         
-        .match-center-bet-v3 {
+        .scoreboard-middle {
           display: flex;
-          flex-direction: column;
           align-items: center;
-          gap: 12px;
+          justify-content: center;
+          min-width: 70px;
+          padding: 0 10px;
+        }
+        
+        .vs-label {
+          font-size: 0.8rem;
+          font-weight: 900;
+          color: rgba(255, 255, 255, 0.2);
+          letter-spacing: 2px;
+          background: rgba(255, 255, 255, 0.02);
+          padding: 4px 10px;
+          border-radius: 6px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .score-display-premium {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 1.3rem;
+          font-weight: 900;
+          color: #00d2ff;
+          font-family: 'Outfit', sans-serif;
+          background: rgba(0, 210, 255, 0.08);
+          padding: 4px 12px;
+          border-radius: 10px;
+          border: 1px solid rgba(0, 210, 255, 0.15);
+          box-shadow: 0 0 15px rgba(0, 210, 255, 0.05);
+        }
+        .score-divider {
+          opacity: 0.5;
+        }
+        
+        .match-betting-section {
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          padding-top: 18px;
         }
         
         .choice-grid-v2 {
           display: flex;
-          gap: 8px;
+          gap: 10px;
           width: 100%;
+          margin-bottom: 16px;
         }
         .choice-col {
           flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 8px;
         }
         
         .choice-btn-v2 {
           height: 48px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.07);
           border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s;
+          gap: 8px;
+          color: white;
+          font-weight: 700;
+          font-size: 0.85rem;
           cursor: pointer;
+          transition: all 0.2s ease;
         }
         .choice-btn-v2:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.08);
-          border-color: rgba(255, 255, 255, 0.2);
-          transform: translateY(-2px);
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.15);
+          transform: translateY(-1px);
         }
-        .choice-btn-v2.draw {
-          font-size: 0.7rem;
-          font-weight: 900;
-          color: rgba(255, 255, 255, 0.5);
-          letter-spacing: 1px;
+        .choice-btn-v2-draw-label {
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: rgba(255, 255, 255, 0.4);
+          letter-spacing: 0.5px;
         }
         
-        .choice-btn-v2.active-1 { background: linear-gradient(135deg, #00d2ff, #3a86ff); border: none; box-shadow: 0 8px 20px -5px rgba(0, 210, 255, 0.4); }
-        .choice-btn-v2.active-X { background: linear-gradient(135deg, #f87171, #ef4444); border: none; box-shadow: 0 8px 20px -5px rgba(239, 68, 68, 0.4); color: white; }
-        .choice-btn-v2.active-2 { background: linear-gradient(135deg, #34d399, #10b981); border: none; box-shadow: 0 8px 20px -5px rgba(16, 185, 129, 0.4); }
+        .choice-btn-v2.active-1 {
+          background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(58, 134, 255, 0.2));
+          border-color: #00d2ff;
+          color: #00d2ff;
+          box-shadow: 0 0 15px rgba(0, 210, 255, 0.15);
+        }
+        .choice-btn-v2.active-X {
+          background: linear-gradient(135deg, rgba(255, 77, 77, 0.2), rgba(239, 68, 68, 0.2));
+          border-color: #ff4d4d;
+          color: #ff4d4d;
+          box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+        }
+        .choice-btn-v2.active-2 {
+          background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(16, 185, 129, 0.2));
+          border-color: #34d399;
+          color: #34d399;
+          box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+        }
+        
+        .btn-team-flag {
+          font-size: 1.1rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 18px;
+          height: 18px;
+        }
         
         .vote-bar-bg {
-          height: 4px;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 2px;
+          height: 5px;
+          background: rgba(255, 255, 255, 0.04);
+          border-radius: 3px;
           overflow: hidden;
         }
-        .vote-bar-fill { height: 100%; border-radius: 2px; }
+        .vote-bar-fill { height: 100%; border-radius: 3px; }
         .vote-bar-fill.home { background: #00d2ff; }
-        .vote-bar-fill.draw { background: #ef4444; }
-        .vote-bar-fill.away { background: #10b981; }
+        .vote-bar-fill.draw { background: #ff4d4d; }
+        .vote-bar-fill.away { background: #34d399; }
         
         .vote-percent {
-          font-size: 0.65rem;
+          font-size: 0.7rem;
           font-weight: 800;
-          color: rgba(255, 255, 255, 0.3);
+          color: rgba(255, 255, 255, 0.25);
           text-align: center;
         }
         
-        .match-footer-info {
+        .betting-footer {
           display: flex;
           align-items: center;
-          gap: 15px;
-          margin-top: 5px;
+          justify-content: space-between;
+          margin-top: 10px;
         }
         
         .total-votes-label {
           display: flex;
           align-items: center;
-          gap: 4px;
-          font-size: 0.65rem;
-          color: rgba(255, 255, 255, 0.2);
-          font-weight: 800;
-          letter-spacing: 0.5px;
-        }
-        
-        .score-display-v2 {
-          font-size: 1.2rem;
-          font-weight: 900;
-          color: #f59e0b;
-          font-family: 'Outfit', sans-serif;
-          letter-spacing: 2px;
+          gap: 6px;
+          font-size: 0.7rem;
+          color: rgba(255, 255, 255, 0.25);
+          font-weight: 700;
         }
         
         .voted-tag {
-          background: rgba(16, 185, 129, 0.1);
-          color: #10b981;
+          background: rgba(52, 211, 153, 0.08);
+          color: #34d399;
           font-size: 0.65rem;
-          font-weight: 900;
+          font-weight: 800;
           padding: 4px 10px;
-          border-radius: 8px;
+          border-radius: 6px;
+          border: 1px solid rgba(52, 211, 153, 0.15);
           display: flex;
           align-items: center;
           gap: 4px;
-          margin-top: 5px;
         }
         
         .gay-btn-v2 {
-          margin-top: 10px;
-          width: 100%;
-          background: linear-gradient(90deg, rgba(0, 210, 255, 0.1), rgba(58, 134, 255, 0.1));
-          border: 1px solid rgba(0, 210, 255, 0.2);
+          background: linear-gradient(90deg, rgba(0, 210, 255, 0.06), rgba(58, 134, 255, 0.06));
+          border: 1px solid rgba(0, 210, 255, 0.15);
           color: #00d2ff;
-          padding: 8px;
-          border-radius: 12px;
+          padding: 8px 18px;
+          border-radius: 10px;
           font-size: 0.75rem;
           font-weight: 800;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all 0.2s ease;
           display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 8px;
+          gap: 6px;
         }
         .gay-btn-v2:hover {
           background: var(--cyan-gradient);
-          color: #000;
+          color: black;
           border-color: transparent;
           transform: scale(1.02);
         }
         
         .admin-edit-btn {
           position: absolute;
-          top: 15px;
-          right: 15px;
+          top: 18px;
+          right: 18px;
           background: none;
           border: none;
           color: rgba(255, 255, 255, 0.2);
           cursor: pointer;
-          transition: 0.2s;
+          transition: color 0.2s;
         }
         .admin-edit-btn:hover { color: white; }
-
+        
         @media (max-width: 600px) {
-          .match-card-grid { grid-template-columns: 1fr; gap: 20px; }
-          .match-team { flex-direction: row; justify-content: flex-start; width: 100%; }
-          .match-team.right { flex-direction: row-reverse; justify-content: flex-start; }
-          .team-flag-round { width: 40px; height: 40px; font-size: 1.2rem; }
-          .team-name-label { max-width: none; font-size: 1rem; }
-          .choice-grid-v2 { gap: 12px; }
-          .match-center-bet-v3 { width: 100%; }
+          .match-scoreboard {
+            margin-bottom: 15px;
+          }
+          .team-flag-round {
+            width: 38px;
+            height: 38px;
+            font-size: 1.3rem;
+            border-radius: 10px;
+            padding: 5px;
+          }
+          .team-name-label {
+            font-size: 0.85rem;
+          }
+          .score-display-premium {
+            font-size: 1.1rem;
+            padding: 3px 8px;
+          }
+          .choice-btn-v2 {
+            height: 44px;
+            font-size: 0.8rem;
+            border-radius: 10px;
+          }
+          .choice-grid-v2 {
+            gap: 8px;
+          }
         }
       ` }} />
     </motion.div>
