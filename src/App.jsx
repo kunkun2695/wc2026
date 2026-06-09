@@ -296,7 +296,10 @@ const App = () => {
               <div className="brand-logo-glow" style={{ width: '32px', height: '32px' }}>
                 <Trophy size={18} className="brand-icon" />
               </div>
-              <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+                <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
+                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.0.1</span>
+              </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
@@ -320,7 +323,10 @@ const App = () => {
           <div className="brand-logo-glow">
             <Trophy className="brand-icon" size={24} />
           </div>
-          <h1 className="brand-name">KizzBugs</h1>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <h1 className="brand-name">KizzBugs</h1>
+            <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.0.1</span>
+          </div>
         </div>
 
         <nav className="nav-menu">
