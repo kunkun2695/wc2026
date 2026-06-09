@@ -147,7 +147,7 @@ const App = () => {
     if ('Notification' in window && Notification.permission === 'granted') {
       const n = new Notification('Gáy World Cup 2026', {
         body: notif.content,
-        icon: notif.sender_avatar || '/favicon.ico'
+        icon: notif.sender_avatar || '/favicon.svg'
       });
       n.onclick = () => {
         window.focus();
