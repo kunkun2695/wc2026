@@ -23,8 +23,8 @@ router.get('/', async (req, res) => {
     const result = await db.query(`
       SELECT 
         m.*, 
-        t1.flag as team1_flag, 
-        t2.flag as team2_flag,
+        COALESCE(m.team1_flag, t1.flag) as team1_flag, 
+        COALESCE(m.team2_flag, t2.flag) as team2_flag,
         (SELECT COUNT(*) FROM predictions WHERE match_id = m.id) as total_votes,
         (SELECT COUNT(*) FROM predictions WHERE match_id = m.id AND predicted_home_score > predicted_away_score) as home_votes,
         (SELECT COUNT(*) FROM predictions WHERE match_id = m.id AND predicted_home_score = predicted_away_score) as draw_votes,

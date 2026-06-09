@@ -9,13 +9,26 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
   const parseMatchTime = (timeStr) => {
     if (!timeStr) return new Date(0);
     try {
-      // Giả sử định dạng: "HH:mm DD-MM" hoặc "DD-MM HH:mm"
-      // Chúng ta sẽ cố gắng tách lấy ngày và tháng
+      // 1. Định dạng "DD/MM - HH:mm" (ví dụ: "11/06 - 17:00")
+      if (timeStr.includes('/')) {
+        const [datePart, timePart] = timeStr.split(' - ');
+        const [day, month] = datePart.split('/');
+        const [hour, min] = timePart.split(':');
+        return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+      }
+      
+      // 2. Định dạng "DD.MM - HH:mm" (ví dụ: "25.6 - 02:00")
+      if (timeStr.includes('.')) {
+        const [datePart, timePart] = timeStr.split(' - ');
+        const [day, month] = datePart.split('.');
+        const [hour, min] = timePart.split(':');
+        return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+      }
+
+      // 3. Định dạng cũ: "HH:mm DD-MM"
       const parts = timeStr.split(/[\s-]/);
-      // Ví dụ: ["00:30", "11", "05"]
-      const [time, day, month] = parts;
+      const [time, day, month] = parts.filter(Boolean);
       const [hour, min] = time.split(':');
-      // Tạo Date giả lập cho năm 2026
       return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
     } catch (e) {
       return new Date(0);
@@ -28,12 +41,11 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
       ? matches 
       : matches.filter(m => predictions.some(p => p.match_id === m.id));
 
-    // Sắp xếp theo thời gian GIẢM DẦN (Mới nhất lên đầu)
-    // Nếu muốn TĂNG DẦN (Trận sắp tới gần nhất lên đầu), đảo ngược a và b
+    // Sắp xếp theo thời gian TĂNG DẦN (Trận gần hiện tại nhất lên đầu)
     return [...filtered].sort((a, b) => {
       const timeA = parseMatchTime(a.match_time);
       const timeB = parseMatchTime(b.match_time);
-      return timeB - timeA; // Giảm dần
+      return timeA - timeB; // Tăng dần
     });
   }, [matches, predictions, activeTab]);
 
