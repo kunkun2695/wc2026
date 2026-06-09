@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Shield, ChevronRight, Zap, Users, Layout } from 'lucide-react';
+import { Trophy, Shield, ChevronRight, Zap, Users, Layout, Sparkles } from 'lucide-react';
+import API_URL from '../config';
 
 const BracketMatch = ({ match }) => {
   if (!match) return <div className="bracket-match-empty" />;
@@ -61,7 +62,29 @@ const GroupCard = ({ groupName, matches }) => {
   );
 };
 
-const BracketView = ({ matches = [] }) => {
+const BracketView = ({ matches = [], user, onRefresh }) => {
+  const handleSeedData = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn nạp lại toàn bộ dữ liệu World Cup 2026 thực tế? Việc này sẽ xóa toàn bộ các dự đoán, bình luận và thông báo hiện tại!")) return;
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${API_URL}/api/admin/seed-wc2026`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+        if (onRefresh) onRefresh();
+      } else {
+        alert(data.error || 'Lỗi khi nạp dữ liệu');
+      }
+    } catch (err) {
+      alert('Lỗi kết nối máy chủ');
+    }
+  };
+
   // Phân loại trận đấu
   const groupMatches = useMemo(() => {
     const groups = {};
@@ -93,6 +116,12 @@ const BracketView = ({ matches = [] }) => {
             <p>Tự động cập nhật theo kết quả thực tế</p>
           </div>
         </div>
+        {user?.role === 'admin' && (
+          <button onClick={handleSeedData} className="seed-data-btn">
+            <Sparkles size={16} />
+            <span>Nạp lại dữ liệu WC 2026</span>
+          </button>
+        )}
       </div>
 
       {/* Vòng bảng Section */}
@@ -157,7 +186,28 @@ const BracketView = ({ matches = [] }) => {
       <style dangerouslySetInnerHTML={{ __html: `
         .bracket-view-container { min-height: 100vh; background: #020617; padding: 100px 30px 40px; color: white; }
         
-        .bracket-header { margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; }
+        .bracket-header { margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+        .seed-data-btn {
+          background: linear-gradient(135deg, #00d2ff 0%, #3a8dff 100%);
+          border: none;
+          border-radius: 12px;
+          padding: 10px 20px;
+          color: #020617;
+          font-weight: 800;
+          font-size: 0.85rem;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          transition: all 0.3s;
+        }
+        .seed-data-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0, 210, 255, 0.4);
+        }
+        .seed-data-btn:active {
+          transform: translateY(0);
+        }
         .trophy-badge { width: 50px; height: 50px; background: linear-gradient(135deg, #ffd700, #b8860b); border-radius: 15px; display: flex; align-items: center; justify-content: center; color: black; box-shadow: 0 0 20px rgba(255,215,0,0.3); }
         .bracket-header h1 { font-size: 2.2rem; font-weight: 900; margin: 0; background: linear-gradient(to right, #fff, #64748b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .bracket-header p { color: #00d2ff; font-weight: 800; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 5px; }

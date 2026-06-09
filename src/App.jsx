@@ -460,7 +460,7 @@ const App = () => {
           )}
           {activeTab === 'bracket' && (
             <motion.div key="bracket" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <BracketView matches={matches} />
+              <BracketView matches={matches} user={user} onRefresh={fetchData} />
             </motion.div>
           )}
           {activeTab === 'admin_matches' && (
