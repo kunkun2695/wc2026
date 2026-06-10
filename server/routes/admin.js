@@ -197,4 +197,30 @@ router.delete('/users/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
+// API Đặt lại mật khẩu của một người dùng
+router.put('/users/:id/reset-password', authenticateAdmin, async (req, res) => {
+  const userId = req.params.id;
+  const { newPassword } = req.body;
+
+  if (!newPassword || newPassword.trim().length === 0) {
+    return res.status(400).json({ error: 'Mật khẩu mới không được để trống' });
+  }
+
+  try {
+    const result = await db.query(
+      'UPDATE users SET password = $1 WHERE id = $2 RETURNING username',
+      [newPassword, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy người dùng này' });
+    }
+
+    res.json({ message: `Đặt lại mật khẩu cho người dùng ${result.rows[0].username} thành công!` });
+  } catch (error) {
+    console.error('Reset User Password Error:', error);
+    res.status(500).json({ error: 'Lỗi khi đặt lại mật khẩu: ' + error.message });
+  }
+});
+
 module.exports = router;

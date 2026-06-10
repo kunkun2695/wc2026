@@ -13,16 +13,33 @@ const AuthView = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Forgot Password States
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1);
+  const [securityQuestion, setSecurityQuestion] = useState('');
+  const [securityAnswer, setSecurityAnswer] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  
+  // Registration States
+  const [regQuestion, setRegQuestion] = useState('Đội bóng yêu thích của bạn là gì?');
+  const [regAnswer, setRegAnswer] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
       const host = window.location.hostname;
+      const body = isLogin 
+        ? { username, password } 
+        : { username, password, name, security_question: regQuestion, security_answer: regAnswer };
+
       const res = await fetch(`${API_URL}/api/users/${isLogin ? 'login' : 'register'}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, name })
+        body: JSON.stringify(body)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -39,6 +56,171 @@ const AuthView = ({ onLogin }) => {
       setLoading(false);
     }
   };
+
+  const handleFindAccount = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/users/forgot-password/question?username=${username}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSecurityQuestion(data.security_question);
+      setForgotStep(2);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (newPassword !== confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp!');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/users/forgot-password/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          security_answer: securityAnswer,
+          newPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      setSuccessMsg('Đặt lại mật khẩu thành công!');
+      setTimeout(() => {
+        setIsForgotPassword(false);
+        setIsLogin(true);
+        setForgotStep(1);
+        setNewPassword('');
+        setConfirmPassword('');
+        setSecurityAnswer('');
+        setSuccessMsg('');
+      }, 2000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isForgotPassword) {
+    return (
+      <div className="auth-page-wrapper">
+        <div className="auth-background"></div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          className="auth-container"
+        >
+          <div className="auth-card">
+            <div className="auth-header" style={{ marginBottom: '25px' }}>
+              <div className="logo-icon">
+                <Trophy size={48} color="#00d2ff" />
+              </div>
+              <h1 className="auth-title" style={{ fontSize: '1.8rem' }}>KHÔI PHỤC MẬT KHẨU</h1>
+              <p className="auth-subtitle">Sử dụng câu hỏi bảo mật để đặt lại</p>
+            </div>
+
+            {forgotStep === 1 ? (
+              <form onSubmit={handleFindAccount} className="auth-form">
+                <p style={{ color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center', marginBottom: '8px', lineHeight: 1.4 }}>
+                  Nhập tên đăng nhập của tài khoản bạn muốn khôi phục mật khẩu:
+                </p>
+                <div className="input-field">
+                  <User size={18} className="field-icon" />
+                  <input 
+                    type="text" 
+                    placeholder="Tên đăng nhập" 
+                    value={username} 
+                    onChange={e => setUsername(e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                {error && <div className="error-message" style={{ marginTop: '8px' }}>{error}</div>}
+
+                <button type="submit" className="submit-btn" disabled={loading} style={{ width: '100%', marginTop: '15px' }}>
+                  {loading ? <div className="spinner"></div> : 'TÌM TÀI KHOẢN'}
+                </button>
+                
+                <button 
+                  type="button" 
+                  onClick={() => { setIsForgotPassword(false); setError(''); }}
+                  style={{ background: 'transparent', border: 'none', color: '#00d2ff', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer', marginTop: '15px', width: '100%', textAlign: 'center' }}
+                >
+                  QUAY LẠI ĐĂNG NHẬP
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleResetPasswordSubmit} className="auth-form">
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', marginBottom: '5px' }}>
+                  <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, display: 'block', marginBottom: '4px' }}>CÂU HỎI BẢO MẬT CỦA BẠN</label>
+                  <p style={{ color: '#00d2ff', fontWeight: 700, fontSize: '0.9rem', margin: 0, lineHeight: 1.4 }}>{securityQuestion}</p>
+                </div>
+
+                <div className="input-field">
+                  <Edit3 size={18} className="field-icon" />
+                  <input 
+                    type="text" 
+                    placeholder="Nhập câu trả lời bảo mật..." 
+                    value={securityAnswer} 
+                    onChange={e => setSecurityAnswer(e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div className="input-field">
+                  <Lock size={18} className="field-icon" />
+                  <input 
+                    type="password" 
+                    placeholder="Mật khẩu mới" 
+                    value={newPassword} 
+                    onChange={e => setNewPassword(e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div className="input-field">
+                  <Lock size={18} className="field-icon" />
+                  <input 
+                    type="password" 
+                    placeholder="Nhập lại mật khẩu mới" 
+                    value={confirmPassword} 
+                    onChange={e => setConfirmPassword(e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                {error && <div className="error-message" style={{ marginTop: '8px' }}>{error}</div>}
+                {successMsg && <div style={{ color: '#00ff64', fontSize: '0.85rem', fontWeight: 700, textAlign: 'center', marginTop: '8px' }}>{successMsg}</div>}
+
+                <button type="submit" className="submit-btn" disabled={loading} style={{ width: '100%', marginTop: '15px' }}>
+                  {loading ? <div className="spinner"></div> : 'ĐẶT LẠI MẬT KHẨU'}
+                </button>
+                
+                <button 
+                  type="button" 
+                  onClick={() => { setForgotStep(1); setError(''); }}
+                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', marginTop: '15px', width: '100%', textAlign: 'center' }}
+                >
+                  QUAY LẠI BƯỚC TRƯỚC
+                </button>
+              </form>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page-wrapper">
@@ -104,6 +286,18 @@ const AuthView = ({ onLogin }) => {
               />
             </div>
 
+            {isLogin && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-8px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setIsForgotPassword(true); setError(''); setForgotStep(1); }}
+                  style={{ background: 'none', border: 'none', color: '#00d2ff', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Quên mật khẩu?
+                </button>
+              </div>
+            )}
+
             <AnimatePresence>
               {!isLogin && (
                 <motion.div 
@@ -111,8 +305,9 @@ const AuthView = ({ onLogin }) => {
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden"
+                  style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
                 >
-                  <div className="input-field mt-4">
+                  <div className="input-field">
                     <Edit3 size={18} className="field-icon" />
                     <input 
                       type="text" 
@@ -120,6 +315,29 @@ const AuthView = ({ onLogin }) => {
                       value={name} 
                       onChange={e => setName(e.target.value)} 
                       required 
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(255, 255, 255, 0.02)', padding: '12px 14px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                    <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Câu hỏi bảo mật (Khôi phục tài khoản)</label>
+                    <select 
+                      value={regQuestion} 
+                      onChange={e => setRegQuestion(e.target.value)} 
+                      style={{ width: '100%', padding: '10px 8px', background: '#090d16', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', color: 'white', fontSize: '0.8rem', outline: 'none' }}
+                    >
+                      <option value="Đội bóng yêu thích của bạn là gì?">Đội bóng yêu thích của bạn là gì?</option>
+                      <option value="Cầu thủ bóng đá thần tượng của bạn là ai?">Cầu thủ bóng đá thần tượng của bạn là ai?</option>
+                      <option value="Mật mã khôi phục bí mật của bạn là gì?">Mật mã khôi phục bí mật của bạn là gì?</option>
+                      <option value="Tên trường tiểu học đầu tiên của bạn?">Tên trường tiểu học đầu tiên của bạn?</option>
+                      <option value="Tên con vật cưng đầu tiên của bạn?">Tên con vật cưng đầu tiên của bạn?</option>
+                    </select>
+                    <input 
+                      type="text" 
+                      placeholder="Nhập câu trả lời..." 
+                      value={regAnswer} 
+                      onChange={e => setRegAnswer(e.target.value)} 
+                      required 
+                      style={{ width: '100%', padding: '12px', background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', color: 'white', fontSize: '0.85rem', outline: 'none', marginTop: '4px' }}
                     />
                   </div>
                 </motion.div>

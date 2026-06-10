@@ -20,11 +20,6 @@ const AdminView = () => {
   const [resetConfirmCode, setResetConfirmCode] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetMsg, setResetMsg] = useState('');
-  
-  // User Management States
-  const [users, setUsers] = useState([]);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(null); // stores id of deleting user
 
   // Fetch AI Config on Load
   React.useEffect(() => {
@@ -40,47 +35,7 @@ const AdminView = () => {
       } catch (err) { console.error('Lỗi lấy cấu hình AI'); }
     };
     fetchConfig();
-    fetchUsers();
   }, []);
-
-  const fetchUsers = async () => {
-    setUsersLoading(true);
-    const finalApiUrl = API_URL || window.location.origin;
-    try {
-      const token = localStorage.getItem('wc2026_token');
-      const res = await fetch(`${finalApiUrl}/api/admin/users`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok) setUsers(data);
-    } catch (err) { console.error('Lỗi lấy danh sách user'); }
-    finally { setUsersLoading(false); }
-  };
-
-  const handleDeleteUser = async (userId, username) => {
-    if (!confirm(`Hành động này sẽ xóa vĩnh viễn người dùng "${username}" và toàn bộ dữ liệu liên quan (tin nhắn, bài viết, dự đoán). Bạn có chắc chắn không?`)) return;
-    
-    setDeleteLoading(userId);
-    const finalApiUrl = API_URL || window.location.origin;
-    try {
-      const token = localStorage.getItem('wc2026_token');
-      const res = await fetch(`${finalApiUrl}/api/admin/users/${userId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message);
-        fetchUsers();
-      } else {
-        alert('❌ ' + data.error);
-      }
-    } catch (err) {
-      alert('❌ Lỗi kết nối');
-    } finally {
-      setDeleteLoading(null);
-    }
-  };
 
   const handleSaveAiKey = async () => {
     if (!aiKey) return;
@@ -247,78 +202,7 @@ const AdminView = () => {
           </div>
         </section>
 
-        {/* 3. USER MANAGEMENT */}
-        <section style={{ background: '#1a1f2e', padding: '30px', borderRadius: '24px', marginBottom: '30px', border: '1px solid rgba(255,255,255,0.03)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Shield size={20} color="#00d2ff" />
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white', margin: 0 }}>QUẢN LÝ NGƯỜI DÙNG ({users.length})</h3>
-            </div>
-            <button onClick={fetchUsers} disabled={usersLoading} style={{ background: 'transparent', border: 'none', color: '#00d2ff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontWeight: 700 }}>
-              <RefreshCw size={14} className={usersLoading ? 'animate-spin' : ''} /> Làm mới
-            </button>
-          </div>
-
-          <div style={{ maxHeight: '400px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            {usersLoading && users.length === 0 ? (
-              <div style={{ padding: '40px', textCenter: 'center', color: '#64748b' }}>Đang tải danh sách người dùng...</div>
-            ) : users.length === 0 ? (
-              <div style={{ padding: '40px', textCenter: 'center', color: '#64748b' }}>Không có người dùng nào.</div>
-            ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                <thead>
-                  <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <th style={{ padding: '15px', color: '#94a3b8', fontWeight: 800 }}>NGƯỜI DÙNG</th>
-                    <th style={{ padding: '15px', color: '#94a3b8', fontWeight: 800 }}>VAI TRÒ</th>
-                    <th style={{ padding: '15px', color: '#94a3b8', fontWeight: 800 }}>ĐIỂM</th>
-                    <th style={{ padding: '15px', color: '#94a3b8', fontWeight: 800, textAlign: 'right' }}>THAO TÁC</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(u => (
-                    <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                      <td style={{ padding: '12px 15px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <img src={u.avatar || 'https://via.placeholder.com/40'} style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} alt="" />
-                          <div>
-                            <div style={{ fontWeight: 800, color: 'white' }}>{u.name || u.username}</div>
-                            <div style={{ fontSize: '0.7rem', color: '#475569' }}>@{u.username}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: '12px 15px' }}>
-                        <span style={{ 
-                          padding: '3px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 900,
-                          background: u.role === 'admin' ? 'rgba(0, 210, 255, 0.1)' : 'rgba(255,255,255,0.05)',
-                          color: u.role === 'admin' ? '#00d2ff' : '#94a3b8',
-                          border: u.role === 'admin' ? '1px solid rgba(0, 210, 255, 0.2)' : '1px solid transparent'
-                        }}>
-                          {u.role.toUpperCase()}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 15px', fontWeight: 900, color: '#00ff64' }}>{u.points}</td>
-                      <td style={{ padding: '12px 15px', textAlign: 'right' }}>
-                        <button
-                          onClick={() => handleDeleteUser(u.id, u.username)}
-                          disabled={deleteLoading === u.id || u.role === 'admin'}
-                          style={{ 
-                            background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', 
-                            width: '32px', height: '32px', borderRadius: '8px', cursor: u.role === 'admin' ? 'not-allowed' : 'pointer',
-                            display: 'inline-flex', alignItems: 'center', justifyCenter: 'center', opacity: u.role === 'admin' ? 0.3 : 1
-                          }}
-                        >
-                          {deleteLoading === u.id ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </section>
-
-        {/* 4. DANGER ZONE */}
+        {/* 3. DANGER ZONE */}
         <section style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
             <AlertTriangle size={20} color="#ef4444" />

@@ -19,6 +19,7 @@ import MatchDetailView from './views/MatchDetailView';
 import ChatView from './views/ChatView';
 import SocialView from './views/SocialView';
 import AiAssistantView from './views/AiAssistantView';
+import UsersManagementView from './views/UsersManagementView';
 import CommentSection from './components/CommentSection';
 import UserAvatar from './components/UserAvatar';
 import { mockAuth } from './data/mockAuth';
@@ -26,7 +27,7 @@ import API_URL from './config';
 import { subscribeToPush } from './utils/pushNotifications';
 
 const App = () => {
-  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, chat, history, settings, admin_matches, admin_teams, admin_system, ai, bracket
+  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, chat, history, settings, admin_matches, admin_teams, admin_users, admin_system, ai, bracket
   const [hideHeader, setHideHeader] = useState(false);
   const [user, setUser] = useState(null);
   const [teams, setTeams] = useState([]);
@@ -298,7 +299,7 @@ const App = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
                 <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
-                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.0.8</span>
+                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.0.9</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -325,7 +326,7 @@ const App = () => {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
             <h1 className="brand-name">KizzBugs</h1>
-            <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.0.8</span>
+            <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.0.9</span>
           </div>
         </div>
 
@@ -393,6 +394,10 @@ const App = () => {
               <button onClick={() => setActiveTab('admin_teams')} className={`nav-item ${activeTab === 'admin_teams' ? 'active' : ''}`}>
                 <div className="active-indicator" />
                 <Shield size={18} className="nav-icon" /> <span>Quản lý đội bóng</span>
+              </button>
+              <button onClick={() => setActiveTab('admin_users')} className={`nav-item ${activeTab === 'admin_users' ? 'active' : ''}`}>
+                <div className="active-indicator" />
+                <Users size={18} className="nav-icon" /> <span>Quản lý thành viên</span>
               </button>
               <button onClick={() => setActiveTab('admin_system')} className={`nav-item ${activeTab === 'admin_system' ? 'active' : ''}`}>
                 <div className="active-indicator" />
@@ -481,6 +486,11 @@ const App = () => {
           {activeTab === 'admin_system' && (
             <motion.div key="as" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <AdminView />
+            </motion.div>
+          )}
+          {activeTab === 'admin_users' && (
+            <motion.div key="au" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <UsersManagementView />
             </motion.div>
           )}
           {activeTab === 'admin_teams' && (

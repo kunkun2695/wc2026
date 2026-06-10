@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
     avatar TEXT,
     dob DATE,
     role VARCHAR(20) DEFAULT 'user',
+    security_question VARCHAR(255),
+    security_answer VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

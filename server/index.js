@@ -62,8 +62,12 @@ async function patchDatabase() {
     // Vá bảng users để hỗ trợ tích lũy điểm
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0`);
     await db.query(`ALTER TABLE predictions ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0`);
+    
+    // Vá bảng users hỗ trợ phục hồi mật khẩu bằng câu hỏi bảo mật
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS security_question VARCHAR(255)`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS security_answer VARCHAR(255)`);
 
-    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội và Chat Image thành công.');
+    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội, Chat Image và bảo mật tài khoản thành công.');
   } catch (err) {
     console.error('⚠️ [DB Fix Error]', err.message);
   }
