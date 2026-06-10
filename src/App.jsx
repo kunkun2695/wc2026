@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Trophy, Search, Edit3, Settings,
-  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles, GitBranch, Calendar
+  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles, GitBranch, Calendar, BookOpen
 } from 'lucide-react';
 import BracketView from './views/BracketView';
 import NotificationsDrawer from './components/NotificationsDrawer';
@@ -21,6 +21,7 @@ import SocialView from './views/SocialView';
 import AiAssistantView from './views/AiAssistantView';
 import UsersManagementView from './views/UsersManagementView';
 import DailyStatsView from './views/DailyStatsView';
+import RulesView from './views/RulesView';
 import CommentSection from './components/CommentSection';
 import UserAvatar from './components/UserAvatar';
 import { mockAuth } from './data/mockAuth';
@@ -28,7 +29,7 @@ import API_URL from './config';
 import { subscribeToPush } from './utils/pushNotifications';
 
 const App = () => {
-  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, stats, chat, history, settings, admin_matches, admin_teams, admin_users, admin_system, ai, bracket
+  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, stats, chat, history, settings, admin_matches, admin_teams, admin_users, admin_system, ai, bracket, rules
   const [hideHeader, setHideHeader] = useState(false);
   const [user, setUser] = useState(null);
   const [teams, setTeams] = useState([]);
@@ -379,6 +380,10 @@ const App = () => {
               <div className="active-indicator" />
               <Settings size={18} className="nav-icon" /> <span>Cài đặt hồ sơ</span>
             </button>
+            <button onClick={() => setActiveTab('rules')} className={`nav-item ${activeTab === 'rules' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <BookOpen size={18} className="nav-icon" /> <span>Luật chơi & Thể lệ</span>
+            </button>
             <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className={`nav-item ${showNotifications ? 'active' : ''}`}>
               <div className="active-indicator" />
               <div className="icon-badge-wrapper">
@@ -457,6 +462,11 @@ const App = () => {
           {activeTab === 'history' && (
             <motion.div key="hi" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <HistoryView predictions={predictions} matches={matches} />
+            </motion.div>
+          )}
+          {activeTab === 'rules' && (
+            <motion.div key="rules" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <RulesView />
             </motion.div>
           )}
           {activeTab === 'settings' && (
@@ -548,6 +558,10 @@ const App = () => {
           <button onClick={() => setActiveTab('bracket')} className={`nav-item-bet ${activeTab === 'bracket' ? 'active' : ''}`}>
             <GitBranch size={20} />
             <span>Nhánh đấu</span>
+          </button>
+          <button onClick={() => setActiveTab('rules')} className={`nav-item-bet ${activeTab === 'rules' ? 'active' : ''}`}>
+            <BookOpen size={20} />
+            <span>Luật chơi</span>
           </button>
           <button onClick={() => setActiveTab('chat')} className={`nav-item-bet ${activeTab === 'chat' ? 'active' : ''}`} style={{ position: 'relative' }}>
             <MessageSquare size={20} />
