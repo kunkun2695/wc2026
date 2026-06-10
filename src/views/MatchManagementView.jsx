@@ -16,9 +16,12 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
   const [s2, setS2] = useState(match.team2_score || 0);
   const [status, setStatus] = useState(match.status || 'UPCOMING');
   const [time, setTime] = useState(match.match_time || '');
-  const [handicapFav, setHandicapFav] = useState(match.handicap_favorite || '');
-  const [handicapTxt, setHandicapTxt] = useState(match.handicap_text || '');
   const [ouTxt, setOuTxt] = useState(match.ou_text || '');
+
+  const isFavT1 = match.handicap_favorite === match.team1_name;
+  const isFavT2 = match.handicap_favorite === match.team2_name;
+  const [hVal1, setHVal1] = useState(isFavT1 ? (match.handicap_text || match.handicap_value || '') : '');
+  const [hVal2, setHVal2] = useState(isFavT2 ? (match.handicap_text || match.handicap_value || '') : '');
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -64,33 +67,67 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-          <div>
-            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '0.5px' }}>ĐỘI CHẤP</label>
-            <select value={handicapFav} onChange={e => setHandicapFav(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }}>
-              <option value="">Đồng banh (Không chấp)</option>
-              <option value={match.team1_name}>{match.team1_name}</option>
-              <option value={match.team2_name}>{match.team2_name}</option>
-            </select>
+        <div style={{ marginBottom: '25px' }}>
+          <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>KÈO CHẤP</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+            <div>
+              <label style={{ fontSize: '0.65rem', color: '#888', display: 'block', marginBottom: '6px', fontWeight: 700 }}>{match.team1_name} chấp:</label>
+              <input 
+                type="text" 
+                value={hVal1} 
+                placeholder="0"
+                onChange={e => {
+                  const val = e.target.value;
+                  setHVal1(val);
+                  if (val.trim() !== '') setHVal2('');
+                }} 
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: '#00d2ff', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 900, fontSize: '0.95rem' }} 
+              />
+            </div>
+            
+            <div>
+              <label style={{ fontSize: '0.65rem', color: '#888', display: 'block', marginBottom: '6px', fontWeight: 700 }}>{match.team2_name} chấp:</label>
+              <input 
+                type="text" 
+                value={hVal2} 
+                placeholder="0"
+                onChange={e => {
+                  const val = e.target.value;
+                  setHVal2(val);
+                  if (val.trim() !== '') setHVal1('');
+                }} 
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: '#00d2ff', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 900, fontSize: '0.95rem' }} 
+              />
+            </div>
           </div>
-          <div>
-            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '0.5px' }}>TỶ LỆ CHẤP</label>
-            <input type="text" value={handicapTxt} placeholder="Ví dụ: 1/1.5 hoặc 0.5" onChange={e => setHandicapTxt(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} />
-          </div>
+          <span style={{ display: 'block', fontSize: '0.6rem', color: 'rgba(255,255,255,0.25)', marginTop: '8px', textAlign: 'center' }}>
+            * Nhập số quả chấp vào ô của đội chấp (để trống cả 2 nghĩa là đồng banh).
+          </span>
         </div>
 
-        {/* Mốc Tài Xỉu đã được ẩn đi theo yêu cầu */}
-
         <button 
-          onClick={() => onSave(match.id, { 
-            team1_score: s1, 
-            team2_score: s2, 
-            status, 
-            match_time: time,
-            handicap_favorite: handicapFav,
-            handicap_text: handicapTxt,
-            ou_text: ouTxt
-          })}
+          onClick={() => {
+            let finalFav = '';
+            let finalTxt = '';
+            
+            if (hVal1 && String(hVal1).trim() !== '' && String(hVal1).trim() !== '0') {
+              finalFav = match.team1_name;
+              finalTxt = String(hVal1).trim();
+            } else if (hVal2 && String(hVal2).trim() !== '' && String(hVal2).trim() !== '0') {
+              finalFav = match.team2_name;
+              finalTxt = String(hVal2).trim();
+            }
+            
+            onSave(match.id, { 
+              team1_score: s1, 
+              team2_score: s2, 
+              status, 
+              match_time: time,
+              handicap_favorite: finalFav,
+              handicap_text: finalTxt,
+              ou_text: ouTxt
+            });
+          }}
           style={{ width: '100%', padding: '18px', borderRadius: '16px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.9rem', letterSpacing: '1px', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(0,210,255,0.3)' }}
         >
           LƯU KẾT QUẢ
