@@ -131,12 +131,41 @@ const MatchManagementView = ({ matches, onUpdateScore, onSync }) => {
     }
   };
 
+  const parseMatchTime = (timeStr) => {
+    if (!timeStr) return new Date(0);
+    try {
+      if (timeStr.includes('/')) {
+        const [datePart, timePart] = timeStr.split(' - ');
+        const [day, month] = datePart.split('/');
+        const [hour, min] = timePart.split(':');
+        return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+      }
+      if (timeStr.includes('.')) {
+        const [datePart, timePart] = timeStr.split(' - ');
+        const [day, month] = datePart.split('.');
+        const [hour, min] = timePart.split(':');
+        return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+      }
+      const parts = timeStr.split(/[\s-]/);
+      const [time, day, month] = parts.filter(Boolean);
+      const [hour, min] = time.split(':');
+      return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+    } catch (e) {
+      return new Date(0);
+    }
+  };
+
   const filteredMatches = matches.filter(m => {
     if (filter === 'all') return true;
     if (filter === 'live') return m.status === 'LIVE';
     if (filter === 'upcoming') return m.status === 'UPCOMING';
     if (filter === 'ft') return m.status === 'FT' || m.status === 'FINISHED';
     return true;
+  }).sort((a, b) => {
+    const now = new Date();
+    const diffA = Math.abs(parseMatchTime(a.match_time) - now);
+    const diffB = Math.abs(parseMatchTime(b.match_time) - now);
+    return diffA - diffB;
   });
 
   return (
