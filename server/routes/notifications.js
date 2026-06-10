@@ -111,6 +111,65 @@ const sendPushNotification = async (userId, title, body, url = '/') => {
   }
 };
 
+// Gửi thông báo nhắc nhở dự đoán trận đấu (Chỉ dành cho Admin)
+router.post('/remind-match', authenticateUser, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Chỉ Admin mới có quyền gửi thông báo nhắc nhở' });
+  }
+
+  const { match_id } = req.body;
+  const senderId = req.user.id;
+
+  if (!match_id) {
+    return res.status(400).json({ error: 'Thiếu ID trận đấu' });
+  }
+
+  try {
+    // Lấy thông tin trận đấu
+    const matchRes = await db.query('SELECT * FROM matches WHERE id = $1', [match_id]);
+    if (matchRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy trận đấu' });
+    }
+    const match = matchRes.rows[0];
+
+    // Tìm tất cả người dùng chưa dự đoán trận này
+    const usersResult = await db.query(`
+      SELECT id, name FROM users 
+      WHERE id NOT IN (
+        SELECT user_id FROM predictions WHERE match_id = $1
+      )
+    `, [match_id]);
+    const usersToRemind = usersResult.rows;
+
+    if (usersToRemind.length === 0) {
+      return res.json({ message: 'Tất cả mọi người đều đã dự đoán trận đấu này!' });
+    }
+
+    const title = '🔔 Nhắc nhở: Chốt kèo ngay!';
+    const body = `Trận đấu giữa ${match.team1_name} vs ${match.team2_name} sắp bắt đầu lúc ${match.match_time}. Vào chốt cửa dự đoán ngay!`;
+    const url = `/`;
+
+    // Tạo thông báo trong DB cho từng người
+    const insertPromises = usersToRemind.map(user => {
+      return db.query(`
+        INSERT INTO notifications (user_id, sender_id, type, title, message, content, url, is_read)
+        VALUES ($1, $2, $3, $4, $5, $5, $6, FALSE)
+      `, [user.id, senderId, 'match_reminder', title, body, url]);
+    });
+    
+    await Promise.all(insertPromises);
+
+    // Gửi Push Notification
+    usersToRemind.forEach(user => {
+      sendPushNotification(user.id, title, body, url);
+    });
+
+    res.json({ message: `Đã gửi nhắc nhở thành công tới ${usersToRemind.length} thành viên chưa dự đoán!` });
+  } catch (error) {
+    res.status(500).json({ error: 'Lỗi gửi nhắc nhở dự đoán: ' + error.message });
+  }
+});
+
 // Gửi thông báo cho TẤT CẢ mọi người (Chỉ dành cho Admin)
 router.post('/broadcast', authenticateUser, async (req, res) => {
   if (req.user.role !== 'admin') {

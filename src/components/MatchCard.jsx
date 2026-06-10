@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Edit3, Check, MessageSquare, Clock, Users } from 'lucide-react';
+import { Edit3, Check, MessageSquare, Clock, Users, Bell } from 'lucide-react';
 
 const FlagIcon = ({ flag }) => {
   const isUrl = flag?.startsWith('http') || flag?.includes('.');
@@ -84,6 +84,32 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
     await onSavePrediction(match.id, h, a);
     setSelectedChoice(choice);
     setIsSaving(false);
+  };
+
+  const handleRemind = async (e) => {
+    e.stopPropagation();
+    if (!window.confirm('Gửi thông báo nhắc nhở chốt kèo trận này cho các thành viên chưa dự đoán?')) return;
+    
+    try {
+      const finalApiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${finalApiUrl}/api/notifications/remind-match`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ match_id: match.id })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Đã gửi nhắc nhở thành công!');
+      } else {
+        alert('Lỗi: ' + (data.error || 'Không thể gửi thông báo'));
+      }
+    } catch (err) {
+      alert('Lỗi kết nối khi gửi thông báo');
+    }
   };
 
   const isPredicted = userPrediction !== undefined;
@@ -278,9 +304,16 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
       </div>
 
       {isAdmin && (
-        <button onClick={() => onEdit(match)} className="admin-edit-btn">
-          <Edit3 size={14} />
-        </button>
+        <div style={{ position: 'absolute', top: '18px', right: '18px', display: 'flex', gap: '8px' }}>
+          {match.status === 'UPCOMING' && (
+            <button onClick={handleRemind} className="admin-remind-btn" title="Nhắc nhở chốt kèo">
+              <Bell size={14} />
+            </button>
+          )}
+          <button onClick={() => onEdit(match)} className="admin-edit-btn" style={{ position: 'static' }} title="Sửa kết quả/kèo">
+            <Edit3 size={14} />
+          </button>
+        </div>
       )}
 
       <style dangerouslySetInnerHTML={{ __html: `
@@ -625,17 +658,21 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           transform: scale(1.02);
         }
         
-        .admin-edit-btn {
-          position: absolute;
-          top: 18px;
-          right: 18px;
-          background: none;
-          border: none;
-          color: rgba(255, 255, 255, 0.2);
+        .admin-edit-btn, .admin-remind-btn {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: rgba(255, 255, 255, 0.4);
           cursor: pointer;
-          transition: color 0.2s;
+          transition: all 0.2s;
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        .admin-edit-btn:hover { color: white; }
+        .admin-edit-btn:hover { color: white; background: rgba(0, 210, 255, 0.15); border-color: #00d2ff; }
+        .admin-remind-btn:hover { color: white; background: rgba(255, 210, 0, 0.15); border-color: #ffd200; }
         
         @media (max-width: 600px) {
           .match-scoreboard {
