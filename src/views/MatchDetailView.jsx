@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Trophy, Calendar, MapPin, Users, Zap, Check, Send, Clock } from 'lucide-react';
 import CommentSection from '../components/CommentSection';
+import UserAvatar from '../components/UserAvatar';
+import API_URL from '../config';
+import { mockAuth } from '../data/mockAuth';
 
 const FlagIcon = ({ flag }) => {
   const isUrl = flag?.startsWith('http') || flag?.includes('.');
@@ -17,6 +20,39 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   
   const [selectedChoice, setSelectedChoice] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [allPredictions, setAllPredictions] = useState([]);
+  const [loadingPreds, setLoadingPreds] = useState(true);
+
+  // Helper to parse match time string to Vietnam Time (UTC+7) Date
+  const parseMatchTimeToVnDate = (timeStr) => {
+    if (!timeStr) return new Date(0);
+    try {
+      let day, month, hour, min;
+      if (timeStr.includes('/')) {
+        const [datePart, timePart] = timeStr.split(' - ');
+        [day, month] = datePart.split('/');
+        [hour, min] = timePart.split(':');
+      } else if (timeStr.includes('.')) {
+        const [datePart, timePart] = timeStr.split(' - ');
+        [day, month] = datePart.split('.');
+        [hour, min] = timePart.split(':');
+      } else {
+        const parts = timeStr.split(/[\s-]/);
+        const [time, d, m] = parts.filter(Boolean);
+        [hour, min] = time.split(':');
+        day = d;
+        month = m;
+      }
+      const pad = (n) => String(n).padStart(2, '0');
+      const isoString = `2026-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(min)}:00+07:00`;
+      return new Date(isoString);
+    } catch (e) {
+      return new Date(0);
+    }
+  };
+
+  const matchTime = match ? parseMatchTimeToVnDate(match.match_time) : new Date(0);
+  const isClosed = match ? (match.status !== 'UPCOMING' || new Date() >= matchTime) : true;
 
   useEffect(() => {
     if (userPrediction) {
@@ -26,10 +62,35 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
     }
   }, [userPrediction]);
 
+  useEffect(() => {
+    const fetchAllPreds = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/predictions/all`, {
+          headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAllPredictions(data.filter(p => p.match_id === matchId));
+        }
+      } catch (err) {
+        console.error('Lỗi lấy dự đoán:', err);
+      } finally {
+        setLoadingPreds(false);
+      }
+    };
+    fetchAllPreds();
+  }, [matchId, userPrediction]);
+
   if (!match) return <div className="p-10 text-center">Không tìm thấy trận đấu</div>;
 
   const t1 = { name: match.team1_name || 'Team 1', flag: match.team1_flag || '⚽', score: match.team1_score ?? 0 };
   const t2 = { name: match.team2_name || 'Team 2', flag: match.team2_flag || '⚽', score: match.team2_score ?? 0 };
+
+  const getOutcomeLabel = (p) => {
+    if (p.predicted_home_score > p.predicted_away_score) return '1';
+    if (p.predicted_home_score < p.predicted_away_score) return '2';
+    return 'X';
+  };
 
   const getHandicapLabel = (team) => {
     if (!match.handicap_favorite || parseFloat(match.handicap_value) === 0) {
@@ -192,11 +253,11 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
             <div className="voting-options">
               <button 
                 onClick={() => {
-                  if (match.status === 'UPCOMING' && !userPrediction) {
+                  if (!isClosed && !userPrediction) {
                     setSelectedChoice('1');
                   }
                 }}
-                className={`vote-opt ${selectedChoice === '1' ? 'active' : ''} ${match.status !== 'UPCOMING' || userPrediction ? 'readonly' : ''}`}
+                className={`vote-opt ${selectedChoice === '1' ? 'active' : ''} ${isClosed || userPrediction ? 'readonly' : ''}`}
               >
                 <div className="opt-flag"><FlagIcon flag={t1.flag} /></div>
                 <span className="opt-name">{t1.name}</span>
@@ -207,11 +268,11 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
               
               <button 
                 onClick={() => {
-                  if (match.status === 'UPCOMING' && !userPrediction) {
+                  if (!isClosed && !userPrediction) {
                     setSelectedChoice('X');
                   }
                 }}
-                className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''} ${match.status !== 'UPCOMING' || userPrediction ? 'readonly' : ''}`}
+                className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''} ${isClosed || userPrediction ? 'readonly' : ''}`}
               >
                 <div className="opt-flag draw">HÒA</div>
                 <span className="opt-name">Bất phân thắng bại</span>
@@ -219,11 +280,11 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
               
               <button 
                 onClick={() => {
-                  if (match.status === 'UPCOMING' && !userPrediction) {
+                  if (!isClosed && !userPrediction) {
                     setSelectedChoice('2');
                   }
                 }}
-                className={`vote-opt ${selectedChoice === '2' ? 'active' : ''} ${match.status !== 'UPCOMING' || userPrediction ? 'readonly' : ''}`}
+                className={`vote-opt ${selectedChoice === '2' ? 'active' : ''} ${isClosed || userPrediction ? 'readonly' : ''}`}
               >
                 <div className="opt-flag"><FlagIcon flag={t2.flag} /></div>
                 <span className="opt-name">{t2.name}</span>
@@ -240,12 +301,12 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
             )}
 
             <button 
-              className={`confirm-vote-btn ${!selectedChoice || userPrediction || match.status !== 'UPCOMING' ? 'disabled' : ''}`}
-              disabled={!selectedChoice || !!userPrediction || isSaving || match.status !== 'UPCOMING'}
+              className={`confirm-vote-btn ${!selectedChoice || userPrediction || isClosed ? 'disabled' : ''}`}
+              disabled={!selectedChoice || !!userPrediction || isSaving || isClosed}
               onClick={handleVote}
             >
-              {isSaving ? 'Đang gửi...' : userPrediction ? 'Lựa chọn của bạn' : match.status !== 'UPCOMING' ? 'Đã đóng dự đoán' : 'CHỐT KÈO NGAY'}
-              {!isSaving && !userPrediction && match.status === 'UPCOMING' && <Send size={18} />}
+              {isSaving ? 'Đang gửi...' : userPrediction ? 'Lựa chọn của bạn' : isClosed ? 'Đã đóng dự đoán' : 'CHỐT KÈO NGAY'}
+              {!isSaving && !userPrediction && !isClosed && <Send size={18} />}
             </button>
 
             {renderPredictionOutcome()}
@@ -297,6 +358,50 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
                 <div className="bar-bg"><div className="bar-fill away" style={{ width: `${(match.away_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
               </div>
             </div>
+          </div>
+
+          {/* Everyone's predictions section */}
+          <div className="everyone-preds-section card-box">
+            <h3 className="section-title"><Users size={18} /> Dự đoán từ bạn bè ({allPredictions.length})</h3>
+            {loadingPreds ? (
+              <div className="text-center p-4 text-slate-500 text-xs">Đang tải dự đoán...</div>
+            ) : allPredictions.length > 0 ? (
+              <div className="everyone-preds-list">
+                {allPredictions.map(p => {
+                  const isCorrect = p.points === 10;
+                  const choice = getOutcomeLabel(p);
+                  const teamSelected = choice === '1' ? t1.name : (choice === '2' ? t2.name : 'Hòa');
+
+                  return (
+                    <div key={p.prediction_id} className="everyone-pred-item">
+                      <div className="user-info-mini">
+                        <UserAvatar src={p.user_avatar} size={28} style={{ borderRadius: '50%' }} />
+                        <span className="user-name-choice">{p.user_name}</span>
+                      </div>
+                      
+                      {p.is_hidden ? (
+                        <div className="choice-pill-locked">
+                          🔒 ĐÃ KHÓA (ẨN)
+                        </div>
+                      ) : (
+                        <div className="choice-pill-revealed">
+                          <span>Chọn: </span>
+                          <strong>{teamSelected}</strong>
+                        </div>
+                      )}
+
+                      {match.status === 'FT' && !p.is_hidden && (
+                        <span className={`outcome-lbl ${isCorrect ? 'correct' : 'wrong'}`}>
+                          {isCorrect ? 'ĐÚNG' : 'SAI'}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center p-4 text-slate-500 text-xs">Chưa có ai dự đoán trận đấu này.</div>
+            )}
           </div>
 
           <div className="detail-comments-section card-box">
@@ -489,6 +594,59 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
         .bar-fill.draw { background: linear-gradient(90deg, #ffd200, #f7971e); }
         .bar-fill.away { background: linear-gradient(90deg, #00ff64, #00ab4e); }
         
+        .everyone-preds-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          max-height: 250px;
+          overflow-y: auto;
+          padding-right: 5px;
+        }
+        .everyone-pred-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          padding: 10px 14px;
+          border-radius: 12px;
+        }
+        .user-name-choice {
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: white;
+        }
+        .choice-pill-locked {
+          font-size: 0.65rem;
+          font-weight: 800;
+          color: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.03);
+          padding: 4px 10px;
+          border-radius: 8px;
+        }
+        .choice-pill-revealed {
+          font-size: 0.75rem;
+          color: #94a3b8;
+        }
+        .choice-pill-revealed strong {
+          color: white;
+          font-weight: 800;
+        }
+        .outcome-lbl {
+          font-size: 0.65rem;
+          font-weight: 900;
+          padding: 3px 8px;
+          border-radius: 6px;
+        }
+        .outcome-lbl.correct {
+          background: rgba(52, 211, 153, 0.1);
+          color: #34d399;
+        }
+        .outcome-lbl.wrong {
+          background: rgba(239, 68, 68, 0.1);
+          color: #ef4444;
+        }
+
         .detail-comment-wrapper {
           height: 400px;
           margin-top: 10px;

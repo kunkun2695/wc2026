@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Trophy, Search, Edit3, Settings,
-  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles, GitBranch
+  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles, GitBranch, Calendar
 } from 'lucide-react';
 import BracketView from './views/BracketView';
 import NotificationsDrawer from './components/NotificationsDrawer';
@@ -20,6 +20,7 @@ import ChatView from './views/ChatView';
 import SocialView from './views/SocialView';
 import AiAssistantView from './views/AiAssistantView';
 import UsersManagementView from './views/UsersManagementView';
+import DailyStatsView from './views/DailyStatsView';
 import CommentSection from './components/CommentSection';
 import UserAvatar from './components/UserAvatar';
 import { mockAuth } from './data/mockAuth';
@@ -27,7 +28,7 @@ import API_URL from './config';
 import { subscribeToPush } from './utils/pushNotifications';
 
 const App = () => {
-  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, chat, history, settings, admin_matches, admin_teams, admin_users, admin_system, ai, bracket
+  const [activeTab, setActiveTab] = useState('home'); // home, social, leaderboard, stats, chat, history, settings, admin_matches, admin_teams, admin_users, admin_system, ai, bracket
   const [hideHeader, setHideHeader] = useState(false);
   const [user, setUser] = useState(null);
   const [teams, setTeams] = useState([]);
@@ -341,6 +342,10 @@ const App = () => {
               <div className="active-indicator" />
               <Trophy size={18} className="nav-icon" /> <span>Bảng xếp hạng</span>
             </button>
+            <button onClick={() => setActiveTab('stats')} className={`nav-item ${activeTab === 'stats' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <Calendar size={18} className="nav-icon" /> <span>Thống kê hằng ngày</span>
+            </button>
             <button onClick={() => setActiveTab('social')} className={`nav-item ${activeTab === 'social' ? 'active' : ''}`}>
               <div className="active-indicator" />
               <Users size={18} className="nav-icon" /> <span>Cộng đồng</span>
@@ -444,6 +449,11 @@ const App = () => {
               <LeaderboardView leaderboard={leaderboard} />
             </motion.div>
           )}
+          {activeTab === 'stats' && (
+            <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <DailyStatsView matches={matches} />
+            </motion.div>
+          )}
           {activeTab === 'history' && (
             <motion.div key="hi" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <HistoryView predictions={predictions} matches={matches} />
@@ -522,6 +532,10 @@ const App = () => {
           <button onClick={() => setActiveTab('leaderboard')} className={`nav-item-bet ${activeTab === 'leaderboard' ? 'active' : ''}`}>
             <Trophy size={20} />
             <span>Xếp hạng</span>
+          </button>
+          <button onClick={() => setActiveTab('stats')} className={`nav-item-bet ${activeTab === 'stats' ? 'active' : ''}`}>
+            <Calendar size={20} />
+            <span>Thống kê</span>
           </button>
           <button onClick={() => setActiveTab('ai')} className={`nav-item-bet ${activeTab === 'ai' ? 'active' : ''}`}>
             <Sparkles size={20} color={activeTab === 'ai' ? '#00d2ff' : 'currentColor'} />

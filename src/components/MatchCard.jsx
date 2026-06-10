@@ -39,8 +39,38 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
     datePart = parts[1] || '01-01';
   }
 
+  const parseMatchTimeToVnDate = (timeStr) => {
+    if (!timeStr) return new Date(0);
+    try {
+      let day, month, hour, min;
+      if (timeStr.includes('/')) {
+        const [datePart, timePart] = timeStr.split(' - ');
+        [day, month] = datePart.split('/');
+        [hour, min] = timePart.split(':');
+      } else if (timeStr.includes('.')) {
+        const [datePart, timePart] = timeStr.split(' - ');
+        [day, month] = datePart.split('.');
+        [hour, min] = timePart.split(':');
+      } else {
+        const parts = timeStr.split(/[\s-]/);
+        const [time, d, m] = parts.filter(Boolean);
+        [hour, min] = time.split(':');
+        day = d;
+        month = m;
+      }
+      const pad = (n) => String(n).padStart(2, '0');
+      const isoString = `2026-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(min)}:00+07:00`;
+      return new Date(isoString);
+    } catch (e) {
+      return new Date(0);
+    }
+  };
+
+  const matchTime = parseMatchTimeToVnDate(match.match_time);
+  const isClosed = match.status !== 'UPCOMING' || new Date() >= matchTime;
+
   const handleSave = async (choice) => {
-    if (isPredicted) return;
+    if (isPredicted || isClosed) return;
     
     let h = 0, a = 0, label = '';
     if (choice === '1') { h = 1; a = 0; label = t1.name + ' thắng'; }
@@ -161,7 +191,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <button 
               className={`choice-btn-v2 ${selectedChoice === '1' ? 'active-1' : ''}`}
               onClick={() => handleSave('1')}
-              disabled={match.status !== 'UPCOMING' || isPredicted}
+              disabled={isClosed || isPredicted}
               title={`${t1.name} thắng`}
             >
               <div className="btn-team-flag"><FlagIcon flag={t1.flag} /></div>
@@ -186,7 +216,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <button 
               className={`choice-btn-v2 draw ${selectedChoice === 'X' ? 'active-X' : ''}`}
               onClick={() => handleSave('X')}
-              disabled={match.status !== 'UPCOMING' || isPredicted}
+              disabled={isClosed || isPredicted}
             >
               <span className="choice-btn-v2-draw-label">HÒA</span>
             </button>
@@ -204,7 +234,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <button 
               className={`choice-btn-v2 ${selectedChoice === '2' ? 'active-2' : ''}`}
               onClick={() => handleSave('2')}
-              disabled={match.status !== 'UPCOMING' || isPredicted}
+              disabled={isClosed || isPredicted}
               title={`${t2.name} thắng`}
             >
               <div className="btn-team-flag"><FlagIcon flag={t2.flag} /></div>

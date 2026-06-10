@@ -41,9 +41,8 @@ const HistoryView = ({ predictions, matches = [] }) => {
       <div className="history-list">
         {predictions.length > 0 ? predictions.map((p, index) => {
           const myChoice = getOutcomeLabel(p);
-          const actualOutcome = getActualOutcome(p);
-          const isCorrect = actualOutcome && myChoice === actualOutcome;
           const isFinished = p.status === 'FT';
+          const isCorrect = isFinished ? p.points === 10 : false;
           const { time, date } = parseTime(p.match_time);
           
           // Tìm trận đấu gốc để lấy logo nếu trong p bị thiếu
@@ -69,9 +68,9 @@ const HistoryView = ({ predictions, matches = [] }) => {
                 <div className="status-indicator">
                   {isFinished ? (
                     isCorrect ? (
-                      <span className="status-label win"><CheckCircle2 size={12} /> THẮNG</span>
+                      <span className="status-label win"><CheckCircle2 size={12} /> ĐÚNG</span>
                     ) : (
-                      <span className="status-label loss"><XCircle size={12} /> TRẬT</span>
+                      <span className="status-label loss"><XCircle size={12} /> SAI</span>
                     )
                   ) : (
                     <span className="status-label pending"><AlertCircle size={12} /> {p.status === 'LIVE' ? 'LIVE' : 'CHỜ'}</span>
@@ -100,6 +99,18 @@ const HistoryView = ({ predictions, matches = [] }) => {
                 </div>
               </div>
 
+              {/* Handicap & OU display row */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', fontWeight: 800, marginTop: '-15px', marginBottom: '18px' }}>
+                {p.handicap_favorite ? (
+                  <span>Chấp: <strong style={{ color: '#00d2ff' }}>{p.handicap_favorite} (-{p.handicap_text})</strong></span>
+                ) : (
+                  <span>Chấp: <strong style={{ color: '#00d2ff' }}>Đồng banh (0)</strong></span>
+                )}
+                {p.ou_text && (
+                  <span>Tài xỉu: <strong style={{ color: '#ffd200' }}>{p.ou_text}</strong></span>
+                )}
+              </div>
+
               {/* Footer: Your Choice and Points */}
               <div className="card-footer-v2">
                 <div className="choice-section">
@@ -113,12 +124,12 @@ const HistoryView = ({ predictions, matches = [] }) => {
 
                 <div className="points-section">
                   {isFinished ? (
-                    <div className={`points-badge ${isCorrect ? 'plus' : 'zero'}`}>
+                    <div className={`points-badge ${isCorrect ? 'plus' : 'loss'}`}>
                       <TrendingUp size={14} />
-                      <span>{isCorrect ? `+${p.points} ĐIỂM` : '0 ĐIỂM'}</span>
+                      <span>{isCorrect ? 'PHẠT 10K (ĐÚNG)' : 'PHẠT 30K (SAI)'}</span>
                     </div>
                   ) : (
-                    <span className="points-estimate">ĐANG TÍNH...</span>
+                    <span className="points-estimate">ĐANG CHỜ ĐẤU...</span>
                   )}
                 </div>
               </div>
@@ -235,6 +246,7 @@ const HistoryView = ({ predictions, matches = [] }) => {
           padding: 6px 12px; border-radius: 12px; font-weight: 900; font-size: 0.8rem;
         }
         .points-badge.plus { background: rgba(0, 255, 100, 0.1); color: #00ff64; border: 1px solid rgba(0, 255, 100, 0.2); }
+        .points-badge.loss { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.2); }
         .points-badge.zero { background: rgba(255,255,255,0.05); color: #64748b; }
         .points-estimate { font-size: 0.65rem; font-weight: 800; color: #475569; }
 

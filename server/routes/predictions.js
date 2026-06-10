@@ -18,12 +18,54 @@ const authenticateUser = (req, res, next) => {
   }
 };
 
-// 1. Tạo hoặc cập nhật dự đoán
+// Helper to parse match time string to Vietnam Time (UTC+7) Date
+const parseMatchTimeToVnDate = (timeStr) => {
+  if (!timeStr) return new Date(0);
+  try {
+    let day, month, hour, min;
+    if (timeStr.includes('/')) {
+      const [datePart, timePart] = timeStr.split(' - ');
+      [day, month] = datePart.split('/');
+      [hour, min] = timePart.split(':');
+    } else if (timeStr.includes('.')) {
+      const [datePart, timePart] = timeStr.split(' - ');
+      [day, month] = datePart.split('.');
+      [hour, min] = timePart.split(':');
+    } else {
+      const parts = timeStr.split(/[\s-]/);
+      const [time, d, m] = parts.filter(Boolean);
+      [hour, min] = time.split(':');
+      day = d;
+      month = m;
+    }
+    const pad = (n) => String(n).padStart(2, '0');
+    const isoString = `2026-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(min)}:00+07:00`;
+    return new Date(isoString);
+  } catch (e) {
+    return new Date(0);
+  }
+};
+
+// 1. Tạo hoặc cập nhật dự đoán (chặn nếu trận đấu đã bắt đầu hoặc quá giờ)
 router.post('/', authenticateUser, async (req, res) => {
   const { match_id, home_score, away_score } = req.body;
   const user_id = req.user.id;
 
   try {
+    // Lấy thông tin trận đấu
+    const matchRes = await db.query('SELECT status, match_time FROM matches WHERE id = $1', [match_id]);
+    if (matchRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy trận đấu' });
+    }
+    const match = matchRes.rows[0];
+
+    const matchTime = parseMatchTimeToVnDate(match.match_time);
+    const now = new Date();
+
+    if (match.status !== 'UPCOMING' || now >= matchTime) {
+      return res.status(400).json({ error: 'Trận đấu đã bắt đầu hoặc quá giờ thi đấu, không thể chốt kèo nữa!' });
+    }
+
     const result = await db.query(
       `INSERT INTO predictions (user_id, match_id, predicted_home_score, predicted_away_score)
        VALUES ($1, $2, $3, $4)
@@ -38,6 +80,65 @@ router.post('/', authenticateUser, async (req, res) => {
   }
 });
 
+// Endpoint lấy toàn bộ dự đoán (mã hóa đối với trận chưa đá)
+router.get('/all', authenticateUser, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT 
+        p.id as prediction_id,
+        p.user_id,
+        p.match_id,
+        p.predicted_home_score,
+        p.predicted_away_score,
+        p.points,
+        p.created_at,
+        u.name as user_name,
+        u.avatar as user_avatar,
+        m.team1_name,
+        m.team2_name,
+        m.team1_score,
+        m.team2_score,
+        m.status,
+        m.match_time,
+        m.handicap_favorite,
+        m.handicap_value,
+        m.handicap_text,
+        m.ou_value,
+        m.ou_text
+      FROM predictions p
+      JOIN users u ON p.user_id = u.id
+      JOIN matches m ON p.match_id = m.id
+      ORDER BY m.id DESC, p.created_at DESC
+    `);
+
+    const currentUserId = req.user.id;
+    const now = new Date();
+
+    const predictions = result.rows.map(row => {
+      const matchTime = parseMatchTimeToVnDate(row.match_time);
+      const isStarted = row.status !== 'UPCOMING' || now >= matchTime;
+      
+      // Nếu là dự đoán của người khác VÀ trận đấu chưa bắt đầu, ẩn dự đoán đi
+      if (row.user_id !== currentUserId && !isStarted) {
+        return {
+          ...row,
+          predicted_home_score: null,
+          predicted_away_score: null,
+          is_hidden: true
+        };
+      }
+      return {
+        ...row,
+        is_hidden: false
+      };
+    });
+
+    res.json(predictions);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 2. Lấy dự đoán của tôi (kèm thông tin trận đấu)
 router.get('/my', authenticateUser, async (req, res) => {
   try {
@@ -46,7 +147,9 @@ router.get('/my', authenticateUser, async (req, res) => {
         p.*, 
         m.team1_name, m.team2_name, m.team1_score, m.team2_score, 
         m.status, m.match_time, m.venue,
-        m.team1_flag, m.team2_flag
+        m.team1_flag, m.team2_flag,
+        m.handicap_favorite, m.handicap_value, m.handicap_text,
+        m.ou_value, m.ou_text
       FROM predictions p
       JOIN matches m ON p.match_id = m.id
       WHERE p.user_id = $1
