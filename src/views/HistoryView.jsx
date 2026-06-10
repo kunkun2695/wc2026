@@ -99,15 +99,17 @@ const HistoryView = ({ predictions, matches = [] }) => {
                 </div>
               </div>
 
-              {/* Handicap & OU display row */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', fontWeight: 800, marginTop: '-15px', marginBottom: '18px' }}>
-                {p.handicap_favorite ? (
-                  <span>Chấp: <strong style={{ color: '#00d2ff' }}>{p.handicap_favorite} (-{p.handicap_text})</strong></span>
+              {/* Handicap display row */}
+              <div style={{ display: 'flex', justifyContent: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', fontWeight: 800, marginTop: '-15px', marginBottom: '18px' }}>
+                {p.handicap_favorite && parseFloat(p.handicap_value) !== 0 ? (
+                  <span>Kèo chấp: <strong style={{ color: '#00d2ff' }}>
+                    {p.handicap_favorite === p.team1_name 
+                      ? `${p.team1_name} chấp ${p.team2_name} ${p.handicap_text || p.handicap_value} trái`
+                      : `${p.team2_name} chấp ${p.team1_name} ${p.handicap_text || p.handicap_value} trái`
+                    }
+                  </strong></span>
                 ) : (
-                  <span>Chấp: <strong style={{ color: '#00d2ff' }}>Đồng banh (0)</strong></span>
-                )}
-                {p.ou_text && (
-                  <span>Tài xỉu: <strong style={{ color: '#ffd200' }}>{p.ou_text}</strong></span>
+                  <span>Kèo chấp: <strong style={{ color: '#00d2ff' }}>Đồng banh (Không chấp)</strong></span>
                 )}
               </div>
 

@@ -79,10 +79,7 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
           </div>
         </div>
 
-        <div style={{ marginBottom: '30px' }}>
-          <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '0.5px' }}>MỐC TÀI XỈU</label>
-          <input type="text" value={ouTxt} placeholder="Ví dụ: 2.5 hoặc 2.5/3" onChange={e => setOuTxt(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} />
-        </div>
+        {/* Mốc Tài Xỉu đã được ẩn đi theo yêu cầu */}
 
         <button 
           onClick={() => onSave(match.id, { 

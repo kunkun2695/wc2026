@@ -198,15 +198,17 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         </div>
       </div>
 
-      {/* Handicap and Over/Under Display Row */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', margin: '-10px 0 18px 0', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-        {match.handicap_favorite ? (
-          <span>Chấp: <strong style={{ color: '#00d2ff' }}>{match.handicap_favorite} (-{match.handicap_text})</strong></span>
+      {/* Handicap Display Row */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '-10px 0 18px 0', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        {match.handicap_favorite && parseFloat(match.handicap_value) !== 0 ? (
+          <span>Kèo chấp: <strong style={{ color: '#00d2ff' }}>
+            {match.handicap_favorite === t1.name 
+              ? `${t1.name} chấp ${t2.name} ${match.handicap_text || match.handicap_value} trái`
+              : `${t2.name} chấp ${t1.name} ${match.handicap_text || match.handicap_value} trái`
+            }
+          </strong></span>
         ) : (
-          <span>Chấp: <strong style={{ color: '#00d2ff' }}>Đồng banh (0)</strong></span>
-        )}
-        {match.ou_text && (
-          <span>Tài xỉu: <strong style={{ color: '#ffd200' }}>{match.ou_text}</strong></span>
+          <span>Kèo chấp: <strong style={{ color: '#00d2ff' }}>Đồng banh (Không chấp)</strong></span>
         )}
       </div>
 

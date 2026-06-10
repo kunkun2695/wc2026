@@ -138,7 +138,7 @@ const RulesView = () => {
             <div className="step-indicator">1</div>
             <div className="step-content">
               <h4>Chọn Trận Đấu</h4>
-              <p>Truy cập trang chủ để xem lịch thi đấu và tỷ lệ kèo chấp/tài xỉu tương ứng được hiển thị trên mỗi thẻ trận đấu.</p>
+              <p>Truy cập trang chủ để xem lịch thi đấu và tỷ lệ kèo chấp tương ứng được hiển thị trên mỗi thẻ trận đấu.</p>
             </div>
           </div>
 

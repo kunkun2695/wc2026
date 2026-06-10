@@ -232,22 +232,18 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
 
             {/* Handicap info */}
             <div className="handicap-info-bar">
-              <div className="info-badge handicap">
-                <span className="badge-label">Kèo chấp</span>
+              <div className="info-badge handicap" style={{ width: '100%', justifyContent: 'center' }}>
+                <span className="badge-label">Tỷ lệ kèo</span>
                 <span className="badge-value">
-                  {match.handicap_favorite ? (
-                    `${match.handicap_favorite} (-${match.handicap_text})`
+                  {match.handicap_favorite && parseFloat(match.handicap_value) !== 0 ? (
+                    match.handicap_favorite === t1.name 
+                      ? `${t1.name} chấp ${t2.name} ${match.handicap_text || match.handicap_value} trái`
+                      : `${t2.name} chấp ${t1.name} ${match.handicap_text || match.handicap_value} trái`
                   ) : (
-                    'Đồng banh (0)'
+                    'Đồng banh (Không chấp)'
                   )}
                 </span>
               </div>
-              {match.ou_text && (
-                <div className="info-badge ou">
-                  <span className="badge-label">Tài xỉu</span>
-                  <span className="badge-value">{match.ou_text}</span>
-                </div>
-              )}
             </div>
             
             <div className="voting-options">

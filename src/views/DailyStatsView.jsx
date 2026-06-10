@@ -301,15 +301,15 @@ const DailyStatsView = ({ matches = [] }) => {
                     </div>
 
                     <div className="odds-row">
-                      {m.handicap_favorite ? (
+                      {m.handicap_favorite && parseFloat(m.handicap_value) !== 0 ? (
                         <span className="odd-badge cap">
-                          Chấp: {m.handicap_favorite} (-{m.handicap_text})
+                          Kèo chấp: {m.handicap_favorite === m.team1_name 
+                            ? `${m.team1_name} chấp ${m.team2_name} ${m.handicap_text || m.handicap_value} trái`
+                            : `${m.team2_name} chấp ${m.team1_name} ${m.handicap_text || m.handicap_value} trái`
+                          }
                         </span>
                       ) : (
-                        <span className="odd-badge cap">Đồng banh (0)</span>
-                      )}
-                      {m.ou_text && (
-                        <span className="odd-badge ou">Tài xỉu: {m.ou_text}</span>
+                        <span className="odd-badge cap">Đồng banh (Không chấp)</span>
                       )}
                     </div>
                   </div>
