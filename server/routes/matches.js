@@ -76,12 +76,32 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
     };
 
     const actualSign = getHandicapSign(hScore, aScore);
-    const predSign = getHandicapSign(pred_h, pred_a);
+    
+    let isCorrect = false;
+    if (!handicapFavorite || handicapValue === 0) {
+      // Kèo đồng banh / không chấp: so sánh trực tiếp lựa chọn với kết quả thực tế
+      const userChoice = pred_h > pred_a ? 1 : (pred_h < pred_a ? -1 : 0);
+      isCorrect = (userChoice === actualSign);
+    } else {
+      // Kèo có chấp:
+      if (actualSign === 0) {
+        // Hòa kèo: cả làng được tính đúng (phạt 10k)
+        isCorrect = true;
+      } else {
+        const favIsTeam1 = (handicapFavorite === team1Name);
+        const userChoseFav = favIsTeam1 ? (pred_h > pred_a) : (pred_h < pred_a);
+        const userChoseUnderdog = favIsTeam1 ? (pred_h < pred_a) : (pred_h > pred_a);
+        
+        if (actualSign === 1 && userChoseFav) {
+          isCorrect = true; // Cửa trên thắng và người dùng chọn cửa trên
+        } else if (actualSign === -1 && userChoseUnderdog) {
+          isCorrect = true; // Cửa dưới thắng và người dùng chọn cửa dưới
+        }
+      }
+    }
 
-    // Nếu trận đấu thực tế là hòa kèo (Refund / actualSign === 0), người chơi không thua nên được tính đoán đúng (10k)
-    // Hoặc nếu người chơi đoán đúng bên thắng kèo chấp
-    if (actualSign === 0 || predSign === actualSign) {
-      points = 10; // Đoán đúng: phạt 10k
+    if (isCorrect) {
+      points = 10; // Đoán đúng/hòa kèo: phạt 10k
     }
 
     await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, p.id]);
