@@ -24,15 +24,15 @@ const RulesView = () => {
 
         <div className="penalty-grid">
           <div className="penalty-box correct">
-            <div className="box-header">ĐOÁN ĐÚNG KÈO (Hoặc Hòa Kèo)</div>
+            <div className="box-header">ĐOÁN ĐÚNG KÈO (Sau Chấp)</div>
             <div className="box-price">10.000đ</div>
-            <div className="box-desc">Người chơi dự đoán chính xác đội thắng kèo chấp (hoặc trận đấu hòa kèo/về tiền) sẽ đóng góp <strong>10k</strong> vào quỹ.</div>
+            <div className="box-desc">Người chơi dự đoán chính xác kết quả sau kèo chấp (chọn đúng đội thắng kèo hoặc chọn cửa Hòa khi trận đấu hòa kèo) sẽ đóng góp <strong>10k</strong> vào quỹ.</div>
           </div>
           
           <div className="penalty-box wrong">
             <div className="box-header">ĐOÁN SAI KÈO</div>
             <div className="box-price">30.000đ</div>
-            <div className="box-desc">Người chơi dự đoán sai đội thắng kèo chấp sẽ đóng góp <strong>30k</strong> vào quỹ.</div>
+            <div className="box-desc">Người chơi dự đoán sai kết quả sau kèo chấp (chọn sai đội thắng kèo hoặc không chọn cửa Hòa khi trận đấu hòa kèo) sẽ đóng góp <strong>30k</strong> vào quỹ.</div>
           </div>
         </div>
       </section>
@@ -97,7 +97,7 @@ const RulesView = () => {
 
             <div className="example-result-box warning">
               <strong>KẾT QUẢ: HÒA KÈO (1.0 vs 1.0)</strong>
-              <p>Hiệu số sau chấp bằng nhau. Cả người chọn Đức và người chọn Curacao đều được tính **Đúng** $\rightarrow$ Cùng phạt **10k VND**.</p>
+              <p>Hiệu số sau chấp bằng nhau (Hòa kèo). Chỉ người dự đoán cửa **HÒA** mới được tính **ĐÚNG** $\rightarrow$ Phạt **10k VND**. Những người chọn Đức hoặc Curacao đều tính **SAI** $\rightarrow$ Phạt **30k VND**.</p>
             </div>
           </div>
 

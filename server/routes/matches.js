@@ -59,49 +59,23 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
     const pred_h = p.predicted_home_score;
     const pred_a = p.predicted_away_score;
 
-    const getHandicapSign = (scoreHome, scoreAway) => {
-      if (!handicapFavorite || handicapValue === 0) {
-        const diff = scoreHome - scoreAway;
-        return diff > 0 ? 1 : (diff < 0 ? -1 : 0);
-      }
-      
-      let diff;
-      if (handicapFavorite === team1Name) {
-        diff = scoreHome - scoreAway - handicapValue;
-      } else {
-        diff = scoreAway - scoreHome - handicapValue;
-      }
-      
-      return diff > 0 ? 1 : (diff < 0 ? -1 : 0);
-    };
-
-    const actualSign = getHandicapSign(hScore, aScore);
-    
-    let isCorrect = false;
+    // Tính kết quả thực tế sau kèo chấp
+    let adjustedDiff;
     if (!handicapFavorite || handicapValue === 0) {
-      // Kèo đồng banh / không chấp: so sánh trực tiếp lựa chọn với kết quả thực tế
-      const userChoice = pred_h > pred_a ? 1 : (pred_h < pred_a ? -1 : 0);
-      isCorrect = (userChoice === actualSign);
+      adjustedDiff = hScore - aScore;
+    } else if (handicapFavorite === team1Name) {
+      adjustedDiff = hScore - handicapValue - aScore;
     } else {
-      // Kèo có chấp:
-      if (actualSign === 0) {
-        // Hòa kèo: cả làng được tính đúng (phạt 10k)
-        isCorrect = true;
-      } else {
-        const favIsTeam1 = (handicapFavorite === team1Name);
-        const userChoseFav = favIsTeam1 ? (pred_h > pred_a) : (pred_h < pred_a);
-        const userChoseUnderdog = favIsTeam1 ? (pred_h < pred_a) : (pred_h > pred_a);
-        
-        if (actualSign === 1 && userChoseFav) {
-          isCorrect = true; // Cửa trên thắng và người dùng chọn cửa trên
-        } else if (actualSign === -1 && userChoseUnderdog) {
-          isCorrect = true; // Cửa dưới thắng và người dùng chọn cửa dưới
-        }
-      }
+      adjustedDiff = hScore - (aScore - handicapValue);
     }
 
+    const actualSign = adjustedDiff > 0 ? 1 : (adjustedDiff < 0 ? -1 : 0);
+    const userChoice = pred_h > pred_a ? 1 : (pred_h < pred_a ? -1 : 0);
+
+    const isCorrect = (userChoice === actualSign);
+
     if (isCorrect) {
-      points = 10; // Đoán đúng/hòa kèo: phạt 10k
+      points = 10; // Đoán đúng (bao gồm chọn Hòa và hòa kèo): phạt 10k
     }
 
     await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, p.id]);
