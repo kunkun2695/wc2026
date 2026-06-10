@@ -88,13 +88,14 @@ const syncMatches = async () => {
       const homeScore = m.score.fullTime.home ?? 0;
       const awayScore = m.score.fullTime.away ?? 0;
       const status = m.status === 'FINISHED' ? 'FT' : (m.status === 'IN_PLAY' ? 'LIVE' : 'UPCOMING');
-      const matchTime = new Date(m.utcDate).toLocaleString('vi-VN', { 
-        timeZone: 'Asia/Ho_Chi_Minh',
-        hour: '2-digit', 
-        minute: '2-digit', 
-        day: '2-digit', 
-        month: '2-digit' 
-      }).replace(',', ' -');
+      const date = new Date(m.utcDate);
+      // Cộng 7 tiếng cho múi giờ Việt Nam (UTC+7)
+      const vnDate = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+      const day = String(vnDate.getUTCDate()).padStart(2, '0');
+      const month = String(vnDate.getUTCMonth() + 1).padStart(2, '0');
+      const hours = String(vnDate.getUTCHours()).padStart(2, '0');
+      const minutes = String(vnDate.getUTCMinutes()).padStart(2, '0');
+      const matchTime = `${day}/${month} - ${hours}:${minutes}`;
       const competition = m.competition?.name || 'International';
 
       if (matchCheck.rows.length > 0) {
