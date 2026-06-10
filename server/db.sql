@@ -27,6 +27,11 @@ CREATE TABLE IF NOT EXISTS matches (
     penalties_team1 INTEGER,
     penalties_team2 INTEGER,
     venue VARCHAR(100),
+    handicap_favorite VARCHAR(100),
+    handicap_value NUMERIC(4,2) DEFAULT 0.0,
+    handicap_text VARCHAR(50),
+    ou_value NUMERIC(4,2) DEFAULT 0.0,
+    ou_text VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

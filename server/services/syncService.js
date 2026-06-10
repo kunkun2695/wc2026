@@ -6,23 +6,50 @@ const { updateBracket } = require('./bracketService');
 const FOOTBALL_DATA_API_KEY = '545cbd97d6964d96bdc65580d348674b';
 
 const calculateMatchPoints = async (matchId, hScore, aScore) => {
+  const matchResult = await db.query('SELECT team1_name, team2_name, handicap_favorite, handicap_value FROM matches WHERE id = $1', [matchId]);
+  if (matchResult.rows.length === 0) return;
+  const match = matchResult.rows[0];
+  const handicapFavorite = match.handicap_favorite;
+  const handicapValue = parseFloat(match.handicap_value) || 0;
+  const team1Name = match.team1_name;
+  const team2Name = match.team2_name;
+
   const predictions = await db.query('SELECT * FROM predictions WHERE match_id = $1', [matchId]);
   for (const p of predictions.rows) {
-    let points = 0;
+    let points = 30; // Mặc định đoán sai: phạt 30k
     const pred_h = p.predicted_home_score;
     const pred_a = p.predicted_away_score;
 
-    if ((hScore > aScore && pred_h > pred_a) ||
-        (hScore < aScore && pred_h < pred_a) ||
-        (hScore === aScore && pred_h === pred_a)) {
-      points = 3;
+    const getHandicapSign = (scoreHome, scoreAway) => {
+      if (!handicapFavorite || handicapValue === 0) {
+        const diff = scoreHome - scoreAway;
+        return diff > 0 ? 1 : (diff < 0 ? -1 : 0);
+      }
+      
+      let diff;
+      if (handicapFavorite === team1Name) {
+        diff = scoreHome - scoreAway - handicapValue;
+      } else {
+        diff = scoreAway - scoreHome - handicapValue;
+      }
+      
+      return diff > 0 ? 1 : (diff < 0 ? -1 : 0);
+    };
+
+    const actualSign = getHandicapSign(hScore, aScore);
+    const predSign = getHandicapSign(pred_h, pred_a);
+
+    // Nếu thực tế hòa kèo hoặc đoán đúng bên thắng kèo chấp
+    if (actualSign === 0 || predSign === actualSign) {
+      points = 10;
     }
+    
     await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, p.id]);
     
-    // Gửi Push Notification thông báo kết quả và điểm
-    const matchInfo = await db.query('SELECT team1_name, team2_name FROM matches WHERE id = $1', [matchId]);
-    const matchTitle = `${matchInfo.rows[0].team1_name} ${hScore}-${aScore} ${matchInfo.rows[0].team2_name}`;
-    const message = `Trận đấu đã kết thúc! Tỉ số: ${matchTitle}. Bạn nhận được ${points} điểm dự đoán.`;
+    // Gửi Push Notification thông báo kết quả và điểm phạt ăn nhậu
+    const matchTitle = `${team1Name} ${hScore}-${aScore} ${team2Name}`;
+    const resultText = points === 10 ? 'ĐÚNG (Phạt 10k)' : 'SAI (Phạt 30k)';
+    const message = `Trận đấu đã kết thúc! Tỉ số: ${matchTitle}. Dự đoán của bạn: ${resultText}.`;
     
     sendPushNotification(p.user_id, '🏆 Kết quả trận đấu!', message, `/match/${matchId}`);
   }

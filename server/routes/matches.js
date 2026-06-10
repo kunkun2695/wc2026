@@ -43,33 +43,117 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Hàm tính điểm cho tất cả người chơi khi trận đấu kết thúc
+// Hàm tính điểm cho tất cả người chơi khi trận đấu kết thúc theo tỷ lệ chấp
 const calculateMatchPoints = async (matchId, hScore, aScore) => {
+  const matchResult = await db.query('SELECT team1_name, team2_name, handicap_favorite, handicap_value FROM matches WHERE id = $1', [matchId]);
+  if (matchResult.rows.length === 0) return;
+  const match = matchResult.rows[0];
+  const handicapFavorite = match.handicap_favorite;
+  const handicapValue = parseFloat(match.handicap_value) || 0;
+  const team1Name = match.team1_name;
+  const team2Name = match.team2_name;
+
   const predictions = await db.query('SELECT * FROM predictions WHERE match_id = $1', [matchId]);
   for (const p of predictions.rows) {
-    let points = 0;
+    let points = 30; // Mặc định đoán sai: phạt 30k
     const pred_h = p.predicted_home_score;
     const pred_a = p.predicted_away_score;
 
-    // Kiểm tra kết quả Thắng/Thua/Hòa (+3 điểm)
-    if (
-      (hScore > aScore && pred_h > pred_a) ||
-      (hScore < aScore && pred_h < pred_a) ||
-      (hScore === aScore && pred_h === pred_a)
-    ) {
-      points = 3;
+    const getHandicapSign = (scoreHome, scoreAway) => {
+      if (!handicapFavorite || handicapValue === 0) {
+        const diff = scoreHome - scoreAway;
+        return diff > 0 ? 1 : (diff < 0 ? -1 : 0);
+      }
+      
+      let diff;
+      if (handicapFavorite === team1Name) {
+        diff = scoreHome - scoreAway - handicapValue;
+      } else {
+        diff = scoreAway - scoreHome - handicapValue;
+      }
+      
+      return diff > 0 ? 1 : (diff < 0 ? -1 : 0);
+    };
+
+    const actualSign = getHandicapSign(hScore, aScore);
+    const predSign = getHandicapSign(pred_h, pred_a);
+
+    // Nếu trận đấu thực tế là hòa kèo (Refund / actualSign === 0), người chơi không thua nên được tính đoán đúng (10k)
+    // Hoặc nếu người chơi đoán đúng bên thắng kèo chấp
+    if (actualSign === 0 || predSign === actualSign) {
+      points = 10; // Đoán đúng: phạt 10k
     }
+
     await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, p.id]);
   }
 };
 
+const parseHandicapVal = (text) => {
+  if (!text) return 0;
+  text = text.trim();
+  if (text === '0') return 0;
+  if (text.includes('/')) {
+    const parts = text.split('/');
+    const val1 = parseFloat(parts[0]);
+    const val2 = parseFloat(parts[1]);
+    return (val1 + val2) / 2;
+  }
+  return parseFloat(text) || 0;
+};
+
+const parseOuVal = (text) => {
+  if (!text) return 0;
+  text = text.trim().toLowerCase().replace('u', '');
+  if (text.includes('/')) {
+    const parts = text.split('/');
+    const val1 = parseFloat(parts[0]);
+    const val2 = parseFloat(parts[1]);
+    return (val1 + val2) / 2;
+  }
+  return parseFloat(text) || 0;
+};
+
 router.put('/:id', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
-  const { team1_score, team2_score, status, match_time } = req.body;
+  const { 
+    team1_score, 
+    team2_score, 
+    status, 
+    match_time,
+    handicap_favorite,
+    handicap_text,
+    ou_text
+  } = req.body;
+
+  const handicap_value = parseHandicapVal(handicap_text);
+  const ou_value = parseOuVal(ou_text);
+
   try {
     const result = await db.query(
-      'UPDATE matches SET team1_score = $1, team2_score = $2, status = $3, match_time = $4 WHERE id = $5 RETURNING *',
-      [team1_score, team2_score, status, match_time, id]
+      `UPDATE matches 
+       SET team1_score = $1, 
+           team2_score = $2, 
+           status = $3, 
+           match_time = $4,
+           handicap_favorite = $5,
+           handicap_value = $6,
+           handicap_text = $7,
+           ou_value = $8,
+           ou_text = $9
+       WHERE id = $10 
+       RETURNING *`,
+      [
+        team1_score, 
+        team2_score, 
+        status, 
+        match_time, 
+        handicap_favorite || null, 
+        handicap_value, 
+        handicap_text || '', 
+        ou_value, 
+        ou_text || '',
+        id
+      ]
     );
 
     if (status === 'FT') {

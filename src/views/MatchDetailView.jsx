@@ -20,8 +20,8 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
 
   useEffect(() => {
     if (userPrediction) {
-      if (userPrediction.home_score > userPrediction.away_score) setSelectedChoice('1');
-      else if (userPrediction.home_score < userPrediction.away_score) setSelectedChoice('2');
+      if (userPrediction.predicted_home_score > userPrediction.predicted_away_score) setSelectedChoice('1');
+      else if (userPrediction.predicted_home_score < userPrediction.predicted_away_score) setSelectedChoice('2');
       else setSelectedChoice('X');
     }
   }, [userPrediction]);
@@ -31,11 +31,87 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   const t1 = { name: match.team1_name || 'Team 1', flag: match.team1_flag || '⚽', score: match.team1_score ?? 0 };
   const t2 = { name: match.team2_name || 'Team 2', flag: match.team2_flag || '⚽', score: match.team2_score ?? 0 };
 
+  const getHandicapLabel = (team) => {
+    if (!match.handicap_favorite || parseFloat(match.handicap_value) === 0) {
+      return '';
+    }
+    const valText = match.handicap_text || match.handicap_value;
+    if (match.handicap_favorite === team) {
+      return `-${valText}`;
+    } else {
+      return `+${valText}`;
+    }
+  };
+
+  const getHandicapHint = () => {
+    if (!selectedChoice) return null;
+    
+    const fav = match.handicap_favorite;
+    const valText = match.handicap_text || match.handicap_value;
+    
+    if (!fav || parseFloat(match.handicap_value) === 0) {
+      if (selectedChoice === '1') return `Bạn đang chọn ${t1.name} thắng (Kèo đồng banh / 0)`;
+      if (selectedChoice === '2') return `Bạn đang chọn ${t2.name} thắng (Kèo đồng banh / 0)`;
+      return `Bạn đang chọn cửa Hòa (Kèo đồng banh / 0)`;
+    }
+
+    const isFavT1 = fav === t1.name;
+    const underdog = isFavT1 ? t2.name : t1.name;
+
+    if (selectedChoice === '1') {
+      if (isFavT1) {
+        return `Bạn đang chọn Cửa trên: ${t1.name} chấp -${valText}`;
+      } else {
+        return `Bạn đang chọn Cửa dưới: ${t1.name} được chấp +${valText}`;
+      }
+    }
+    if (selectedChoice === '2') {
+      if (!isFavT1) {
+        return `Bạn đang chọn Cửa trên: ${t2.name} chấp -${valText}`;
+      } else {
+        return `Bạn đang chọn Cửa dưới: ${t2.name} được chấp +${valText}`;
+      }
+    }
+    if (selectedChoice === 'X') {
+      return `Bạn đang chọn Hòa (Đồng nghĩa chọn Cửa dưới: ${underdog} được chấp +${valText})`;
+    }
+    return null;
+  };
+
+  const renderPredictionOutcome = () => {
+    if (!userPrediction || match.status !== 'FT') return null;
+    const isCorrect = userPrediction.points === 10;
+    return (
+      <div className="prediction-outcome-detail" style={{ 
+        fontSize: '0.8rem', 
+        fontWeight: 900, 
+        marginTop: '20px', 
+        textAlign: 'center', 
+        padding: '10px 16px', 
+        borderRadius: '14px',
+        background: isCorrect ? 'rgba(52, 211, 153, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+        border: isCorrect ? '1px solid rgba(52, 211, 153, 0.15)' : '1px solid rgba(239, 68, 68, 0.15)',
+        color: isCorrect ? '#34d399' : '#ef4444'
+      }}>
+        DỰ ĐOÁN KÈO: {isCorrect ? 'ĐÚNG (Phạt 10k)' : 'SAI (Phạt 30k)'}
+      </div>
+    );
+  };
+
   const handleVote = async () => {
     if (!selectedChoice || isSaving) return;
+
+    let label = '';
+    if (selectedChoice === '1') label = t1.name + ' thắng';
+    else if (selectedChoice === 'X') label = 'Hòa';
+    else if (selectedChoice === '2') label = t2.name + ' thắng';
+
+    const confirmSave = window.confirm(`Bạn muốn bình chọn cửa: ${label}?`);
+    if (!confirmSave) return;
+
     setIsSaving(true);
     try {
-      const [h, a] = selectedChoice === '1' ? [1, 0] : selectedChoice === '2' ? [0, 1] : [1, 1];
+      const [h, a] = selectedChoice === '1' ? [1, 0] : selectedChoice === '2' ? [0, 1] : [0, 0];
       await onSavePrediction(match.id, h, a);
     } finally {
       setIsSaving(false);
@@ -92,41 +168,87 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
               <h3 className="section-title mb-0"><Trophy size={18} /> Bình chọn thắng thua</h3>
               {userPrediction && <span className="voted-tag"><Check size={12} /> Đã chốt</span>}
             </div>
+
+            {/* Handicap info */}
+            <div className="handicap-info-bar">
+              <div className="info-badge handicap">
+                <span className="badge-label">Kèo chấp</span>
+                <span className="badge-value">
+                  {match.handicap_favorite ? (
+                    `${match.handicap_favorite} (-${match.handicap_text})`
+                  ) : (
+                    'Đồng banh (0)'
+                  )}
+                </span>
+              </div>
+              {match.ou_text && (
+                <div className="info-badge ou">
+                  <span className="badge-label">Tài xỉu</span>
+                  <span className="badge-value">{match.ou_text}</span>
+                </div>
+              )}
+            </div>
             
             <div className="voting-options">
               <button 
-                onClick={() => setSelectedChoice('1')}
-                className={`vote-opt ${selectedChoice === '1' ? 'active' : ''}`}
+                onClick={() => {
+                  if (match.status === 'UPCOMING' && !userPrediction) {
+                    setSelectedChoice('1');
+                  }
+                }}
+                className={`vote-opt ${selectedChoice === '1' ? 'active' : ''} ${match.status !== 'UPCOMING' || userPrediction ? 'readonly' : ''}`}
               >
                 <div className="opt-flag"><FlagIcon flag={t1.flag} /></div>
                 <span className="opt-name">{t1.name}</span>
+                {getHandicapLabel(t1.name) && (
+                  <span className="opt-handicap-label">({getHandicapLabel(t1.name)})</span>
+                )}
               </button>
               
               <button 
-                onClick={() => setSelectedChoice('X')}
-                className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''}`}
+                onClick={() => {
+                  if (match.status === 'UPCOMING' && !userPrediction) {
+                    setSelectedChoice('X');
+                  }
+                }}
+                className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''} ${match.status !== 'UPCOMING' || userPrediction ? 'readonly' : ''}`}
               >
                 <div className="opt-flag draw">HÒA</div>
                 <span className="opt-name">Bất phân thắng bại</span>
               </button>
               
               <button 
-                onClick={() => setSelectedChoice('2')}
-                className={`vote-opt ${selectedChoice === '2' ? 'active' : ''}`}
+                onClick={() => {
+                  if (match.status === 'UPCOMING' && !userPrediction) {
+                    setSelectedChoice('2');
+                  }
+                }}
+                className={`vote-opt ${selectedChoice === '2' ? 'active' : ''} ${match.status !== 'UPCOMING' || userPrediction ? 'readonly' : ''}`}
               >
                 <div className="opt-flag"><FlagIcon flag={t2.flag} /></div>
                 <span className="opt-name">{t2.name}</span>
+                {getHandicapLabel(t2.name) && (
+                  <span className="opt-handicap-label">({getHandicapLabel(t2.name)})</span>
+                )}
               </button>
             </div>
 
+            {getHandicapHint() && (
+              <div className="handicap-hint-label">
+                {getHandicapHint()}
+              </div>
+            )}
+
             <button 
-              className={`confirm-vote-btn ${!selectedChoice || userPrediction ? 'disabled' : ''}`}
-              disabled={!selectedChoice || !!userPrediction || isSaving}
+              className={`confirm-vote-btn ${!selectedChoice || userPrediction || match.status !== 'UPCOMING' ? 'disabled' : ''}`}
+              disabled={!selectedChoice || !!userPrediction || isSaving || match.status !== 'UPCOMING'}
               onClick={handleVote}
             >
-              {isSaving ? 'Đang gửi...' : userPrediction ? 'Lựa chọn của bạn' : 'CHỐT KÈO NGAY'}
-              {!isSaving && !userPrediction && <Send size={18} />}
+              {isSaving ? 'Đang gửi...' : userPrediction ? 'Lựa chọn của bạn' : match.status !== 'UPCOMING' ? 'Đã đóng dự đoán' : 'CHỐT KÈO NGAY'}
+              {!isSaving && !userPrediction && match.status === 'UPCOMING' && <Send size={18} />}
             </button>
+
+            {renderPredictionOutcome()}
           </div>
 
           <div className="info-grid">
@@ -276,6 +398,71 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
         
         /* Voting Styles */
         .voted-tag { background: rgba(0, 255, 100, 0.1); color: #00ff64; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 10px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(0, 255, 100, 0.2); }
+        .opt-handicap-label {
+          font-size: 0.65rem;
+          font-weight: 800;
+          color: #00d2ff;
+          margin-top: 2px;
+        }
+        .vote-opt.active .opt-handicap-label {
+          color: inherit;
+        }
+        .vote-opt.readonly {
+          cursor: default;
+        }
+        .vote-opt.readonly:hover {
+          background: rgba(255,255,255,0.03);
+        }
+        .handicap-info-bar {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+        .info-badge {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          padding: 8px 12px;
+          border-radius: 12px;
+          text-align: center;
+        }
+        .info-badge.handicap {
+          border-color: rgba(0, 210, 255, 0.15);
+        }
+        .info-badge.ou {
+          border-color: rgba(255, 210, 0, 0.15);
+        }
+        .badge-label {
+          font-size: 0.6rem;
+          color: rgba(255, 255, 255, 0.4);
+          text-transform: uppercase;
+          font-weight: 800;
+          letter-spacing: 0.5px;
+          margin-bottom: 2px;
+        }
+        .badge-value {
+          font-size: 0.8rem;
+          font-weight: 900;
+        }
+        .info-badge.handicap .badge-value {
+          color: #00d2ff;
+        }
+        .info-badge.ou .badge-value {
+          color: #ffd200;
+        }
+        .handicap-hint-label {
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: #10b981;
+          text-align: center;
+          margin-bottom: 15px;
+          padding: 8px 12px;
+          background: rgba(16, 185, 129, 0.05);
+          border: 1px solid rgba(16, 185, 129, 0.15);
+          border-radius: 10px;
+        }
         .voting-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .vote-opt { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 15px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s; }
         .vote-opt:hover { background: rgba(255,255,255,0.06); }

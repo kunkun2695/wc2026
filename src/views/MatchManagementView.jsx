@@ -16,17 +16,20 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
   const [s2, setS2] = useState(match.team2_score || 0);
   const [status, setStatus] = useState(match.status || 'UPCOMING');
   const [time, setTime] = useState(match.match_time || '');
+  const [handicapFav, setHandicapFav] = useState(match.handicap_favorite || '');
+  const [handicapTxt, setHandicapTxt] = useState(match.handicap_text || '');
+  const [ouTxt, setOuTxt] = useState(match.ou_text || '');
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ position: absolute, inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }} onClick={onClose}></div>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }} onClick={onClose}></div>
       <div style={{ position: 'relative', width: '100%', maxWidth: '500px', background: '#1a1f2e', borderRadius: '24px', padding: '30px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>CẬP NHẬT TỈ SỐ</h2>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>CẬP NHẬT TRẬN ĐẤU & KÈO</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}><X size={24} /></button>
         </div>
         
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
             <div style={{ width: '60px', height: '40px', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               <FlagDisplay flag={match.team1_flag} />
@@ -46,7 +49,7 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
           <div>
             <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>TRẠNG THÁI</label>
             <select value={status} onChange={e => setStatus(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }}>
@@ -61,8 +64,36 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
           </div>
         </div>
 
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+          <div>
+            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '0.5px' }}>ĐỘI CHẤP</label>
+            <select value={handicapFav} onChange={e => setHandicapFav(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }}>
+              <option value="">Đồng banh (Không chấp)</option>
+              <option value={match.team1_name}>{match.team1_name}</option>
+              <option value={match.team2_name}>{match.team2_name}</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '0.5px' }}>TỶ LỆ CHẤP</label>
+            <input type="text" value={handicapTxt} placeholder="Ví dụ: 1/1.5 hoặc 0.5" onChange={e => setHandicapTxt(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '30px' }}>
+          <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '0.5px' }}>MỐC TÀI XỈU</label>
+          <input type="text" value={ouTxt} placeholder="Ví dụ: 2.5 hoặc 2.5/3" onChange={e => setOuTxt(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} />
+        </div>
+
         <button 
-          onClick={() => onSave(match.id, { team1_score: s1, team2_score: s2, status, match_time: time })}
+          onClick={() => onSave(match.id, { 
+            team1_score: s1, 
+            team2_score: s2, 
+            status, 
+            match_time: time,
+            handicap_favorite: handicapFav,
+            handicap_text: handicapTxt,
+            ou_text: ouTxt
+          })}
           style={{ width: '100%', padding: '18px', borderRadius: '16px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.9rem', letterSpacing: '1px', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(0,210,255,0.3)' }}
         >
           LƯU KẾT QUẢ
@@ -75,12 +106,32 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
 const MatchManagementView = ({ matches, onUpdateScore, onSync }) => {
   const [editingMatch, setEditingMatch] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncingOdds, setIsSyncingOdds] = useState(false);
   const [filter, setFilter] = useState('all'); // all, live, upcoming, ft
 
   const handleSync = async () => {
     setIsSyncing(true);
     await onSync();
     setIsSyncing(false);
+  };
+
+  const handleSyncOdds = async () => {
+    setIsSyncingOdds(true);
+    try {
+      const finalApiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${finalApiUrl}/api/admin/matches/sync-odds`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      alert(data.message || 'Đồng bộ tỷ lệ kèo thành công!');
+      window.location.reload();
+    } catch (err) {
+      alert('Lỗi đồng bộ tỷ lệ kèo!');
+    } finally {
+      setIsSyncingOdds(false);
+    }
   };
 
   const filteredMatches = matches.filter(m => {
@@ -102,14 +153,24 @@ const MatchManagementView = ({ matches, onUpdateScore, onSync }) => {
             </div>
             <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>QUẢN LÝ TRẬN ĐẤU</h1>
           </div>
-          <button 
-            onClick={handleSync} 
-            disabled={isSyncing}
-            style={{ padding: '12px 24px', borderRadius: '12px', background: 'rgba(0,210,255,0.1)', color: '#00d2ff', border: '1px solid rgba(0,210,255,0.3)', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
-          >
-            <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
-            {isSyncing ? 'ĐANG ĐỒNG BỘ...' : 'ĐỒNG BỘ API'}
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              onClick={handleSyncOdds} 
+              disabled={isSyncingOdds}
+              style={{ padding: '12px 24px', borderRadius: '12px', background: 'rgba(0,210,255,0.1)', color: '#00d2ff', border: '1px solid rgba(0,210,255,0.3)', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+            >
+              <RefreshCw size={18} className={isSyncingOdds ? 'animate-spin' : ''} />
+              {isSyncingOdds ? 'ĐANG ĐỒNG BỘ KÈO...' : 'ĐỒNG BỘ TỶ LỆ KÈO'}
+            </button>
+            <button 
+              onClick={handleSync} 
+              disabled={isSyncing}
+              style={{ padding: '12px 24px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+            >
+              <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
+              {isSyncing ? 'ĐANG ĐỒNG BỘ...' : 'ĐỒNG BỘ API'}
+            </button>
+          </div>
         </header>
 
         <div style={{ display: 'flex', gap: '10px', marginBottom: '30px', overflowX: 'auto', paddingBottom: '10px' }}>

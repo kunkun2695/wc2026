@@ -58,6 +58,38 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
 
   const isPredicted = userPrediction !== undefined;
 
+  const getHandicapLabel = (team) => {
+    if (!match.handicap_favorite || parseFloat(match.handicap_value) === 0) {
+      return '';
+    }
+    const valText = match.handicap_text || match.handicap_value;
+    if (match.handicap_favorite === team) {
+      return `-${valText}`;
+    } else {
+      return `+${valText}`;
+    }
+  };
+
+  const renderPredictionOutcome = () => {
+    if (!userPrediction || match.status !== 'FT') return null;
+    const isCorrect = userPrediction.points === 10;
+    return (
+      <div style={{ 
+        fontSize: '0.75rem', 
+        fontWeight: 900, 
+        marginTop: '15px', 
+        textAlign: 'center', 
+        padding: '8px 12px', 
+        borderRadius: '10px',
+        background: isCorrect ? 'rgba(52, 211, 153, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+        border: isCorrect ? '1px solid rgba(52, 211, 153, 0.15)' : '1px solid rgba(239, 68, 68, 0.15)',
+        color: isCorrect ? '#34d399' : '#ef4444'
+      }}>
+        DỰ ĐOÁN KÈO: {isCorrect ? 'ĐÚNG (Phạt 10k)' : 'SAI (Phạt 30k)'}
+      </div>
+    );
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }} 
@@ -110,6 +142,18 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         </div>
       </div>
 
+      {/* Handicap and Over/Under Display Row */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', margin: '-10px 0 18px 0', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        {match.handicap_favorite ? (
+          <span>Chấp: <strong style={{ color: '#00d2ff' }}>{match.handicap_favorite} (-{match.handicap_text})</strong></span>
+        ) : (
+          <span>Chấp: <strong style={{ color: '#00d2ff' }}>Đồng banh (0)</strong></span>
+        )}
+        {match.ou_text && (
+          <span>Tài xỉu: <strong style={{ color: '#ffd200' }}>{match.ou_text}</strong></span>
+        )}
+      </div>
+
       {/* Betting / Prediction Section */}
       <div className="match-betting-section">
         <div className="choice-grid-v2">
@@ -122,6 +166,11 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             >
               <div className="btn-team-flag"><FlagIcon flag={t1.flag} /></div>
               <span className="btn-choice-text">{t1.name}</span>
+              {getHandicapLabel(t1.name) && (
+                <span style={{ fontSize: '0.65rem', opacity: 0.8, marginLeft: '2px', fontWeight: 800, color: selectedChoice === '1' ? 'inherit' : '#00d2ff' }}>
+                  ({getHandicapLabel(t1.name)})
+                </span>
+              )}
             </button>
             <div className="vote-bar-bg">
               <motion.div 
@@ -160,6 +209,11 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             >
               <div className="btn-team-flag"><FlagIcon flag={t2.flag} /></div>
               <span className="btn-choice-text">{t2.name}</span>
+              {getHandicapLabel(t2.name) && (
+                <span style={{ fontSize: '0.65rem', opacity: 0.8, marginLeft: '2px', fontWeight: 800, color: selectedChoice === '2' ? 'inherit' : '#00d2ff' }}>
+                  ({getHandicapLabel(t2.name)})
+                </span>
+              )}
             </button>
             <div className="vote-bar-bg">
               <motion.div 
@@ -189,6 +243,8 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <MessageSquare size={14} /> GÁY NGAY ({match.comment_count || 0})
           </button>
         </div>
+
+        {renderPredictionOutcome()}
       </div>
 
       {isAdmin && (

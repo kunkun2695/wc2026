@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const jwt = require('jsonwebtoken');
+const { syncOdds } = require('../services/oddsService');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
@@ -153,7 +154,21 @@ router.post('/seed-wc2026', authenticateAdmin, async (req, res) => {
 // API Lấy danh sách toàn bộ người dùng
 router.get('/users', authenticateAdmin, async (req, res) => {
   try {
-    const result = await db.query('SELECT id, username, name, role, avatar, points, created_at FROM users ORDER BY points DESC');
+    const result = await db.query(`
+      SELECT 
+        u.id, 
+        u.username, 
+        u.name, 
+        u.role, 
+        u.avatar, 
+        COALESCE(SUM(CASE WHEN m.status = 'FT' AND p.points = 10 THEN 1 ELSE 0 END), 0) as points,
+        u.created_at 
+      FROM users u
+      LEFT JOIN predictions p ON u.id = p.user_id
+      LEFT JOIN matches m ON p.match_id = m.id
+      GROUP BY u.id
+      ORDER BY points DESC
+    `);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: 'Lỗi lấy danh sách user: ' + error.message });
@@ -220,6 +235,17 @@ router.put('/users/:id/reset-password', authenticateAdmin, async (req, res) => {
   } catch (error) {
     console.error('Reset User Password Error:', error);
     res.status(500).json({ error: 'Lỗi khi đặt lại mật khẩu: ' + error.message });
+  }
+});
+
+// API Đồng bộ kèo cược từ kqbd.mobi thủ công
+router.post('/matches/sync-odds', authenticateAdmin, async (req, res) => {
+  try {
+    const updatedCount = await syncOdds();
+    res.json({ message: `Đồng bộ tỷ lệ kèo cược thành công! Đã cập nhật ${updatedCount} trận đấu.` });
+  } catch (error) {
+    console.error('Odds manual sync error:', error);
+    res.status(500).json({ error: 'Lỗi đồng bộ tỷ lệ kèo: ' + error.message });
   }
 });
 

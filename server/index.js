@@ -67,7 +67,14 @@ async function patchDatabase() {
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS security_question VARCHAR(255)`);
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS security_answer VARCHAR(255)`);
 
-    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội, Chat Image và bảo mật tài khoản thành công.');
+    // Vá bảng matches hỗ trợ kèo chấp (Handicap) & Tài xỉu (Over/Under)
+    await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS handicap_favorite VARCHAR(100)`);
+    await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS handicap_value NUMERIC(4,2) DEFAULT 0.0`);
+    await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS handicap_text VARCHAR(50)`);
+    await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS ou_value NUMERIC(4,2) DEFAULT 0.0`);
+    await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS ou_text VARCHAR(50)`);
+
+    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội, Chat Image, bảo mật tài khoản và kèo cược thành công.');
   } catch (err) {
     console.error('⚠️ [DB Fix Error]', err.message);
   }
