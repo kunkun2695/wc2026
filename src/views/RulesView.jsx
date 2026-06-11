@@ -28,7 +28,7 @@ const RulesView = () => {
             <div className="box-price">10.000đ</div>
             <div className="box-desc">Người chơi dự đoán chính xác kết quả sau kèo chấp (chọn đúng đội thắng kèo hoặc chọn cửa Hòa khi trận đấu hòa kèo) sẽ đóng góp <strong>10k</strong> vào quỹ.</div>
           </div>
-          
+
           <div className="penalty-box wrong">
             <div className="box-header">ĐOÁN SAI KÈO</div>
             <div className="box-price">30.000đ</div>
@@ -46,7 +46,7 @@ const RulesView = () => {
           <ShieldAlert size={16} />
           <span>Kèo chấp ngăn ngừa việc mọi người chỉ tập trung chọn các đội mạnh!</span>
         </div>
-        
+
         <p className="rules-text">
           Đội mạnh hơn là <strong>Cửa trên</strong> (được ký hiệu dấu trừ, ví dụ: <span className="highlight-tag favorite">-0.5</span> hoặc <span className="highlight-tag favorite">-1</span>). Đội yếu hơn là <strong>Cửa dưới</strong> (được ký hiệu dấu cộng, ví dụ: <span className="highlight-tag underdog">+0.5</span> hoặc <span className="highlight-tag underdog">+1</span>).
         </p>
@@ -82,7 +82,7 @@ const RulesView = () => {
             <div className="example-badge">Ví dụ 1</div>
             <h4>Kèo chấp 1 Trái (Chấp 1.0) — Đức chấp Curacao (-1)</h4>
             <p className="example-context">Bạn chọn Đức (Cửa trên). Trận đấu kết thúc với tỷ số thực tế: <strong>Đức 2 - 1 Curacao</strong>.</p>
-            
+
             <div className="visual-math-panel">
               <div className="math-col">
                 <span className="math-lbl">Đức (Cửa trên)</span>
@@ -97,7 +97,7 @@ const RulesView = () => {
 
             <div className="example-result-box warning">
               <strong>KẾT QUẢ: HÒA KÈO (1.0 vs 1.0)</strong>
-              <p>Hiệu số sau chấp bằng nhau (Hòa kèo). Chỉ người dự đoán cửa **HÒA** mới được tính **ĐÚNG** $\rightarrow$ Phạt **10k VND**. Những người chọn Đức hoặc Curacao đều tính **SAI** $\rightarrow$ Phạt **30k VND**.</p>
+              <p>Hiệu số sau chấp bằng nhau (Hòa kèo). Chỉ người dự đoán cửa **HÒA** mới được tính **ĐÚNG** → Phạt **10k VND**. Những người chọn Đức hoặc Curacao đều tính **SAI** → Phạt **30k VND**.</p>
             </div>
           </div>
 
@@ -106,7 +106,7 @@ const RulesView = () => {
             <div className="example-badge">Ví dụ 2</div>
             <h4>Kèo chấp Nửa Trái (Chấp 0.5) — Đức chấp Curacao (-0.5)</h4>
             <p className="example-context">Trận đấu kết thúc với tỷ số thực tế: <strong>Đức 1 - 1 Curacao</strong> (Tỷ số hòa).</p>
-            
+
             <div className="visual-math-panel">
               <div className="math-col">
                 <span className="math-lbl">Đức (Cửa trên)</span>
@@ -160,7 +160,8 @@ const RulesView = () => {
         </div>
       </section>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .rules-container {
           max-width: 800px;
           margin: 0 auto;
