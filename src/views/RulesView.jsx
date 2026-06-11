@@ -10,35 +10,35 @@ const RulesView = () => {
           <BookOpen size={32} />
         </div>
         <h1 className="font-outfit">Luật Chơi & Thể Lệ</h1>
-        <p>Hướng dẫn cách dự đoán, tính điểm phạt và quy đổi quỹ ăn nhậu</p>
+        <p>Hướng dẫn cách dự đoán, tính điểm phạt và quy đổi quỹ lương khô</p>
       </header>
 
       {/* Section 1: Core Penalties */}
       <section className="rules-section-card glass-card">
         <h2 className="section-title">
-          <Coins size={22} color="#ffd200" /> 💰 Quy Tắc Phạt Quỹ Ăn Nhậu (10k / 30k)
+          <Coins size={22} color="#ffd200" /> 💰 Quy Tắc Đóng Góp Quỹ Lương Khô (10 / 30 bánh)
         </h2>
         <p className="section-intro">
-          Để cuộc vui thêm phần kịch tính và gây quỹ cho các buổi liên hoan, mức phạt được tính dựa trên kết quả cược chấp của từng trận đấu:
+          Để cuộc vui thêm phần kịch tính và gây quỹ cho các buổi liên hoan, mức đóng góp được tính dựa trên kết quả cược chấp của từng trận đấu:
         </p>
 
         <div className="penalty-grid">
           <div className="penalty-box correct">
             <div className="box-header">ĐOÁN ĐÚNG KÈO (Sau Chấp)</div>
-            <div className="box-price">10.000đ</div>
-            <div className="box-desc">Người chơi dự đoán chính xác kết quả sau kèo chấp (chọn đúng đội thắng kèo hoặc chọn cửa Hòa khi trận đấu hòa kèo) sẽ đóng góp <strong>10k</strong> vào quỹ.</div>
+            <div className="box-price">10 bánh</div>
+            <div className="box-desc">Người chơi dự đoán chính xác kết quả sau kèo chấp (chọn đúng đội thắng kèo hoặc chọn cửa Hòa khi trận đấu hòa kèo) sẽ đóng góp <strong>10 bánh lương khô</strong> vào quỹ.</div>
           </div>
 
           <div className="penalty-box wrong">
             <div className="box-header">ĐOÁN SAI KÈO</div>
-            <div className="box-price">30.000đ</div>
-            <div className="box-desc">Người chơi dự đoán sai kết quả sau kèo chấp (chọn sai đội thắng kèo hoặc không chọn cửa Hòa khi trận đấu hòa kèo) sẽ đóng góp <strong>30k</strong> vào quỹ.</div>
+            <div className="box-price">30 bánh</div>
+            <div className="box-desc">Người chơi dự đoán sai kết quả sau kèo chấp (chọn sai đội thắng kèo hoặc không chọn cửa Hòa khi trận đấu hòa kèo) sẽ đóng góp <strong>30 bánh lương khô</strong> vào quỹ.</div>
           </div>
 
           <div className="penalty-box missed">
             <div className="box-header">BỎ LỠ DỰ ĐOÁN</div>
-            <div className="box-price">30.000đ</div>
-            <div className="box-desc">Nếu trận đấu đã bắt đầu hoặc đã có kết quả mà người chơi chưa thực hiện bình chọn, hệ thống sẽ tự động tính là <strong>dự đoán sai</strong> và phạt <strong>30k VND</strong>.</div>
+            <div className="box-price">30 bánh</div>
+            <div className="box-desc">Nếu trận đấu đã bắt đầu hoặc đã có kết quả mà người chơi chưa thực hiện bình chọn, hệ thống sẽ tự động tính là <strong>dự đoán sai</strong> và đóng góp <strong>30 bánh lương khô</strong>.</div>
           </div>
         </div>
       </section>
@@ -103,7 +103,7 @@ const RulesView = () => {
 
             <div className="example-result-box warning">
               <strong>KẾT QUẢ: HÒA KÈO (1.0 vs 1.0)</strong>
-              <p>Hiệu số sau chấp bằng nhau (Hòa kèo). Chỉ người dự đoán cửa **HÒA** mới được tính **ĐÚNG** ➔ Phạt **10k VND**. Những người chọn Đức hoặc Curacao đều tính **SAI** ➔ Phạt **30k VND**.</p>
+              <p>Hiệu số sau chấp bằng nhau (Hòa kèo). Chỉ người dự đoán cửa **HÒA** mới được tính **ĐÚNG** ➔ Đóng góp **10 bánh**. Những người chọn Đức hoặc Curacao đều tính **SAI** ➔ Đóng góp **30 bánh**.</p>
             </div>
           </div>
 
@@ -127,7 +127,7 @@ const RulesView = () => {
 
             <div className="example-result-box wrong">
               <strong>KẾT QUẢ: CỬA DƯỚI THẮNG KÈO (0.5 vs 1.0)</strong>
-              <p>Người chọn Curacao (Cửa dưới) thắng ➔ Phạt **10k VND**. Người chọn Đức (Cửa trên) hoặc Hòa thua ➔ Phạt **30k VND**.</p>
+              <p>Người chọn Curacao (Cửa dưới) thắng ➔ Đóng góp **10 bánh**. Người chọn Đức (Cửa trên) hoặc Hòa thua ➔ Đóng góp **30 bánh**.</p>
             </div>
           </div>
         </div>

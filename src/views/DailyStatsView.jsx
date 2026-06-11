@@ -292,7 +292,7 @@ const DailyStatsView = ({ matches = [] }) => {
           <Calendar size={32} />
         </div>
         <h1 className="font-outfit">Thống Kê Hằng Ngày</h1>
-        <p>Bảng tổng hợp điểm số và tiền phạt ăn nhậu hôm nay</p>
+        <p>Bảng tổng hợp điểm số và lương khô đóng góp hôm nay</p>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '15px' }}>
           <button 
             onClick={handleExportPDF} 
@@ -321,7 +321,7 @@ const DailyStatsView = ({ matches = [] }) => {
         {/* PDF Header */}
         <div className="pdf-header">
           <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#00d2ff', fontFamily: 'Outfit, sans-serif' }}>
-            BÁO CÁO PHẠT HẰNG NGÀY
+            BÁO CÁO LƯƠNG KHÔ HẰNG NGÀY
           </div>
           <div style={{ fontSize: '0.9rem', color: '#8a94a6', fontWeight: 600, marginTop: '5px' }}>
             Giải đấu: World Cup 2026 Tracker
@@ -338,9 +338,9 @@ const DailyStatsView = ({ matches = [] }) => {
             <Coins size={22} />
           </div>
           <div className="card-info">
-            <span className="card-lbl">TỔNG PHẠT TRONG NGÀY</span>
+            <span className="card-lbl">TỔNG LƯƠNG KHÔ TRONG NGÀY</span>
             <span className="card-val red">
-              {new Intl.NumberFormat('vi-VN').format(dateTotals.totalFines)}đ
+              {new Intl.NumberFormat('vi-VN').format(dateTotals.totalFines / 1000)} bánh
             </span>
           </div>
         </div>
@@ -377,7 +377,7 @@ const DailyStatsView = ({ matches = [] }) => {
       {/* Leaderboard Table for Selected Day */}
       <section className="stats-section-box">
         <h3 className="section-title-stats">
-          <Trophy size={18} color="#ffd200" /> Bảng Quy Đổi Phạt Ăn Nhậu Ngày {selectedDate}
+          <Trophy size={18} color="#ffd200" /> Bảng Quy Đổi Lương Khô Ngày {selectedDate}
         </h3>
         
         <div className="table-responsive glass-panel">
@@ -388,7 +388,7 @@ const DailyStatsView = ({ matches = [] }) => {
                 <th>Thành viên</th>
                 <th style={{ textAlign: 'center' }}>Đoán đúng</th>
                 <th style={{ textAlign: 'center' }}>Đoán sai</th>
-                <th style={{ textAlign: 'right' }}>Tiền phạt hôm nay</th>
+                 <th style={{ textAlign: 'right' }}>Lương khô đóng góp (bánh)</th>
               </tr>
             </thead>
             <tbody>
@@ -412,9 +412,9 @@ const DailyStatsView = ({ matches = [] }) => {
                       <XCircle size={14} style={{ display: 'inline', marginRight: '4px' }} />
                       {u.wrong}
                     </td>
-                    <td className="fine-cell">
-                      <span>{new Intl.NumberFormat('vi-VN').format(u.fines)}đ</span>
-                    </td>
+                     <td className="fine-cell">
+                       <span>{new Intl.NumberFormat('vi-VN').format(u.fines / 1000)} bánh</span>
+                     </td>
                   </tr>
                 ))
               ) : (
@@ -521,7 +521,7 @@ const DailyStatsView = ({ matches = [] }) => {
 
                               {isStarted && !p.is_hidden && (
                                 <div className={`outcome-badge ${isCorrect ? 'correct' : 'wrong'}`}>
-                                  {choice === 'MISSED' ? 'BỎ LỠ (Phạt 30k)' : (isCorrect ? 'ĐÚNG (Phạt 10k)' : 'SAI (Phạt 30k)')}
+                                   {choice === 'MISSED' ? 'BỎ LỠ (30 bánh)' : (isCorrect ? 'ĐÚNG (10 bánh)' : 'SAI (30 bánh)')}
                                 </div>
                               )}
                             </div>

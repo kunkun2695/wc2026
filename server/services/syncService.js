@@ -30,7 +30,7 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
   for (const p of predictions.rows) {
     if (p.predicted_home_score === -1) {
       // Gửi Push Notification thông báo phạt do bỏ lỡ dự đoán
-      const message = `Trận đấu ${team1Name} vs ${team2Name} đã kết thúc (Tỉ số: ${hScore}-${aScore}). Bạn đã bỏ lỡ không dự đoán và bị PHẠT 30k.`;
+      const message = `Trận đấu ${team1Name} vs ${team2Name} đã kết thúc (Tỉ số: ${hScore}-${aScore}). Bạn đã bỏ lỡ không dự đoán và đóng góp 30 bánh lương khô.`;
       sendPushNotification(p.user_id, '🏆 Bỏ lỡ dự đoán!', message, `/match/${matchId}`);
       continue;
     }
@@ -62,8 +62,8 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
     
     // Gửi Push Notification thông báo kết quả và điểm phạt ăn nhậu
     const matchTitle = `${team1Name} ${hScore}-${aScore} ${team2Name}`;
-    const resultText = points === 10 ? 'ĐÚNG (Phạt 10k)' : 'SAI (Phạt 30k)';
-    const message = `Trận đấu đã kết thúc! Tỉ số: ${matchTitle}. Dự đoán của bạn: ${resultText}.`;
+    const resultText = points === 10 ? 'ĐÚNG (Đóng góp 10 bánh)' : 'SAI (Đóng góp 30 bánh)';
+    const message = `Trận đấu đã kết thúc! Tỉ số: ${matchTitle}. Kết quả dự đoán của bạn: ${resultText}.`;
     
     sendPushNotification(p.user_id, '🏆 Kết quả trận đấu!', message, `/match/${matchId}`);
   }

@@ -150,13 +150,13 @@ const HistoryView = ({ predictions, matches = [] }) => {
                       <TrendingUp size={14} />
                       <span>
                         {myChoice === 'MISSED' 
-                          ? 'PHẠT 30K (BỎ LỠ)' 
-                          : (isCorrect ? 'PHẠT 10K (ĐÚNG)' : 'PHẠT 30K (SAI)')}
+                          ? 'ĐÓNG GÓP: 30 BÁNH (BỎ LỠ)' 
+                          : (isCorrect ? 'ĐÓNG GÓP: 10 BÁNH (ĐÚNG)' : 'ĐÓNG GÓP: 30 BÁNH (SAI)')}
                       </span>
                     </div>
                   ) : (
                     <span className="points-estimate">
-                      {myChoice === 'MISSED' ? 'BỎ LỠ (PHẠT 30K)' : 'ĐANG CHỜ ĐẤU...'}
+                      {myChoice === 'MISSED' ? 'BỎ LỠ (ĐÓNG GÓP 30 BÁNH)' : 'ĐANG CHỜ ĐẤU...'}
                     </span>
                   )}
                 </div>

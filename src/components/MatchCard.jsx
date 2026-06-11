@@ -150,7 +150,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           border: '1px solid rgba(239, 68, 68, 0.15)',
           color: '#ef4444'
         }}>
-          BỎ LỠ DỰ ĐOÁN: PHẠT 30K (Dự đoán sai)
+          BỎ LỠ DỰ ĐOÁN: ĐÓNG GÓP 30 BÁNH LƯƠNG KHÔ (Dự đoán sai)
         </div>
       );
     }
@@ -168,7 +168,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         border: isCorrect ? '1px solid rgba(52, 211, 153, 0.15)' : '1px solid rgba(239, 68, 68, 0.15)',
         color: isCorrect ? '#34d399' : '#ef4444'
       }}>
-        DỰ ĐOÁN KÈO: {isCorrect ? 'ĐÚNG (Phạt 10k)' : 'SAI (Phạt 30k)'}
+        DỰ ĐOÁN KÈO: {isCorrect ? 'ĐÚNG (Đóng góp 10 bánh)' : 'SAI (Đóng góp 30 bánh)'}
       </div>
     );
   };

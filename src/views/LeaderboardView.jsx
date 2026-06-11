@@ -39,8 +39,8 @@ const LeaderboardView = ({ leaderboard }) => {
 
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
               <div className="user-fines-lb">
-                <span className="fines-val">{Math.floor(user.total_fines / 1000)}k</span>
-                <span className="fines-label">TIỀN PHẠT</span>
+                <span className="fines-val">{Math.floor(user.total_fines / 1000)}</span>
+                <span className="fines-label">LƯƠNG KHÔ</span>
               </div>
               <div className="user-points-lb">
                 <span className="points-val">{user.total_points || 0}</span>
