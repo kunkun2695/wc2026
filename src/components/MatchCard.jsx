@@ -182,7 +182,22 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
 
         <div className="scoreboard-middle">
           {match.status === 'UPCOMING' ? (
-            <span className="vs-label">VS</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <span className="vs-label">VS</span>
+              <span style={{ 
+                fontSize: '0.75rem', 
+                fontWeight: 800, 
+                color: 'rgba(0, 210, 255, 0.6)', 
+                fontFamily: 'monospace',
+                background: 'rgba(0, 210, 255, 0.04)',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                border: '1px solid rgba(0, 210, 255, 0.1)',
+                letterSpacing: '0.5px'
+              }}>
+                {t1.score} - {t2.score}
+              </span>
+            </div>
           ) : (
             <div className="score-display-premium">
               <span>{t1.score}</span>
