@@ -97,7 +97,7 @@ const RulesView = () => {
 
             <div className="example-result-box warning">
               <strong>KẾT QUẢ: HÒA KÈO (1.0 vs 1.0)</strong>
-              <p>Hiệu số sau chấp bằng nhau (Hòa kèo). Chỉ người dự đoán cửa **HÒA** mới được tính **ĐÚNG** → Phạt **10k VND**. Những người chọn Đức hoặc Curacao đều tính **SAI** → Phạt **30k VND**.</p>
+              <p>Hiệu số sau chấp bằng nhau (Hòa kèo). Chỉ người dự đoán cửa **HÒA** mới được tính **ĐÚNG** ➔ Phạt **10k VND**. Những người chọn Đức hoặc Curacao đều tính **SAI** ➔ Phạt **30k VND**.</p>
             </div>
           </div>
 
@@ -121,7 +121,7 @@ const RulesView = () => {
 
             <div className="example-result-box wrong">
               <strong>KẾT QUẢ: CỬA DƯỚI THẮNG KÈO (0.5 vs 1.0)</strong>
-              <p>Người chọn Curacao (Cửa dưới) thắng $\rightarrow$ Phạt **10k VND**. Người chọn Đức (Cửa trên) hoặc Hòa thua $\rightarrow$ Phạt **30k VND**.</p>
+              <p>Người chọn Curacao (Cửa dưới) thắng ➔ Phạt **10k VND**. Người chọn Đức (Cửa trên) hoặc Hòa thua ➔ Phạt **30k VND**.</p>
             </div>
           </div>
         </div>
