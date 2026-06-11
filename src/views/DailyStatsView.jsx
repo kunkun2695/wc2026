@@ -146,6 +146,65 @@ const DailyStatsView = ({ matches = [] }) => {
     return 'X';
   };
 
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportPDF = () => {
+    setExporting(true);
+    
+    const runExport = () => {
+      const element = document.getElementById('daily-stats-pdf-content');
+      if (!element) {
+        setExporting(false);
+        return;
+      }
+      
+      element.classList.add('is-pdf-exporting');
+      
+      const opt = {
+        margin:       [10, 10, 10, 10],
+        filename:     `Bao_cao_phat_WC2026_Ngay_${selectedDate.replace(/[\/\.]/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { 
+          scale: 2, 
+          useCORS: true, 
+          backgroundColor: '#06090f',
+          logging: false
+        },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      
+      window.html2pdf().from(element).set(opt).save()
+        .then(() => {
+          element.classList.remove('is-pdf-exporting');
+          setExporting(false);
+        })
+        .catch(err => {
+          console.error('Lỗi xuất PDF:', err);
+          element.classList.remove('is-pdf-exporting');
+          setExporting(false);
+          alert('Không thể xuất file PDF. Vui lòng thử lại!');
+        });
+    };
+
+    if (!window.html2pdf) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.integrity = 'sha512-GsLlZN/3F2ErC5IfS5QRLps5G9R0Yb35dxxVMjYOPGs2NY73xS3gOJ5caDG5gzjEDx9N34zw63V5t/XwG3s3LM==';
+      script.crossOrigin = 'anonymous';
+      script.referrerPolicy = 'no-referrer';
+      script.onload = () => {
+        runExport();
+      };
+      script.onerror = () => {
+        setExporting(false);
+        alert('Lỗi tải thư viện xuất PDF. Vui lòng kiểm tra kết nối mạng!');
+      };
+      document.body.appendChild(script);
+    } else {
+      runExport();
+    }
+  };
+
   if (loading) {
     return (
       <div className="stats-loading">
@@ -163,6 +222,15 @@ const DailyStatsView = ({ matches = [] }) => {
         </div>
         <h1 className="font-outfit">Thống Kê Hằng Ngày</h1>
         <p>Bảng tổng hợp điểm số và tiền phạt ăn nhậu hôm nay</p>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '15px' }}>
+          <button 
+            onClick={handleExportPDF} 
+            className="export-pdf-btn"
+            disabled={exporting}
+          >
+            {exporting ? 'Đang xuất PDF...' : '📄 Xuất Báo Cáo PDF'}
+          </button>
+        </div>
       </header>
 
       {/* Date selector slider */}
@@ -178,7 +246,21 @@ const DailyStatsView = ({ matches = [] }) => {
         ))}
       </div>
 
-      <div className="stats-grid-dashboard">
+      <div id="daily-stats-pdf-content" className="pdf-content-wrapper">
+        {/* PDF Header */}
+        <div className="pdf-header">
+          <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#00d2ff', fontFamily: 'Outfit, sans-serif' }}>
+            BÁO CÁO PHẠT HẰNG NGÀY
+          </div>
+          <div style={{ fontSize: '0.9rem', color: '#8a94a6', fontWeight: 600, marginTop: '5px' }}>
+            Giải đấu: World Cup 2026 Tracker
+          </div>
+          <div style={{ fontSize: '1.1rem', color: '#ffd200', fontWeight: 800, marginTop: '8px' }}>
+            Ngày thi đấu: {selectedDate}
+          </div>
+        </div>
+
+        <div className="stats-grid-dashboard">
         {/* Card: Total Fines */}
         <div className="dashboard-card glow-red">
           <div className="card-icon-wrapper red">
@@ -360,6 +442,7 @@ const DailyStatsView = ({ matches = [] }) => {
           )}
         </div>
       </section>
+      </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
         .daily-stats-container {
@@ -781,6 +864,52 @@ const DailyStatsView = ({ matches = [] }) => {
           .match-choices-grid {
             grid-template-columns: 1fr;
           }
+        }
+
+        /* PDF Export Button */
+        .export-pdf-btn {
+          background: linear-gradient(90deg, rgba(0, 210, 255, 0.1), rgba(58, 134, 255, 0.1));
+          border: 1px solid rgba(0, 210, 255, 0.3);
+          color: #00d2ff;
+          padding: 10px 24px;
+          border-radius: 12px;
+          font-size: 0.85rem;
+          font-weight: 800;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 15px;
+        }
+        .export-pdf-btn:hover:not(:disabled) {
+          background: var(--cyan-gradient);
+          color: black;
+          border-color: transparent;
+          box-shadow: 0 4px 15px rgba(0, 210, 255, 0.2);
+          transform: scale(1.02);
+        }
+        .export-pdf-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        /* PDF Styles */
+        .pdf-header {
+          display: none;
+        }
+        
+        .pdf-content-wrapper.is-pdf-exporting {
+          background: #06090f !important;
+          padding: 20px !important;
+        }
+        
+        .is-pdf-exporting .pdf-header {
+          display: block;
+          text-align: center;
+          margin-bottom: 25px;
+          border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+          padding-bottom: 15px;
         }
       `}} />
     </div>
