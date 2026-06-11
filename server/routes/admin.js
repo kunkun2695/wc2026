@@ -120,26 +120,79 @@ router.post('/seed-wc2026', authenticateAdmin, async (req, res) => {
   try {
     await db.query('BEGIN');
 
-    // Xóa dữ liệu cũ
-    await db.query('DELETE FROM predictions');
-    await db.query('DELETE FROM comments');
-    await db.query('DELETE FROM notifications');
-    await db.query('DELETE FROM matches');
+    // 1. Chỉ xóa các trận đấu KHÔNG có dự đoán của người chơi để giữ lại dữ liệu dự đoán
+    const matchesWithPredictionsRes = await db.query('SELECT DISTINCT match_id FROM predictions');
+    const matchIdsWithPredictions = matchesWithPredictionsRes.rows.map(r => r.match_id);
 
-    // Thêm các trận vòng bảng
-    for (const m of groupMatches) {
-      await db.query(
-        'INSERT INTO matches (team1_name, team1_flag, team2_name, team2_flag, match_time, group_name, status, team1_score, team2_score, competition_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
-        [m.team1_name, m.team1_flag, m.team2_name, m.team2_flag, m.match_time, m.group_name, 'UPCOMING', 0, 0, m.competition_name]
-      );
+    if (matchIdsWithPredictions.length > 0) {
+      await db.query('DELETE FROM matches WHERE id NOT IN (' + matchIdsWithPredictions.join(',') + ')');
+    } else {
+      await db.query('DELETE FROM predictions');
+      await db.query('DELETE FROM comments');
+      await db.query('DELETE FROM notifications');
+      await db.query('DELETE FROM matches');
     }
 
-    // Thêm các trận knockout
-    for (const m of knockoutMatches) {
-      await db.query(
-        'INSERT INTO matches (team1_name, team1_flag, team2_name, team2_flag, match_time, group_name, status, team1_score, team2_score, competition_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
-        [m.team1_name, m.team1_flag, m.team2_name, m.team2_flag, m.match_time, m.group_name, 'UPCOMING', 0, 0, m.competition_name]
+    // 2. Thêm hoặc cập nhật các trận vòng bảng
+    for (const m of groupMatches) {
+      const existRes = await db.query(
+        'SELECT id FROM matches WHERE (team1_name = $1 AND team2_name = $2) OR (team1_name = $2 AND team2_name = $1)',
+        [m.team1_name, m.team2_name]
       );
+      if (existRes.rows.length > 0) {
+        const matchId = existRes.rows[0].id;
+        const predCheck = await db.query('SELECT COUNT(*) FROM predictions WHERE match_id = $1', [matchId]);
+        const hasPred = parseInt(predCheck.rows[0].count) > 0;
+
+        if (hasPred) {
+          // Nếu đã có dự đoán, chỉ cập nhật thông tin bổ trợ như cờ, giờ đấu, bảng đấu, địa điểm (không reset điểm số/trạng thái)
+          await db.query(
+            'UPDATE matches SET team1_flag = $1, team2_flag = $2, match_time = $3, group_name = $4, competition_name = $5 WHERE id = $6',
+            [m.team1_flag, m.team2_flag, m.match_time, m.group_name, m.competition_name, matchId]
+          );
+        } else {
+          // Nếu không có dự đoán, có thể cập nhật và reset trạng thái về mặc định
+          await db.query(
+            'UPDATE matches SET team1_flag = $1, team2_flag = $2, match_time = $3, group_name = $4, status = $5, team1_score = $6, team2_score = $7, competition_name = $8 WHERE id = $9',
+            [m.team1_flag, m.team2_flag, m.match_time, m.group_name, 'UPCOMING', 0, 0, m.competition_name, matchId]
+          );
+        }
+      } else {
+        await db.query(
+          'INSERT INTO matches (team1_name, team1_flag, team2_name, team2_flag, match_time, group_name, status, team1_score, team2_score, competition_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+          [m.team1_name, m.team1_flag, m.team2_name, m.team2_flag, m.match_time, m.group_name, 'UPCOMING', 0, 0, m.competition_name]
+        );
+      }
+    }
+
+    // 3. Thêm hoặc cập nhật các trận knockout
+    for (const m of knockoutMatches) {
+      const existRes = await db.query(
+        'SELECT id FROM matches WHERE (team1_name = $1 AND team2_name = $2) OR (team1_name = $2 AND team2_name = $1)',
+        [m.team1_name, m.team2_name]
+      );
+      if (existRes.rows.length > 0) {
+        const matchId = existRes.rows[0].id;
+        const predCheck = await db.query('SELECT COUNT(*) FROM predictions WHERE match_id = $1', [matchId]);
+        const hasPred = parseInt(predCheck.rows[0].count) > 0;
+
+        if (hasPred) {
+          await db.query(
+            'UPDATE matches SET team1_flag = $1, team2_flag = $2, match_time = $3, group_name = $4, competition_name = $5 WHERE id = $6',
+            [m.team1_flag, m.team2_flag, m.match_time, m.group_name, m.competition_name, matchId]
+          );
+        } else {
+          await db.query(
+            'UPDATE matches SET team1_flag = $1, team2_flag = $2, match_time = $3, group_name = $4, status = $5, team1_score = $6, team2_score = $7, competition_name = $8 WHERE id = $9',
+            [m.team1_flag, m.team2_flag, m.match_time, m.group_name, 'UPCOMING', 0, 0, m.competition_name, matchId]
+          );
+        }
+      } else {
+        await db.query(
+          'INSERT INTO matches (team1_name, team1_flag, team2_name, team2_flag, match_time, group_name, status, team1_score, team2_score, competition_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+          [m.team1_name, m.team1_flag, m.team2_name, m.team2_flag, m.match_time, m.group_name, 'UPCOMING', 0, 0, m.competition_name]
+        );
+      }
     }
 
     await db.query('COMMIT');
