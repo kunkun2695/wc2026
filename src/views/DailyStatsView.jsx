@@ -9,6 +9,51 @@ const DailyStatsView = ({ matches = [] }) => {
   const [predictions, setPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState('');
+  const [users, setUsers] = useState([]);
+
+  // Fetch all users
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/users`);
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data);
+      }
+    } catch (err) {
+      console.error('Lỗi lấy danh sách user:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const parseMatchTimeToVnDate = (timeStr) => {
+    if (!timeStr) return new Date(0);
+    try {
+      let day, month, hour, min;
+      if (timeStr.includes('/')) {
+        const [datePart, timePart] = timeStr.split(' - ');
+        [day, month] = datePart.split('/');
+        [hour, min] = timePart.split(':');
+      } else if (timeStr.includes('.')) {
+        const [datePart, timePart] = timeStr.split(' - ');
+        [day, month] = datePart.split('.');
+        [hour, min] = timePart.split(':');
+      } else {
+        const parts = timeStr.split(/[\s-]/);
+        const [time, d, m] = parts.filter(Boolean);
+        [hour, min] = time.split(':');
+        day = d;
+        month = m;
+      }
+      const pad = (n) => String(n).padStart(2, '0');
+      const isoString = `2026-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(min)}:00+07:00`;
+      return new Date(isoString);
+    } catch (e) {
+      return new Date(0);
+    }
+  };
 
   // Fetch all predictions from the server
   const fetchAllPredictions = async () => {
@@ -92,37 +137,65 @@ const DailyStatsView = ({ matches = [] }) => {
   const userStatsToday = useMemo(() => {
     const statsMap = {};
 
-    predictionsToday.forEach(p => {
-      const isFinished = p.status === 'FT';
-      if (!statsMap[p.user_id]) {
-        statsMap[p.user_id] = {
-          userId: p.user_id,
-          userName: p.user_name,
-          userAvatar: p.user_avatar,
-          correct: 0,
-          wrong: 0,
-          fines: 0,
-          predictedCount: 0
-        };
-      }
+    // 1. Initialize stats for ALL users
+    users.forEach(u => {
+      statsMap[u.id] = {
+        userId: u.id,
+        userName: u.name,
+        userAvatar: u.avatar || '',
+        correct: 0,
+        wrong: 0,
+        fines: 0,
+        predictedCount: 0
+      };
+    });
 
-      statsMap[p.user_id].predictedCount++;
-      if (isFinished) {
-        if (p.points === 10) {
-          statsMap[p.user_id].correct++;
-          statsMap[p.user_id].fines += 10000;
+    // 2. Map predictions by user_id and match_id for quick lookup
+    const predMap = {};
+    predictionsToday.forEach(p => {
+      predMap[`${p.user_id}_${p.match_id}`] = p;
+    });
+
+    // 3. For each user and each match today, compute points/fines
+    users.forEach(u => {
+      matchesToday.forEach(m => {
+        const mTime = parseMatchTimeToVnDate(m.match_time);
+        const isStarted = m.status !== 'UPCOMING' || new Date() >= mTime;
+        const isFinished = m.status === 'FT';
+        
+        const p = predMap[`${u.id}_${m.id}`];
+        
+        if (p) {
+          if (p.predicted_home_score !== -1) {
+            statsMap[u.id].predictedCount++;
+          }
+          
+          if (isFinished) {
+            if (p.points === 10) {
+              statsMap[u.id].correct++;
+              statsMap[u.id].fines += 10000;
+            } else {
+              statsMap[u.id].wrong++;
+              statsMap[u.id].fines += 30000;
+            }
+          } else if (isStarted && p.predicted_home_score === -1) {
+            statsMap[u.id].wrong++;
+            statsMap[u.id].fines += 30000;
+          }
         } else {
-          statsMap[p.user_id].wrong++;
-          statsMap[p.user_id].fines += 30000;
+          if (isStarted) {
+            statsMap[u.id].wrong++;
+            statsMap[u.id].fines += 30000;
+          }
         }
-      }
+      });
     });
 
     return Object.values(statsMap).sort((a, b) => {
       if (b.correct !== a.correct) return b.correct - a.correct;
       return a.fines - b.fines;
     });
-  }, [predictionsToday]);
+  }, [users, matchesToday, predictionsToday]);
 
   // Aggregated totals for the selected date
   const dateTotals = useMemo(() => {
@@ -141,6 +214,7 @@ const DailyStatsView = ({ matches = [] }) => {
   }, [userStatsToday, matchesToday]);
 
   const getOutcomeLabel = (p) => {
+    if (p.predicted_home_score === -1) return 'MISSED';
     if (p.predicted_home_score > p.predicted_away_score) return '1';
     if (p.predicted_home_score < p.predicted_away_score) return '2';
     return 'X';
@@ -188,16 +262,13 @@ const DailyStatsView = ({ matches = [] }) => {
 
     if (!window.html2pdf) {
       const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-      script.integrity = 'sha512-GsLlZN/3F2ErC5IfS5QRLps5G9R0Yb35dxxVMjYOPGs2NY73xS3gOJ5caDG5gzjEDx9N34zw63V5t/XwG3s3LM==';
-      script.crossOrigin = 'anonymous';
-      script.referrerPolicy = 'no-referrer';
+      script.src = '/html2pdf.bundle.min.js';
       script.onload = () => {
         runExport();
       };
       script.onerror = () => {
         setExporting(false);
-        alert('Lỗi tải thư viện xuất PDF. Vui lòng kiểm tra kết nối mạng!');
+        alert('Lỗi tải thư viện xuất PDF cục bộ. Vui lòng thử lại!');
       };
       document.body.appendChild(script);
     } else {
@@ -398,41 +469,68 @@ const DailyStatsView = ({ matches = [] }) => {
 
                   {/* Users choices for this match */}
                   <div className="match-choices-grid">
-                    {matchPredictions.length > 0 ? (
-                      matchPredictions.map(p => {
-                        const isCorrect = p.points === 10;
-                        const choice = getOutcomeLabel(p);
-                        const teamSelected = choice === '1' ? m.team1_name : (choice === '2' ? m.team2_name : 'Hòa (X)');
+                    {(() => {
+                      const mTime = parseMatchTimeToVnDate(m.match_time);
+                      const isStarted = m.status !== 'UPCOMING' || new Date() >= mTime;
+                      
+                      const displayPreds = users.map(u => {
+                        const existingPred = matchPredictions.find(p => p.user_id === u.id);
+                        if (existingPred) return existingPred;
                         
-                        return (
-                          <div key={p.prediction_id} className="user-choice-card">
-                            <div className="user-info-choice">
-                              <UserAvatar src={p.user_avatar} size={24} />
-                              <span className="name">{p.user_name}</span>
-                            </div>
-                            
-                            {p.is_hidden ? (
-                              <div className="choice-badge-locked">
-                                <Clock size={10} /> ĐÃ KHÓA (ẨN)
-                              </div>
-                            ) : (
-                              <div className="choice-badge-revealed">
-                                <span className="label">Chọn: </span>
-                                <span className="val">{teamSelected}</span>
-                              </div>
-                            )}
+                        if (isStarted) {
+                          return {
+                            prediction_id: `missed_${u.id}_${m.id}`,
+                            user_id: u.id,
+                            user_name: u.name,
+                            user_avatar: u.avatar || '',
+                            match_id: m.id,
+                            predicted_home_score: -1,
+                            predicted_away_score: -1,
+                            points: 30,
+                            is_hidden: false
+                          };
+                        }
+                        return null;
+                      }).filter(Boolean);
 
-                            {isFinished && !p.is_hidden && (
-                              <div className={`outcome-badge ${isCorrect ? 'correct' : 'wrong'}`}>
-                                {isCorrect ? 'ĐÚNG (Phạt 10k)' : 'SAI (Phạt 30k)'}
+                      if (displayPreds.length > 0) {
+                        return displayPreds.map(p => {
+                          const isCorrect = p.points === 10;
+                          const choice = getOutcomeLabel(p);
+                          const teamSelected = choice === 'MISSED' 
+                            ? 'Bỏ lỡ dự đoán' 
+                            : (choice === '1' ? m.team1_name : (choice === '2' ? m.team2_name : 'Hòa (X)'));
+                          
+                          return (
+                            <div key={p.prediction_id} className="user-choice-card">
+                              <div className="user-info-choice">
+                                <UserAvatar src={p.user_avatar} size={24} />
+                                <span className="name">{p.user_name}</span>
                               </div>
-                            )}
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="no-preds-match">Chưa có ai dự đoán trận đấu này.</div>
-                    )}
+                              
+                              {p.is_hidden ? (
+                                <div className="choice-badge-locked">
+                                  <Clock size={10} /> ĐÃ KHÓA (ẨN)
+                                </div>
+                              ) : (
+                                <div className="choice-badge-revealed">
+                                  <span className="label">Chọn: </span>
+                                  <span className="val" style={{ color: choice === 'MISSED' ? '#ef4444' : 'inherit', fontWeight: choice === 'MISSED' ? 800 : 'inherit' }}>{teamSelected}</span>
+                                </div>
+                              )}
+
+                              {isStarted && !p.is_hidden && (
+                                <div className={`outcome-badge ${isCorrect ? 'correct' : 'wrong'}`}>
+                                  {choice === 'MISSED' ? 'BỎ LỠ (Phạt 30k)' : (isCorrect ? 'ĐÚNG (Phạt 10k)' : 'SAI (Phạt 30k)')}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        });
+                      } else {
+                        return <div className="no-preds-match">Chưa có ai dự đoán trận đấu này.</div>;
+                      }
+                    })()}
                   </div>
                 </div>
               );

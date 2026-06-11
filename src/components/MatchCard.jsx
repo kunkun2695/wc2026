@@ -16,11 +16,15 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
 
   useEffect(() => {
     if (userPrediction) {
-      if (userPrediction.predicted_home_score > userPrediction.predicted_away_score) setSelectedChoice('1');
+      if (userPrediction.predicted_home_score === -1) setSelectedChoice('MISSED');
+      else if (userPrediction.predicted_home_score > userPrediction.predicted_away_score) setSelectedChoice('1');
       else if (userPrediction.predicted_home_score < userPrediction.predicted_away_score) setSelectedChoice('2');
       else setSelectedChoice('X');
+    } else {
+      setSelectedChoice(null);
     }
   }, [userPrediction]);
+
 
   const t1 = { name: match.team1_name || 'Team 1', flag: match.team1_flag || '⚽', score: match.team1_score ?? 0 };
   const t2 = { name: match.team2_name || 'Team 2', flag: match.team2_flag || '⚽', score: match.team2_score ?? 0 };
@@ -68,6 +72,9 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
 
   const matchTime = parseMatchTimeToVnDate(match.match_time);
   const isClosed = match.status !== 'UPCOMING' || new Date() >= matchTime;
+  const isMissed = (userPrediction && userPrediction.predicted_home_score === -1) ||
+                   (!userPrediction && isClosed);
+
 
   const handleSave = async (choice) => {
     if (isPredicted || isClosed) return;
@@ -114,7 +121,8 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
     }
   };
 
-  const isPredicted = userPrediction !== undefined;
+  const isPredicted = userPrediction !== undefined && userPrediction.predicted_home_score !== -1;
+
 
   const getHandicapLabel = (team) => {
     if (!match.handicap_favorite || parseFloat(match.handicap_value) === 0) {
@@ -129,6 +137,23 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
   };
 
   const renderPredictionOutcome = () => {
+    if (isMissed) {
+      return (
+        <div style={{ 
+          fontSize: '0.75rem', 
+          fontWeight: 900, 
+          marginTop: '15px', 
+          textAlign: 'center', 
+          padding: '8px 12px', 
+          borderRadius: '10px',
+          background: 'rgba(239, 68, 68, 0.08)',
+          border: '1px solid rgba(239, 68, 68, 0.15)',
+          color: '#ef4444'
+        }}>
+          BỎ LỠ DỰ ĐOÁN: PHẠT 30K (Dự đoán sai)
+        </div>
+      );
+    }
     if (!userPrediction || match.status !== 'FT') return null;
     const isCorrect = userPrediction.points === 10;
     return (
@@ -308,10 +333,27 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <span>{match.total_votes || 0} PHIẾU</span>
           </div>
 
-          {isPredicted && match.status === 'UPCOMING' && (
-            <div className="voted-tag">
-              <Check size={10} /> ĐÃ DỰ ĐOÁN
+          {isMissed ? (
+            <div className="missed-tag" style={{
+              background: 'rgba(239, 68, 68, 0.08)',
+              color: '#ef4444',
+              fontSize: '0.65rem',
+              fontWeight: 800,
+              padding: '4px 10px',
+              border: '1px solid rgba(239, 68, 68, 0.15)',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              BỎ LỠ DỰ ĐOÁN
             </div>
+          ) : (
+            isPredicted && match.status === 'UPCOMING' && (
+              <div className="voted-tag">
+                <Check size={10} /> ĐÃ DỰ ĐOÁN
+              </div>
+            )
           )}
 
           <button className="gay-btn-v2" onClick={() => onOpenComments(match)}>

@@ -10,6 +10,7 @@ const HistoryView = ({ predictions, matches = [] }) => {
   };
 
   const getOutcomeLabel = (p) => {
+    if (p.predicted_home_score === -1) return 'MISSED';
     if (p.predicted_home_score > p.predicted_away_score) return '1';
     if (p.predicted_home_score < p.predicted_away_score) return '2';
     return 'X';
@@ -67,13 +68,19 @@ const HistoryView = ({ predictions, matches = [] }) => {
                 
                 <div className="status-indicator">
                   {isFinished ? (
-                    isCorrect ? (
+                    myChoice === 'MISSED' ? (
+                      <span className="status-label loss" style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}><XCircle size={12} /> BỎ LỠ</span>
+                    ) : isCorrect ? (
                       <span className="status-label win"><CheckCircle2 size={12} /> ĐÚNG</span>
                     ) : (
                       <span className="status-label loss"><XCircle size={12} /> SAI</span>
                     )
                   ) : (
-                    <span className="status-label pending"><AlertCircle size={12} /> {p.status === 'LIVE' ? 'LIVE' : 'CHỜ'}</span>
+                    myChoice === 'MISSED' ? (
+                      <span className="status-label loss" style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}><XCircle size={12} /> BỎ LỠ</span>
+                    ) : (
+                      <span className="status-label pending"><AlertCircle size={12} /> {p.status === 'LIVE' ? 'LIVE' : 'CHỜ'}</span>
+                    )
                   )}
                 </div>
               </div>
@@ -117,21 +124,40 @@ const HistoryView = ({ predictions, matches = [] }) => {
               <div className="card-footer-v2">
                 <div className="choice-section">
                   <span className="footer-label">BẠN CHỌN:</span>
-                  <div className="choice-pills">
-                    <div className={`choice-pill ${myChoice === '1' ? 'active' : ''}`}>1</div>
-                    <div className={`choice-pill ${myChoice === 'X' ? 'active' : ''}`}>X</div>
-                    <div className={`choice-pill ${myChoice === '2' ? 'active' : ''}`}>2</div>
-                  </div>
+                  {myChoice === 'MISSED' ? (
+                    <span style={{ 
+                      color: '#ef4444', 
+                      fontSize: '0.8rem', 
+                      fontWeight: 800,
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(239, 68, 68, 0.15)',
+                      textTransform: 'uppercase'
+                    }}>Bỏ lỡ dự đoán</span>
+                  ) : (
+                    <div className="choice-pills">
+                      <div className={`choice-pill ${myChoice === '1' ? 'active' : ''}`}>1</div>
+                      <div className={`choice-pill ${myChoice === 'X' ? 'active' : ''}`}>X</div>
+                      <div className={`choice-pill ${myChoice === '2' ? 'active' : ''}`}>2</div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="points-section">
                   {isFinished ? (
                     <div className={`points-badge ${isCorrect ? 'plus' : 'loss'}`}>
                       <TrendingUp size={14} />
-                      <span>{isCorrect ? 'PHẠT 10K (ĐÚNG)' : 'PHẠT 30K (SAI)'}</span>
+                      <span>
+                        {myChoice === 'MISSED' 
+                          ? 'PHẠT 30K (BỎ LỠ)' 
+                          : (isCorrect ? 'PHẠT 10K (ĐÚNG)' : 'PHẠT 30K (SAI)')}
+                      </span>
                     </div>
                   ) : (
-                    <span className="points-estimate">ĐANG CHỜ ĐẤU...</span>
+                    <span className="points-estimate">
+                      {myChoice === 'MISSED' ? 'BỎ LỠ (PHẠT 30K)' : 'ĐANG CHỜ ĐẤU...'}
+                    </span>
                   )}
                 </div>
               </div>

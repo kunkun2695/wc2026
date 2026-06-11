@@ -34,6 +34,12 @@ const RulesView = () => {
             <div className="box-price">30.000đ</div>
             <div className="box-desc">Người chơi dự đoán sai kết quả sau kèo chấp (chọn sai đội thắng kèo hoặc không chọn cửa Hòa khi trận đấu hòa kèo) sẽ đóng góp <strong>30k</strong> vào quỹ.</div>
           </div>
+
+          <div className="penalty-box missed">
+            <div className="box-header">BỎ LỠ DỰ ĐOÁN</div>
+            <div className="box-price">30.000đ</div>
+            <div className="box-desc">Nếu trận đấu đã bắt đầu hoặc đã có kết quả mà người chơi chưa thực hiện bình chọn, hệ thống sẽ tự động tính là <strong>dự đoán sai</strong> và phạt <strong>30k VND</strong>.</div>
+          </div>
         </div>
       </section>
 
@@ -226,7 +232,7 @@ const RulesView = () => {
 
         .penalty-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
           gap: 16px;
         }
 
@@ -243,6 +249,10 @@ const RulesView = () => {
           background: rgba(239, 68, 68, 0.03);
           border-color: rgba(239, 68, 68, 0.12);
         }
+        .penalty-box.missed {
+          background: rgba(239, 68, 68, 0.05);
+          border-color: rgba(239, 68, 68, 0.2);
+        }
 
         .box-header {
           font-size: 0.75rem;
@@ -252,6 +262,7 @@ const RulesView = () => {
         }
         .penalty-box.correct .box-header { color: #34d399; }
         .penalty-box.wrong .box-header { color: #f87171; }
+        .penalty-box.missed .box-header { color: #f87171; }
 
         .box-price {
           font-size: 2rem;
@@ -261,6 +272,7 @@ const RulesView = () => {
         }
         .penalty-box.correct .box-price { color: #00ff64; }
         .penalty-box.wrong .box-price { color: #ff4d4d; }
+        .penalty-box.missed .box-price { color: #ff4d4d; }
 
         .box-desc {
           font-size: 0.8rem;

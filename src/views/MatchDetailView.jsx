@@ -22,6 +22,22 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   const [isSaving, setIsSaving] = useState(false);
   const [allPredictions, setAllPredictions] = useState([]);
   const [loadingPreds, setLoadingPreds] = useState(true);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/users`);
+        if (res.ok) {
+          const data = await res.json();
+          setUsers(data);
+        }
+      } catch (err) {
+        console.error('Lỗi lấy danh sách user:', err);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   // Helper to parse match time string to Vietnam Time (UTC+7) Date
   const parseMatchTimeToVnDate = (timeStr) => {
@@ -53,10 +69,13 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
 
   const matchTime = match ? parseMatchTimeToVnDate(match.match_time) : new Date(0);
   const isClosed = match ? (match.status !== 'UPCOMING' || new Date() >= matchTime) : true;
+  const isMissed = (userPrediction && userPrediction.predicted_home_score === -1) ||
+                   (!userPrediction && isClosed);
 
   useEffect(() => {
     if (userPrediction) {
-      if (userPrediction.predicted_home_score > userPrediction.predicted_away_score) setSelectedChoice('1');
+      if (userPrediction.predicted_home_score === -1) setSelectedChoice('MISSED');
+      else if (userPrediction.predicted_home_score > userPrediction.predicted_away_score) setSelectedChoice('1');
       else if (userPrediction.predicted_home_score < userPrediction.predicted_away_score) setSelectedChoice('2');
       else setSelectedChoice('X');
     }
@@ -87,6 +106,7 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   const t2 = { name: match.team2_name || 'Team 2', flag: match.team2_flag || '⚽', score: match.team2_score ?? 0 };
 
   const getOutcomeLabel = (p) => {
+    if (p.predicted_home_score === -1) return 'MISSED';
     if (p.predicted_home_score > p.predicted_away_score) return '1';
     if (p.predicted_home_score < p.predicted_away_score) return '2';
     return 'X';
@@ -140,6 +160,23 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   };
 
   const renderPredictionOutcome = () => {
+    if (isMissed) {
+      return (
+        <div className="prediction-outcome-detail" style={{ 
+          fontSize: '0.8rem', 
+          fontWeight: 900, 
+          marginTop: '20px', 
+          textAlign: 'center', 
+          padding: '10px 16px', 
+          borderRadius: '14px',
+          background: 'rgba(239, 68, 68, 0.08)',
+          border: '1px solid rgba(239, 68, 68, 0.15)',
+          color: '#ef4444'
+        }}>
+          BỎ LỠ DỰ ĐOÁN: PHẠT 30K (Dự đoán sai)
+        </div>
+      );
+    }
     if (!userPrediction || match.status !== 'FT') return null;
     const isCorrect = userPrediction.points === 10;
     return (
@@ -311,7 +348,11 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
               disabled={!selectedChoice || !!userPrediction || isSaving || isClosed}
               onClick={handleVote}
             >
-              {isSaving ? 'Đang gửi...' : userPrediction ? 'Lựa chọn của bạn' : isClosed ? 'Đã đóng dự đoán' : 'CHỐT KÈO NGAY'}
+              {isSaving 
+                ? 'Đang gửi...' 
+                : (userPrediction 
+                  ? (userPrediction.predicted_home_score === -1 ? 'BỎ LỠ DỰ ĐOÁN (Phạt 30k)' : 'Lựa chọn của bạn') 
+                  : (isClosed ? 'Đã đóng dự đoán' : 'CHỐT KÈO NGAY'))}
               {!isSaving && !userPrediction && !isClosed && <Send size={18} />}
             </button>
 
@@ -368,45 +409,77 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
 
           {/* Everyone's predictions section */}
           <div className="everyone-preds-section card-box">
-            <h3 className="section-title"><Users size={18} /> Dự đoán từ bạn bè ({allPredictions.length})</h3>
             {loadingPreds ? (
               <div className="text-center p-4 text-slate-500 text-xs">Đang tải dự đoán...</div>
-            ) : allPredictions.length > 0 ? (
-              <div className="everyone-preds-list">
-                {allPredictions.map(p => {
-                  const isCorrect = p.points === 10;
-                  const choice = getOutcomeLabel(p);
-                  const teamSelected = choice === '1' ? t1.name : (choice === '2' ? t2.name : 'Hòa');
-
-                  return (
-                    <div key={p.prediction_id} className="everyone-pred-item">
-                      <div className="user-info-mini">
-                        <UserAvatar src={p.user_avatar} size={28} style={{ borderRadius: '50%' }} />
-                        <span className="user-name-choice">{p.user_name}</span>
-                      </div>
-                      
-                      {p.is_hidden ? (
-                        <div className="choice-pill-locked">
-                          🔒 ĐÃ KHÓA (ẨN)
-                        </div>
-                      ) : (
-                        <div className="choice-pill-revealed">
-                          <span>Chọn: </span>
-                          <strong>{teamSelected}</strong>
-                        </div>
-                      )}
-
-                      {match.status === 'FT' && !p.is_hidden && (
-                        <span className={`outcome-lbl ${isCorrect ? 'correct' : 'wrong'}`}>
-                          {isCorrect ? 'ĐÚNG' : 'SAI'}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
             ) : (
-              <div className="text-center p-4 text-slate-500 text-xs">Chưa có ai dự đoán trận đấu này.</div>
+              (() => {
+                const displayPreds = users.map(u => {
+                  const existingPred = allPredictions.find(p => p.user_id === u.id);
+                  if (existingPred) return existingPred;
+                  
+                  if (isClosed) {
+                    return {
+                      prediction_id: `missed_${u.id}_${matchId}`,
+                      user_id: u.id,
+                      user_name: u.name,
+                      user_avatar: u.avatar || '',
+                      match_id: matchId,
+                      predicted_home_score: -1,
+                      predicted_away_score: -1,
+                      points: 30,
+                      is_hidden: false
+                    };
+                  }
+                  return null;
+                }).filter(Boolean);
+
+                return (
+                  <>
+                    <h3 className="section-title">
+                      <Users size={18} /> Dự đoán từ bạn bè ({displayPreds.length})
+                    </h3>
+                    {displayPreds.length > 0 ? (
+                      <div className="everyone-preds-list">
+                        {displayPreds.map(p => {
+                          const isCorrect = p.points === 10;
+                          const choice = getOutcomeLabel(p);
+                          const teamSelected = choice === 'MISSED' 
+                            ? 'Bỏ lỡ dự đoán' 
+                            : (choice === '1' ? t1.name : (choice === '2' ? t2.name : 'Hòa'));
+
+                          return (
+                            <div key={p.prediction_id} className="everyone-pred-item">
+                              <div className="user-info-mini">
+                                <UserAvatar src={p.user_avatar} size={28} style={{ borderRadius: '50%' }} />
+                                <span className="user-name-choice">{p.user_name}</span>
+                              </div>
+                              
+                              {p.is_hidden ? (
+                                <div className="choice-pill-locked">
+                                  🔒 ĐÃ KHÓA (ẨN)
+                                </div>
+                              ) : (
+                                <div className="choice-pill-revealed">
+                                  <span>Chọn: </span>
+                                  <strong style={{ color: choice === 'MISSED' ? '#ef4444' : 'white' }}>{teamSelected}</strong>
+                                </div>
+                              )}
+
+                              {isClosed && !p.is_hidden && (
+                                <span className={`outcome-lbl ${isCorrect ? 'correct' : 'wrong'}`}>
+                                  {choice === 'MISSED' ? 'BỎ LỠ' : (isCorrect ? 'ĐÚNG' : 'SAI')}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center p-4 text-slate-500 text-xs">Chưa có ai dự đoán trận đấu này.</div>
+                    )}
+                  </>
+                );
+              })()
             )}
           </div>
 

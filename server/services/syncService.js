@@ -14,8 +14,27 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
   const team1Name = match.team1_name;
   const team2Name = match.team2_name;
 
+  // 1. Tự động phạt 30k cho người dùng chưa dự đoán khi trận đấu kết thúc
+  const usersRes = await db.query('SELECT id FROM users');
+  for (const u of usersRes.rows) {
+    const predCheck = await db.query('SELECT id FROM predictions WHERE user_id = $1 AND match_id = $2', [u.id, matchId]);
+    if (predCheck.rows.length === 0) {
+      await db.query(
+        'INSERT INTO predictions (user_id, match_id, predicted_home_score, predicted_away_score, points) VALUES ($1, $2, $3, $4, $5)',
+        [u.id, matchId, -1, -1, 30]
+      );
+    }
+  }
+
   const predictions = await db.query('SELECT * FROM predictions WHERE match_id = $1', [matchId]);
   for (const p of predictions.rows) {
+    if (p.predicted_home_score === -1) {
+      // Gửi Push Notification thông báo phạt do bỏ lỡ dự đoán
+      const message = `Trận đấu ${team1Name} vs ${team2Name} đã kết thúc (Tỉ số: ${hScore}-${aScore}). Bạn đã bỏ lỡ không dự đoán và bị PHẠT 30k.`;
+      sendPushNotification(p.user_id, '🏆 Bỏ lỡ dự đoán!', message, `/match/${matchId}`);
+      continue;
+    }
+
     let points = 30; // Mặc định đoán sai: phạt 30k
     const pred_h = p.predicted_home_score;
     const pred_a = p.predicted_away_score;
