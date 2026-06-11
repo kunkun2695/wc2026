@@ -232,12 +232,16 @@ const App = () => {
         },
         body: JSON.stringify({ match_id, home_score, away_score })
       });
+      const data = await res.json();
       if (res.ok) {
+        alert('Dự đoán của bạn đã được lưu thành công!');
         fetchData();
         return true;
       }
+      alert('Lỗi: ' + (data.error || 'Không thể lưu dự đoán'));
       return false;
     } catch (err) {
+      alert('Lỗi mạng: Không thể kết nối tới máy chủ');
       return false;
     }
   };
@@ -283,7 +287,16 @@ const App = () => {
     mockAuth.setUser(updatedUser);
   };
 
-  if (!user) return <AuthView onLogin={(u) => setUser(u)} />;
+  if (!user) return (
+    <AuthView 
+      onLogin={(u) => { 
+        setUser(u); 
+        fetchData();
+        fetchNotifications();
+        fetchUnreadChatCount();
+      }} 
+    />
+  );
 
   const handleOpenComments = (match) => {
     setCommentMatch(match);
@@ -301,7 +314,7 @@ const App = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
                 <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
-                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.2</span>
+                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.3</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -328,7 +341,7 @@ const App = () => {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
             <h1 className="brand-name">KizzBugs</h1>
-            <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.2</span>
+            <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.3</span>
           </div>
         </div>
 
@@ -546,6 +559,10 @@ const App = () => {
           <button onClick={() => setActiveTab('stats')} className={`nav-item-bet ${activeTab === 'stats' ? 'active' : ''}`}>
             <Calendar size={20} />
             <span>Thống kê</span>
+          </button>
+          <button onClick={() => setActiveTab('history')} className={`nav-item-bet ${activeTab === 'history' ? 'active' : ''}`}>
+            <History size={20} />
+            <span>Lịch sử</span>
           </button>
           <button onClick={() => setActiveTab('ai')} className={`nav-item-bet ${activeTab === 'ai' ? 'active' : ''}`}>
             <Sparkles size={20} color={activeTab === 'ai' ? '#00d2ff' : 'currentColor'} />

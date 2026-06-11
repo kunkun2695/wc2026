@@ -50,6 +50,83 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
   }
 };
 
+const translateTeamName = (engName) => {
+  if (!engName) return '';
+  const mapping = {
+    // English name from API -> Vietnamese name in DB
+    'South Africa': 'Nam Phi',
+    'South Korea': 'Hàn Quốc',
+    'Korea Republic': 'Hàn Quốc',
+    'Korea, Republic of': 'Hàn Quốc',
+    'Czech Republic': 'CH Séc',
+    'Czechia': 'CH Séc',
+    'Bosnia and Herzegovina': 'Bosnia',
+    'Bosnia-Herzegovina': 'Bosnia',
+    'Switzerland': 'Thụy Sĩ',
+    'United States': 'Mỹ',
+    'USA': 'Mỹ',
+    'Turkey': 'Thổ Nhĩ Kỳ',
+    'Türkiye': 'Thổ Nhĩ Kỳ',
+    'Germany': 'Đức',
+    'Curaçao': 'Curacao',
+    'Curacao': 'Curacao',
+    "Côte d'Ivoire": 'Bờ Biển Ngà',
+    'Côte d’Ivoire': 'Bờ Biển Ngà',
+    'Ivory Coast': 'Bờ Biển Ngà',
+    'Netherlands': 'Hà Lan',
+    'Japan': 'Nhật Bản',
+    'Sweden': 'Thụy Điển',
+    'Belgium': 'Bỉ',
+    'Egypt': 'Ai Cập',
+    'Spain': 'Tây Ban Nha',
+    'Cape Verde': 'Cabo Verde',
+    'Cabo Verde': 'Cabo Verde',
+    'France': 'Pháp',
+    'Norway': 'Na Uy',
+    'Austria': 'Áo',
+    'Portugal': 'Bồ Đào Nha',
+    'DR Congo': 'CHDC Congo',
+    'Congo DR': 'CHDC Congo',
+    'Democratic Republic of the Congo': 'CHDC Congo',
+    'England': 'Anh',
+    'Croatia': 'Croatia',
+    'Ghana': 'Ghana',
+    'Panama': 'Panama',
+    'Mexico': 'Mexico',
+    'Canada': 'Canada',
+    'Qatar': 'Qatar',
+    'Brazil': 'Brazil',
+    'Morocco': 'Morocco',
+    'Haiti': 'Haiti',
+    'Scotland': 'Scotland',
+    'Paraguay': 'Paraguay',
+    'Australia': 'Australia',
+    'Ecuador': 'Ecuador',
+    'Tunisia': 'Tunisia',
+    'New Zealand': 'New Zealand',
+    'Saudi Arabia': 'Saudi Arabia',
+    'Uruguay': 'Uruguay',
+    'Senegal': 'Senegal',
+    'Iraq': 'Iraq',
+    'Argentina': 'Argentina',
+    'Algeria': 'Algeria',
+    'Jordan': 'Jordan',
+    'Uzbekistan': 'Uzbekistan',
+    'Colombia': 'Colombia',
+    'Iran': 'Iran'
+  };
+
+  const name = engName.trim();
+  if (mapping[name]) return mapping[name];
+
+  for (const key of Object.keys(mapping)) {
+    if (key.toLowerCase() === name.toLowerCase()) {
+      return mapping[key];
+    }
+  }
+  return name;
+};
+
 const syncMatches = async () => {
   try {
     console.log('[SYNC] Đang bắt đầu đồng bộ tự động...');
@@ -64,20 +141,33 @@ const syncMatches = async () => {
       const h = m.homeTeam;
       const a = m.awayTeam;
 
-      // 1. Đảm bảo Đội bóng tồn tại
-      const teamCheck1 = await db.query('SELECT id FROM teams WHERE name = $1', [h.name]);
-      if (teamCheck1.rows.length === 0) {
-        await db.query('INSERT INTO teams (name, flag, group_name) VALUES ($1, $2, $3)', [h.name, h.crest || '⚽', 'A']);
+      const homeName = translateTeamName(h.name);
+      const awayName = translateTeamName(a.name);
+
+      // Chỉ đồng bộ World Cup hoặc các trận đấu có cả 2 đội bóng tồn tại trong hệ thống
+      const isWorldCup = m.competition?.code === 'WC';
+      
+      const teamCheck1 = await db.query('SELECT id FROM teams WHERE name = $1', [homeName]);
+      const teamCheck2 = await db.query('SELECT id FROM teams WHERE name = $1', [awayName]);
+
+      const teamsExist = teamCheck1.rows.length > 0 && teamCheck2.rows.length > 0;
+
+      if (!isWorldCup && !teamsExist) {
+        continue; // Bỏ qua trận đấu không liên quan
       }
-      const teamCheck2 = await db.query('SELECT id FROM teams WHERE name = $1', [a.name]);
+
+      // 1. Đảm bảo Đội bóng tồn tại
+      if (teamCheck1.rows.length === 0) {
+        await db.query('INSERT INTO teams (name, flag, group_name) VALUES ($1, $2, $3)', [homeName, h.crest || '⚽', 'A']);
+      }
       if (teamCheck2.rows.length === 0) {
-        await db.query('INSERT INTO teams (name, flag, group_name) VALUES ($1, $2, $3)', [a.name, a.crest || '⚽', 'A']);
+        await db.query('INSERT INTO teams (name, flag, group_name) VALUES ($1, $2, $3)', [awayName, a.crest || '⚽', 'A']);
       }
 
       // 2. Cập nhật hoặc Thêm trận đấu
       const matchCheck = await db.query(
         'SELECT id, status FROM matches WHERE team1_name = $1 AND team2_name = $2',
-        [h.name, a.name]
+        [homeName, awayName]
       );
 
       const homeScore = m.score.fullTime.home ?? 0;
@@ -106,8 +196,8 @@ const syncMatches = async () => {
         }
       } else {
         const newMatch = await db.query(
-          'INSERT INTO matches (team1_name, team2_name, team1_score, team2_score, status, match_time, group_name, venue) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
-          [h.name, a.name, homeScore, awayScore, status, matchTime, 'A', competition]
+          'INSERT INTO matches (team1_name, team1_flag, team2_name, team2_flag, team1_score, team2_score, status, match_time, group_name, venue) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id',
+          [homeName, h.crest || '⚽', awayName, a.crest || '⚽', homeScore, awayScore, status, matchTime, 'A', competition]
         );
         if (status === 'FT') {
           await calculateMatchPoints(newMatch.rows[0].id, homeScore, awayScore);

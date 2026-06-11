@@ -173,7 +173,17 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
     setIsSaving(true);
     try {
       const [h, a] = selectedChoice === '1' ? [1, 0] : selectedChoice === '2' ? [0, 1] : [0, 0];
-      await onSavePrediction(match.id, h, a);
+      const success = await onSavePrediction(match.id, h, a);
+      if (!success) {
+        // Khôi phục lựa chọn cũ (hoặc null nếu chưa có dự đoán trước đó)
+        if (userPrediction) {
+          if (userPrediction.predicted_home_score > userPrediction.predicted_away_score) setSelectedChoice('1');
+          else if (userPrediction.predicted_home_score < userPrediction.predicted_away_score) setSelectedChoice('2');
+          else setSelectedChoice('X');
+        } else {
+          setSelectedChoice(null);
+        }
+      }
     } finally {
       setIsSaving(false);
     }

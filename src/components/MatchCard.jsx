@@ -81,8 +81,10 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
     if (!confirmSave) return;
 
     setIsSaving(true);
-    await onSavePrediction(match.id, h, a);
-    setSelectedChoice(choice);
+    const success = await onSavePrediction(match.id, h, a);
+    if (success) {
+      setSelectedChoice(choice);
+    }
     setIsSaving(false);
   };
 
