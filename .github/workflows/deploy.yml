@@ -27,7 +27,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: longtran26/wc2026:${{ github.sha }}
+          tags: |
+            longtran26/wc2026:${{ github.sha }}
+            longtran26/wc2026:latest
           no-cache: true
           build-args: |
             VITE_API_URL=https://estrip.fun

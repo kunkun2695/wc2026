@@ -1,7 +1,11 @@
 version: '3.8'
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        - VITE_API_URL=${VITE_API_URL:-https://estrip.fun}
+        - VITE_VAPID_PUBLIC_KEY=${VITE_VAPID_PUBLIC_KEY:-BE_cpojus2_nYd4aTJdzHTL-b9f-Csp5RTBez_2cmyB96lkrJN3AW-GBuDNOr7L9sTug9kmNmZud0Y6e90TbUj0}
     image: longtran26/wc2026:latest
     ports:   # <--- Chữ p này phải thẳng hàng với chữ i của image
       - "5005:5005"
