@@ -150,9 +150,29 @@ const translateTeamName = (engName) => {
 const syncMatches = async () => {
   try {
     console.log('[SYNC] Đang bắt đầu đồng bộ tự động...');
-    const response = await axios.get('https://api.football-data.org/v4/competitions/WC/matches', {
-      headers: { 'X-Auth-Token': FOOTBALL_DATA_API_KEY }
-    });
+    
+    let response;
+    let retries = 3;
+    let delay = 2000;
+    
+    for (let i = 0; i < retries; i++) {
+      try {
+        response = await axios.get('https://api.football-data.org/v4/competitions/WC/matches', {
+          headers: { 
+            'X-Auth-Token': FOOTBALL_DATA_API_KEY,
+            'Connection': 'close'
+          },
+          timeout: 15000
+        });
+        break;
+      } catch (err) {
+        console.warn(`[SYNC] API request failed (attempt ${i + 1}/${retries}): ${err.message}`);
+        if (i === retries - 1) {
+          throw err;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+      }
+    }
 
     const matches = response.data.matches;
     let synced = 0;
@@ -246,6 +266,7 @@ const syncMatches = async () => {
       synced++;
     }
     console.log(`[SYNC] Hoàn tất! Đã cập nhật ${synced} trận đấu.`);
+    global.lastSuccessfulSyncTime = Date.now();
     return synced;
   } catch (error) {
     console.error('[SYNC] Lỗi:', error.message);

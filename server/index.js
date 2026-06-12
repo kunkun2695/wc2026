@@ -170,7 +170,11 @@ app.listen(PORT, async () => {
 
   // Thực hiện đồng bộ ngay khi khởi động server
   console.log('[STARTUP] Đang thực hiện đồng bộ trận đấu lần đầu...');
+  global.lastAttemptTime = Date.now();
   syncMatches()
-    .then(synced => console.log(`[STARTUP] Đồng bộ thành công! Đã cập nhật ${synced} trận đấu.`))
+    .then(synced => {
+      console.log(`[STARTUP] Đồng bộ thành công! Đã cập nhật ${synced} trận đấu.`);
+      global.lastSuccessfulSyncTime = Date.now();
+    })
     .catch(err => console.error('[STARTUP ERROR] Lỗi đồng bộ lần đầu:', err.message));
 });

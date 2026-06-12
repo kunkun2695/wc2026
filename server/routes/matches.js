@@ -5,6 +5,7 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const { updateBracket } = require('../services/bracketService');
 const { sendBroadcastNotification } = require('./notifications');
+const { syncMatches } = require('../services/syncService');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
@@ -23,6 +24,24 @@ const authenticateAdmin = (req, res, next) => {
 
 router.get('/', async (req, res) => {
   try {
+    // Kiểm tra tự động đồng bộ nền (Self-healing Auto Sync)
+    const now = Date.now();
+    const lastSync = global.lastSuccessfulSyncTime || 0;
+    const lastAttempt = global.lastAttemptTime || 0;
+    
+    // Nếu quá 30 phút kể từ lần đồng bộ thành công cuối cùng VÀ quá 5 phút kể từ lần thử gần nhất
+    if (now - lastSync > 30 * 60 * 1000 && now - lastAttempt > 5 * 60 * 1000) {
+      global.lastAttemptTime = now;
+      console.log(`[AUTO SYNC] Đã quá 30 phút kể từ lần đồng bộ cuối cùng. Kích hoạt đồng bộ nền...`);
+      syncMatches()
+        .then(synced => {
+          console.log(`[AUTO SYNC] Đồng bộ nền hoàn tất thành công! Đã cập nhật ${synced} trận đấu.`);
+        })
+        .catch(err => {
+          console.error('[AUTO SYNC ERROR] Lỗi đồng bộ nền:', err.message);
+        });
+    }
+
     const result = await db.query(`
       SELECT 
         m.*, 
@@ -219,8 +238,6 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-const { syncMatches } = require('../services/syncService');
 
 router.post('/sync', async (req, res) => {
   try {
