@@ -115,18 +115,6 @@ router.get('/all', authenticateUser, async (req, res) => {
     const now = new Date();
 
     const predictions = result.rows.map(row => {
-      const matchTime = parseMatchTimeToVnDate(row.match_time);
-      const isStarted = row.status !== 'UPCOMING' || now >= matchTime;
-      
-      // Nếu là dự đoán của người khác VÀ trận đấu chưa bắt đầu, ẩn dự đoán đi
-      if (row.user_id !== currentUserId && !isStarted) {
-        return {
-          ...row,
-          predicted_home_score: null,
-          predicted_away_score: null,
-          is_hidden: true
-        };
-      }
       return {
         ...row,
         is_hidden: false

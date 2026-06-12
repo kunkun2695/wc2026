@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import MatchCard from '../components/MatchCard';
 import { LayoutGrid, CheckCircle2, Trophy, Clock, Calendar } from 'lucide-react';
 
-const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatches, onOpenComments }) => {
+const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatches, onOpenComments, onViewDetails }) => {
   const [activeTab, setActiveTab] = useState('all'); 
 
   // Hàm chuyển đổi string "HH:mm DD-MM" hoặc tương tự thành Date để so sánh
@@ -126,6 +126,7 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
                       onSavePrediction={onSavePrediction}
                       onRefreshMatches={onRefreshMatches}
                       onOpenComments={onOpenComments}
+                      onViewDetails={onViewDetails}
                     />
                   </div>
                 </div>

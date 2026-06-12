@@ -10,7 +10,7 @@ const FlagIcon = ({ flag }) => {
   return <span>{flag}</span>;
 };
 
-const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, onRefreshMatches, onOpenComments }) => {
+const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, onRefreshMatches, onOpenComments, onViewDetails }) => {
   const [selectedChoice, setSelectedChoice] = useState(null); // '1' (Home), 'X' (Draw), '2' (Away)
   const [isSaving, setIsSaving] = useState(false);
 
@@ -178,6 +178,8 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
       initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }} 
       className={`match-card-premium ${match.status === 'LIVE' ? 'is-live' : ''}`}
+      onClick={() => onViewDetails && onViewDetails(match.id)}
+      style={{ cursor: onViewDetails ? 'pointer' : 'default' }}
     >
       {/* Time & Status Badge */}
       <div className="match-badge-top">
@@ -260,7 +262,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           <div className="choice-col">
             <button 
               className={`choice-btn-v2 ${selectedChoice === '1' ? 'active-1' : ''}`}
-              onClick={() => handleSave('1')}
+              onClick={(e) => { e.stopPropagation(); handleSave('1'); }}
               disabled={isClosed || isPredicted}
               title={`${t1.name} thắng`}
             >
@@ -285,7 +287,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           <div className="choice-col">
             <button 
               className={`choice-btn-v2 draw ${selectedChoice === 'X' ? 'active-X' : ''}`}
-              onClick={() => handleSave('X')}
+              onClick={(e) => { e.stopPropagation(); handleSave('X'); }}
               disabled={isClosed || isPredicted}
             >
               <span className="choice-btn-v2-draw-label">HÒA</span>
@@ -303,7 +305,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           <div className="choice-col">
             <button 
               className={`choice-btn-v2 ${selectedChoice === '2' ? 'active-2' : ''}`}
-              onClick={() => handleSave('2')}
+              onClick={(e) => { e.stopPropagation(); handleSave('2'); }}
               disabled={isClosed || isPredicted}
               title={`${t2.name} thắng`}
             >
@@ -356,7 +358,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             )
           )}
 
-          <button className="gay-btn-v2" onClick={() => onOpenComments(match)}>
+          <button className="gay-btn-v2" onClick={(e) => { e.stopPropagation(); onOpenComments(match); }}>
             <MessageSquare size={14} /> GÁY NGAY ({match.comment_count || 0})
           </button>
         </div>
@@ -367,11 +369,11 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
       {isAdmin && (
         <div style={{ position: 'absolute', top: '18px', right: '18px', display: 'flex', gap: '8px' }}>
           {match.status === 'UPCOMING' && (
-            <button onClick={handleRemind} className="admin-remind-btn" title="Nhắc nhở chốt kèo">
+            <button onClick={(e) => { e.stopPropagation(); handleRemind(e); }} className="admin-remind-btn" title="Nhắc nhở chốt kèo">
               <Bell size={14} />
             </button>
           )}
-          <button onClick={() => onEdit(match)} className="admin-edit-btn" style={{ position: 'static' }} title="Sửa kết quả/kèo">
+          <button onClick={(e) => { e.stopPropagation(); onEdit(match); }} className="admin-edit-btn" style={{ position: 'static' }} title="Sửa kết quả/kèo">
             <Edit3 size={14} />
           </button>
         </div>
