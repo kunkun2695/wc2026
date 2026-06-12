@@ -7,30 +7,6 @@ const { updateBracket } = require('../services/bracketService');
 const { sendBroadcastNotification } = require('./notifications');
 const { syncMatches } = require('../services/syncService');
 
-const parseMatchTimeStr = (timeStr) => {
-  if (!timeStr) return new Date(0);
-  try {
-    if (timeStr.includes('/')) {
-      const [datePart, timePart] = timeStr.split(' - ');
-      const [day, month] = datePart.split('/');
-      const [hour, min] = timePart.split(':');
-      return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
-    }
-    if (timeStr.includes('.')) {
-      const [datePart, timePart] = timeStr.split(' - ');
-      const [day, month] = datePart.split('.');
-      const [hour, min] = timePart.split(':');
-      return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
-    }
-    const parts = timeStr.split(/[\s-]/);
-    const [time, day, month] = parts.filter(Boolean);
-    const [hour, min] = time.split(':');
-    return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
-  } catch (e) {
-    return new Date(0);
-  }
-};
-
 const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
 const authenticateAdmin = (req, res, next) => {
@@ -63,48 +39,6 @@ router.get('/', async (req, res) => {
       LEFT JOIN teams t2 ON m.team2_name = t2.name
       ORDER BY m.id DESC
     `);
-
-    // Kiểm tra tự động đồng bộ nền (Self-healing Dynamic Auto Sync)
-    const now = Date.now();
-    const lastSync = global.lastSuccessfulSyncTime || 0;
-    const lastAttempt = global.lastAttemptTime || 0;
-    
-    // Kiểm tra xem có trận đấu nào đang đá (LIVE) hoặc chuẩn bị bắt đầu
-    let hasLiveOrActiveMatch = false;
-    const nowTime = new Date();
-    
-    for (const m of result.rows) {
-      if (m.status === 'LIVE') {
-        hasLiveOrActiveMatch = true;
-        break;
-      }
-      
-      // Nếu chưa kết thúc, kiểm tra xem có bắt đầu trong 15 phút tới hoặc đã đá được dưới 4 tiếng không
-      if (m.status !== 'FT' && m.status !== 'FINISHED') {
-        const matchDate = parseMatchTimeStr(m.match_time);
-        const timeDiff = nowTime - matchDate;
-        if (timeDiff > -15 * 60 * 1000 && timeDiff < 4 * 60 * 60 * 1000) {
-          hasLiveOrActiveMatch = true;
-          break;
-        }
-      }
-    }
-    
-    // Nếu có trận LIVE/Active: đồng bộ mỗi 1 phút. Nếu không: đồng bộ mỗi 30 phút.
-    const syncInterval = hasLiveOrActiveMatch ? 1 * 60 * 1000 : 30 * 60 * 1000;
-    const attemptInterval = hasLiveOrActiveMatch ? 30 * 1000 : 5 * 60 * 1000; // Thử lại sau 30s nếu có trận LIVE
-    
-    if (now - lastSync > syncInterval && now - lastAttempt > attemptInterval) {
-      global.lastAttemptTime = now;
-      console.log(`[AUTO SYNC] Đã quá hạn đồng bộ (Khoảng cách: ${syncInterval / 1000}s, Live/Active: ${hasLiveOrActiveMatch}). Kích hoạt đồng bộ nền...`);
-      syncMatches()
-        .then(synced => {
-          console.log(`[AUTO SYNC] Đồng bộ nền hoàn tất thành công! Đã cập nhật ${synced} trận đấu.`);
-        })
-        .catch(err => {
-          console.error('[AUTO SYNC ERROR] Lỗi đồng bộ nền:', err.message);
-        });
-    }
     res.json(result.rows);
   } catch (error) {
     console.error('[MATCHES ROUTE ERROR]', error);

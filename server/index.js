@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-const cron = require('node-cron');
 
 // Nạp cấu hình ENV ngay đầu tiên
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -143,13 +142,72 @@ app.use((req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
+const parseMatchTimeStr = (timeStr) => {
+  if (!timeStr) return new Date(0);
+  try {
+    if (timeStr.includes('/')) {
+      const [datePart, timePart] = timeStr.split(' - ');
+      const [day, month] = datePart.split('/');
+      const [hour, min] = timePart.split(':');
+      return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+    }
+    if (timeStr.includes('.')) {
+      const [datePart, timePart] = timeStr.split(' - ');
+      const [day, month] = datePart.split('.');
+      const [hour, min] = timePart.split(':');
+      return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+    }
+    const parts = timeStr.split(/[\s-]/);
+    const [time, day, month] = parts.filter(Boolean);
+    const [hour, min] = time.split(':');
+    return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+  } catch (e) {
+    return new Date(0);
+  }
+};
+
+const runBackgroundSync = async () => {
+  let hasLiveOrActiveMatch = false;
+  try {
+    const result = await db.query('SELECT status, match_time FROM matches');
+    const nowTime = new Date();
+    
+    for (const m of result.rows) {
+      if (m.status === 'LIVE') {
+        hasLiveOrActiveMatch = true;
+        break;
+      }
+      if (m.status !== 'FT' && m.status !== 'FINISHED') {
+        const matchDate = parseMatchTimeStr(m.match_time);
+        const timeDiff = nowTime - matchDate;
+        if (timeDiff > -15 * 60 * 1000 && timeDiff < 4 * 60 * 60 * 1000) {
+          hasLiveOrActiveMatch = true;
+          break;
+        }
+      }
+    }
+    
+    console.log(`[BACKGROUND SYNC WORKER] Bắt đầu đồng bộ tự động (Có trận Live/Active: ${hasLiveOrActiveMatch})...`);
+    global.lastAttemptTime = Date.now();
+    const synced = await syncMatches();
+    global.lastSuccessfulSyncTime = Date.now();
+    console.log(`[BACKGROUND SYNC WORKER] Đồng bộ thành công! Đã cập nhật ${synced} trận đấu.`);
+  } catch (err) {
+    console.error('[BACKGROUND SYNC WORKER ERROR] Lỗi đồng bộ nền:', err.message);
+  } finally {
+    // Lên lịch đồng bộ tiếp theo: nếu có trận LIVE/Active thì sau 1 phút, ngược lại sau 30 phút.
+    const nextInterval = hasLiveOrActiveMatch ? 1 * 60 * 1000 : 30 * 60 * 1000;
+    console.log(`[BACKGROUND SYNC WORKER] Lên lịch đồng bộ tiếp theo sau ${nextInterval / 1000}s`);
+    setTimeout(runBackgroundSync, nextInterval);
+  }
+};
+
 // Start Server
 app.listen(PORT, async () => {
   console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
   
   // Tự động nạp API Key từ Database khi khởi động
   try {
-    const db = require('./config/db');
     const result = await db.query("SELECT value FROM system_config WHERE key = 'OPENAI_API_KEY'");
     if (result.rows[0]?.value) {
       process.env.OPENAI_API_KEY = result.rows[0].value;
@@ -162,19 +220,7 @@ app.listen(PORT, async () => {
   console.log(`🌐 TRUY CẬP LAN: http://192.168.1.101:${PORT}`);
   console.log('✅ Đã kích hoạt Module: Teams, Matches, Users');
   
-  // Tự động đồng bộ mỗi 30 phút
-  cron.schedule('*/30 * * * *', () => {
-    syncMatches().catch(err => console.error('[CRON ERROR]', err.message));
-  });
-  console.log('⏰ Đã kích hoạt Lịch trình: Tự động cập nhật mỗi 30 phút\n');
-
-  // Thực hiện đồng bộ ngay khi khởi động server
-  console.log('[STARTUP] Đang thực hiện đồng bộ trận đấu lần đầu...');
-  global.lastAttemptTime = Date.now();
-  syncMatches()
-    .then(synced => {
-      console.log(`[STARTUP] Đồng bộ thành công! Đã cập nhật ${synced} trận đấu.`);
-      global.lastSuccessfulSyncTime = Date.now();
-    })
-    .catch(err => console.error('[STARTUP ERROR] Lỗi đồng bộ lần đầu:', err.message));
+  // Kích hoạt worker đồng bộ nền tự động
+  console.log('[BACKGROUND WORKER] Bắt đầu kích hoạt Worker đồng bộ động...');
+  runBackgroundSync();
 });
