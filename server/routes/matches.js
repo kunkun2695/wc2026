@@ -4,6 +4,7 @@ const db = require('../config/db');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const { updateBracket } = require('../services/bracketService');
+const { sendBroadcastNotification } = require('./notifications');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
@@ -137,6 +138,13 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
   const ou_value = parseOuVal(ou_text);
 
   try {
+    // Lấy thông tin trận đấu cũ trước khi cập nhật để so sánh
+    const oldMatchRes = await db.query(
+      'SELECT team1_name, team2_name, handicap_favorite, handicap_text, ou_text FROM matches WHERE id = $1',
+      [id]
+    );
+    const oldMatch = oldMatchRes.rows[0];
+
     const result = await db.query(
       `UPDATE matches 
        SET team1_score = $1, 
@@ -167,6 +175,42 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
     if (status === 'FT') {
       await calculateMatchPoints(id, team1_score, team2_score);
       await updateBracket();
+    }
+
+    // Gửi thông báo nếu Admin vào kèo mới hoặc cập nhật tỷ lệ chấp
+    if (oldMatch) {
+      const isOldHandicapEmpty = !oldMatch.handicap_favorite && !oldMatch.handicap_text;
+      const isNewHandicapEntered = handicap_favorite || handicap_text;
+      
+      const handicapChanged = oldMatch.handicap_favorite !== (handicap_favorite || null) || 
+                              oldMatch.handicap_text !== (handicap_text || '');
+                              
+      const ouChanged = oldMatch.ou_text !== (ou_text || '');
+
+      if (isNewHandicapEntered && (isOldHandicapEmpty || handicapChanged || ouChanged)) {
+        let title = '';
+        let body = '';
+        const team1 = oldMatch.team1_name;
+        const team2 = oldMatch.team2_name;
+        
+        const handicapStr = handicap_text 
+          ? (handicap_favorite === team1 ? `${team1} chấp ${team2} ${handicap_text}` : `${team2} chấp ${team1} ${handicap_text}`)
+          : 'Đồng banh';
+        const ouStr = ou_text || 'Chưa có';
+
+        if (isOldHandicapEmpty) {
+          title = `🏆 Kèo mới: ${team1} vs ${team2}`;
+          body = `Admin đã vào kèo trận ${team1} vs ${team2}. Kèo chấp: ${handicapStr}. Tài Xỉu: ${ouStr}. Vào chốt kèo ngay!`;
+        } else {
+          title = `⚡ Cập nhật kèo: ${team1} vs ${team2}`;
+          body = `Admin đã thay đổi tỷ lệ kèo trận ${team1} vs ${team2}. Kèo mới: ${handicapStr}. Tài Xỉu: ${ouStr}. Hãy kiểm tra lại lựa chọn của bạn!`;
+        }
+        
+        // Gửi thông báo đẩy và lưu vào DB cho mọi người (sender là admin hiện tại)
+        sendBroadcastNotification(title, body, `/`, req.user.id).catch(err => {
+          console.error('Error sending handicap update notification:', err);
+        });
+      }
     }
 
     res.json(result.rows[0]);
