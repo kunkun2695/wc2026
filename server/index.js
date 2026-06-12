@@ -79,7 +79,17 @@ async function patchDatabase() {
     console.error('⚠️ [DB Fix Error]', err.message);
   }
 }
-patchDatabase();
+
+async function initDatabaseAndCleanup() {
+  await patchDatabase();
+  try {
+    const { cleanDuplicateTeamsAndMatches } = require('./services/dbCleanupService');
+    await cleanDuplicateTeamsAndMatches();
+  } catch (err) {
+    console.error('⚠️ [DB Cleanup Error]', err.message);
+  }
+}
+initDatabaseAndCleanup();
 
 // Modules
 const teamsRoutes = require('./routes/teams');
