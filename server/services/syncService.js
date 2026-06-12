@@ -166,12 +166,25 @@ const syncMatches = async () => {
         });
         break;
       } catch (err) {
-        console.warn(`[SYNC] API request failed (attempt ${i + 1}/${retries}): ${err.message}`);
+        if (err.response && err.response.status === 429) {
+          console.error(`⚠️ [RATE LIMIT] Bị giới hạn cuộc gọi API (HTTP 429)! Chi tiết:`, err.response.data?.message || err.message);
+          const resetTime = err.response.headers['x-requestcounter-reset'] || err.response.headers['X-RequestCounter-Reset'];
+          if (resetTime) {
+            console.warn(`[RATE LIMIT] Khoảng thời gian reset còn: ${resetTime} giây.`);
+          }
+        } else {
+          console.warn(`[SYNC] API request failed (attempt ${i + 1}/${retries}): ${err.message}`);
+        }
         if (i === retries - 1) {
           throw err;
         }
         await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
       }
+    }
+
+    const reqRemaining = response.headers['x-requests-available-minute'] || response.headers['X-Requests-Available-Minute'];
+    if (reqRemaining !== undefined) {
+      console.log(`[SYNC] Rate Limit còn lại: ${reqRemaining} yêu cầu/phút.`);
     }
 
     const matches = response.data.matches;
