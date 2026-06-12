@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Trophy, Search, Edit3, Settings,
-  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles, GitBranch, Calendar, BookOpen
+  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles, GitBranch, Calendar, BookOpen, Sun, Moon
 } from 'lucide-react';
 import BracketView from './views/BracketView';
 import NotificationsDrawer from './components/NotificationsDrawer';
@@ -43,6 +43,20 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [commentMatch, setCommentMatch] = useState(null);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   useEffect(() => {
     const checkSession = async () => {
@@ -314,10 +328,13 @@ const App = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
                 <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
-                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.24</span>
+                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.25</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button onClick={toggleTheme} className="mobile-notif-btn" title="Đổi giao diện">
+                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+              </button>
               <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
                 <Bell size={18} />
                 {notifications.some(n => !n.is_read) && <span className="notif-badge-mini" style={{ top: '6px', right: '6px' }}></span>}
@@ -335,14 +352,24 @@ const App = () => {
 
       {/* Sidebar - Modern Professional Version */}
       <aside className={`sidebar ${activeTab === 'notifications' ? 'sidebar-minimized' : ''}`}>
-        <div className="sidebar-brand">
-          <div className="brand-logo-glow">
-            <Trophy className="brand-icon" size={24} />
+        <div className="sidebar-brand" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="brand-logo-glow">
+              <Trophy className="brand-icon" size={24} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+              <h1 className="brand-name">KizzBugs</h1>
+              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.25</span>
+            </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-            <h1 className="brand-name">KizzBugs</h1>
-            <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.24</span>
-          </div>
+          <button 
+            onClick={toggleTheme} 
+            className="theme-toggle-btn" 
+            title={theme === 'light' ? 'Chuyển sang giao diện tối' : 'Chuyển sang giao diện sáng'}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
         </div>
 
         <nav className="nav-menu">
