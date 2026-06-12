@@ -1,6 +1,6 @@
 const axios = require('axios');
 const db = require('../config/db');
-const { sendPushNotification, sendBroadcastNotification } = require('../routes/notifications');
+const { sendPushNotification, sendBroadcastNotification, sendAdminNotification } = require('../routes/notifications');
 const { updateBracket } = require('./bracketService');
 
 const FOOTBALL_DATA_API_KEY = '545cbd97d6964d96bdc65580d348674b';
@@ -168,6 +168,15 @@ const syncMatches = async () => {
       } catch (err) {
         if (err.response && err.response.status === 429) {
           console.error(`⚠️ [RATE LIMIT] Bị giới hạn cuộc gọi API (HTTP 429)! Chi tiết:`, err.response.data?.message || err.message);
+          
+          if (!global.isAdminNotifiedRateLimit) {
+            global.isAdminNotifiedRateLimit = true;
+            const resetSecs = err.response.headers['x-requestcounter-reset'] || err.response.headers['X-RequestCounter-Reset'] || '60';
+            const alertTitle = '⚠️ Lỗi API Rate Limit!';
+            const alertBody = `API cập nhật tỉ số bóng đá đã bị chặn (HTTP 429). Hệ thống sẽ tự động tạm ngưng đồng bộ trong ${resetSecs} giây tiếp theo.`;
+            sendAdminNotification(alertTitle, alertBody, '/').catch(e => console.error('[SYNC] Không thể gửi thông báo lỗi cho admin:', e.message));
+          }
+
           const resetTime = err.response.headers['x-requestcounter-reset'] || err.response.headers['X-RequestCounter-Reset'];
           if (resetTime) {
             console.warn(`[RATE LIMIT] Khoảng thời gian reset còn: ${resetTime} giây.`);
@@ -181,6 +190,9 @@ const syncMatches = async () => {
         await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
       }
     }
+
+    // Reset cảnh báo admin khi gọi thành công
+    global.isAdminNotifiedRateLimit = false;
 
     const reqRemaining = response.headers['x-requests-available-minute'] || response.headers['X-Requests-Available-Minute'];
     if (reqRemaining !== undefined) {

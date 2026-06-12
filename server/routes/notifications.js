@@ -234,8 +234,34 @@ const sendBroadcastNotification = async (title, body, url = '/', senderId = 1) =
   }
 };
 
+// Hàm gửi thông báo riêng cho tất cả Admin
+const sendAdminNotification = async (title, body, url = '/', senderId = 1) => {
+  try {
+    const adminsResult = await db.query("SELECT id FROM users WHERE role = 'admin'");
+    const admins = adminsResult.rows;
+
+    const insertPromises = admins.map(admin => {
+      return db.query(`
+        INSERT INTO notifications (user_id, sender_id, type, title, message, content, url, is_read)
+        VALUES ($1, $2, $3, $4, $5, $5, $6, FALSE)
+      `, [admin.id, senderId, 'system_alert', title, body, url]);
+    });
+    
+    await Promise.all(insertPromises);
+
+    admins.forEach(admin => {
+      sendPushNotification(admin.id, title, body, url);
+    });
+    return true;
+  } catch (error) {
+    console.error('Send Admin Notification Error:', error);
+    return false;
+  }
+};
+
 module.exports = {
   router,
   sendPushNotification,
-  sendBroadcastNotification
+  sendBroadcastNotification,
+  sendAdminNotification
 };
