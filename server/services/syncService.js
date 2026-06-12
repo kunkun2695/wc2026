@@ -74,6 +74,7 @@ const translateTeamName = (engName) => {
   const mapping = {
     // English name from API -> Vietnamese name in DB
     'South Africa': 'Nam Phi',
+    'Cape Verde Islands': 'Cabo Verde',
     'South Korea': 'Hàn Quốc',
     'Korea Republic': 'Hàn Quốc',
     'Korea, Republic of': 'Hàn Quốc',
