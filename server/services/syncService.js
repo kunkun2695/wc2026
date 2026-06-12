@@ -149,7 +149,7 @@ const translateTeamName = (engName) => {
 const syncMatches = async () => {
   try {
     console.log('[SYNC] Đang bắt đầu đồng bộ tự động...');
-    const response = await axios.get('https://api.football-data.org/v4/matches', {
+    const response = await axios.get('https://api.football-data.org/v4/competitions/WC/matches', {
       headers: { 'X-Auth-Token': FOOTBALL_DATA_API_KEY }
     });
 
@@ -159,6 +159,10 @@ const syncMatches = async () => {
     for (const m of matches) {
       const h = m.homeTeam;
       const a = m.awayTeam;
+
+      if (!h || !a || !h.name || !a.name) {
+        continue; // Bỏ qua các trận đấu chưa xác định đủ 2 đội bóng (null)
+      }
 
       const homeName = translateTeamName(h.name);
       const awayName = translateTeamName(a.name);

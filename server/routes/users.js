@@ -9,7 +9,7 @@ const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
+    const result = await db.query('SELECT * FROM users WHERE LOWER(username) = LOWER($1)', [username]);
     const user = result.rows[0];
     
     if (!user) {
@@ -87,7 +87,7 @@ router.get('/forgot-password/question', async (req, res) => {
     return res.status(400).json({ error: 'Thiếu tên đăng nhập' });
   }
   try {
-    const result = await db.query('SELECT security_question FROM users WHERE username = $1', [username]);
+    const result = await db.query('SELECT security_question FROM users WHERE LOWER(username) = LOWER($1)', [username]);
     const user = result.rows[0];
     if (!user) {
       return res.status(404).json({ error: 'Tài khoản không tồn tại' });
@@ -108,7 +108,7 @@ router.post('/forgot-password/reset', async (req, res) => {
     return res.status(400).json({ error: 'Thiếu thông tin yêu cầu' });
   }
   try {
-    const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
+    const result = await db.query('SELECT * FROM users WHERE LOWER(username) = LOWER($1)', [username]);
     const user = result.rows[0];
     if (!user) {
       return res.status(404).json({ error: 'Tài khoản không tồn tại' });
