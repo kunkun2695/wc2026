@@ -23,10 +23,19 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
       const m = now.getMinutes();
       const s = now.getSeconds();
       const nextTarget = m < 30 ? 30 : 60;
-      setSecondsLeft((nextTarget - m - 1) * 60 + (60 - s));
+      
+      const seconds = (nextTarget - m - 1) * 60 + (60 - s);
+      setSecondsLeft(seconds);
+
+      // Khi đếm ngược vừa reset và trôi qua 5 giây (để server hoàn tất đồng bộ), tự động cập nhật lại dữ liệu ở client
+      if (seconds === 1795) {
+        if (onRefreshMatches) {
+          onRefreshMatches();
+        }
+      }
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [onRefreshMatches]);
 
   const formatCountdown = (totalSeconds) => {
     const min = Math.floor(totalSeconds / 60);
