@@ -520,9 +520,17 @@ const DailyStatsView = ({ matches = [] }) => {
                               )}
 
                               {isStarted && !p.is_hidden && (
-                                <div className={`outcome-badge ${isCorrect ? 'correct' : 'wrong'}`}>
-                                   {choice === 'MISSED' ? 'BỎ LỠ (30 bánh)' : (isCorrect ? 'ĐÚNG (10 bánh)' : 'SAI (30 bánh)')}
-                                </div>
+                                <>
+                                  {isFinished ? (
+                                    <div className={`outcome-badge ${isCorrect ? 'correct' : 'wrong'}`}>
+                                       {choice === 'MISSED' ? 'BỎ LỠ (30 bánh)' : (isCorrect ? 'ĐÚNG (10 bánh)' : 'SAI (30 bánh)')}
+                                    </div>
+                                  ) : (
+                                    <div className="outcome-badge pending">
+                                       {choice === 'MISSED' ? 'BỎ LỠ (30 bánh)' : (m.status === 'LIVE' ? 'ĐANG ĐÁ' : 'CHỜ KẾT QUẢ')}
+                                    </div>
+                                  )}
+                                </>
                               )}
                             </div>
                           );
@@ -899,6 +907,7 @@ const DailyStatsView = ({ matches = [] }) => {
         }
         .outcome-badge.correct { background: rgba(52, 211, 153, 0.08); color: #34d399; }
         .outcome-badge.wrong { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
+        .outcome-badge.pending { background: rgba(0, 210, 255, 0.08); color: #00d2ff; }
 
         .no-preds-match {
           grid-column: 1 / -1;
