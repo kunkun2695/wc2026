@@ -1,6 +1,6 @@
 const axios = require('axios');
 const db = require('../config/db');
-const { sendPushNotification } = require('../routes/notifications');
+const { sendPushNotification, sendBroadcastNotification } = require('../routes/notifications');
 const { updateBracket } = require('./bracketService');
 
 const FOOTBALL_DATA_API_KEY = '545cbd97d6964d96bdc65580d348674b';
@@ -190,7 +190,7 @@ const syncMatches = async () => {
 
       // 2. Cập nhật hoặc Thêm trận đấu
       const matchCheck = await db.query(
-        'SELECT id, status FROM matches WHERE team1_name = $1 AND team2_name = $2',
+        'SELECT id, status, team1_score, team2_score FROM matches WHERE team1_name = $1 AND team2_name = $2',
         [homeName, awayName]
       );
 
@@ -210,10 +210,25 @@ const syncMatches = async () => {
       if (matchCheck.rows.length > 0) {
         const matchId = matchCheck.rows[0].id;
         const oldStatus = matchCheck.rows[0].status;
+        const oldHomeScore = matchCheck.rows[0].team1_score ?? 0;
+        const oldAwayScore = matchCheck.rows[0].team2_score ?? 0;
+
+        const scoreChanged = oldHomeScore !== homeScore || oldAwayScore !== awayScore;
+
         await db.query(
           'UPDATE matches SET team1_score = $1, team2_score = $2, status = $3, match_time = $4, venue = $5 WHERE id = $6',
           [homeScore, awayScore, status, matchTime, competition, matchId]
         );
+
+        if (scoreChanged) {
+          const statusText = status === 'FT' ? 'KẾT THÚC' : (status === 'LIVE' ? 'LIVE' : 'UPCOMING');
+          const title = `⚽ Tỷ số mới: ${homeName} ${homeScore} - ${awayScore} ${awayName}`;
+          const body = `Cập nhật tỷ số trận đấu ${homeName} vs ${awayName}: ${oldHomeScore}-${oldAwayScore} ➔ ${homeScore}-${awayScore} (${statusText}).`;
+          sendBroadcastNotification(title, body, '/').catch(err => {
+            console.error('[SYNC] Error broadcasting score change:', err.message);
+          });
+        }
+
         if (status === 'FT' && oldStatus !== 'FT') {
           await calculateMatchPoints(matchId, homeScore, awayScore);
           await updateBracket();

@@ -1,9 +1,38 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import MatchCard from '../components/MatchCard';
 import { LayoutGrid, CheckCircle2, Trophy, Clock, Calendar } from 'lucide-react';
 
 const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatches, onOpenComments, onViewDetails }) => {
   const [activeTab, setActiveTab] = useState('all'); 
+
+  // Bộ đếm thời gian cập nhật tự động tiếp theo (30 phút một lần)
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    const calculateSecondsLeft = () => {
+      const now = new Date();
+      const m = now.getMinutes();
+      const s = now.getSeconds();
+      const nextTarget = m < 30 ? 30 : 60;
+      return (nextTarget - m - 1) * 60 + (60 - s);
+    };
+    return calculateSecondsLeft();
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      const m = now.getMinutes();
+      const s = now.getSeconds();
+      const nextTarget = m < 30 ? 30 : 60;
+      setSecondsLeft((nextTarget - m - 1) * 60 + (60 - s));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatCountdown = (totalSeconds) => {
+    const min = Math.floor(totalSeconds / 60);
+    const sec = totalSeconds % 60;
+    return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  }; 
 
   // Hàm chuyển đổi string "HH:mm DD-MM" hoặc tương tự thành Date để so sánh
   const parseMatchTime = (timeStr) => {
@@ -75,9 +104,15 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
               <Calendar size={24} color="#00d2ff" />
               <h2 className="font-outfit">LỊCH THI ĐẤU CHI TIẾT</h2>
             </div>
-            <div className="prediction-counter">
-              <CheckCircle2 size={14} color="#00d2ff" />
-              <span>{predictedCount}/{totalMatches} TRẬN ĐÃ GÁY</span>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="prediction-counter" style={{ background: 'rgba(255, 210, 0, 0.08)', color: '#ffd200', borderColor: 'rgba(255, 210, 0, 0.2)' }} title="Đồng bộ tự động từ Football-Data API">
+                <Clock size={12} color="#ffd200" />
+                <span>ĐỒNG BỘ SAU: {formatCountdown(secondsLeft)}</span>
+              </div>
+              <div className="prediction-counter">
+                <CheckCircle2 size={14} color="#00d2ff" />
+                <span>{predictedCount}/{totalMatches} TRẬN ĐÃ GÁY</span>
+              </div>
             </div>
           </div>
 
