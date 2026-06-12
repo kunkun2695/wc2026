@@ -157,4 +157,10 @@ app.listen(PORT, async () => {
     syncMatches().catch(err => console.error('[CRON ERROR]', err.message));
   });
   console.log('⏰ Đã kích hoạt Lịch trình: Tự động cập nhật mỗi 30 phút\n');
+
+  // Thực hiện đồng bộ ngay khi khởi động server
+  console.log('[STARTUP] Đang thực hiện đồng bộ trận đấu lần đầu...');
+  syncMatches()
+    .then(synced => console.log(`[STARTUP] Đồng bộ thành công! Đã cập nhật ${synced} trận đấu.`))
+    .catch(err => console.error('[STARTUP ERROR] Lỗi đồng bộ lần đầu:', err.message));
 });
