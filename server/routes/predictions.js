@@ -4,6 +4,7 @@ const db = require('../config/db');
 const jwt = require('jsonwebtoken');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
+const { sendBroadcastNotification } = require('./notifications');
 
 // Middleware xác thực người dùng
 const authenticateUser = (req, res, next) => {
@@ -53,7 +54,10 @@ router.post('/', authenticateUser, async (req, res) => {
 
   try {
     // Lấy thông tin trận đấu
-    const matchRes = await db.query('SELECT status, match_time FROM matches WHERE id = $1', [match_id]);
+    const matchRes = await db.query(
+      'SELECT status, match_time, team1_name, team2_name, handicap_favorite, handicap_text FROM matches WHERE id = $1',
+      [match_id]
+    );
     if (matchRes.rows.length === 0) {
       return res.status(404).json({ error: 'Không tìm thấy trận đấu' });
     }
@@ -74,6 +78,40 @@ router.post('/', authenticateUser, async (req, res) => {
        RETURNING *`,
       [user_id, match_id, home_score, away_score]
     );
+
+    // Gửi thông báo nếu Admin bình chọn/dự đoán
+    if (req.user.role === 'admin') {
+      const team1 = match.team1_name;
+      const team2 = match.team2_name;
+      const hFav = match.handicap_favorite;
+      const hTxt = match.handicap_text;
+
+      let choiceLabel = '';
+      if (home_score > away_score) {
+        if (hFav && hTxt) {
+          choiceLabel = hFav === team1 ? `${team1} (-${hTxt})` : `${team1} (+${hTxt})`;
+        } else {
+          choiceLabel = team1;
+        }
+      } else if (home_score < away_score) {
+        if (hFav && hTxt) {
+          choiceLabel = hFav === team2 ? `${team2} (-${hTxt})` : `${team2} (+${hTxt})`;
+        } else {
+          choiceLabel = team2;
+        }
+      } else {
+        choiceLabel = 'Hòa';
+      }
+
+      const title = `📢 Admin đã chốt kèo: ${team1} vs ${team2}`;
+      const body = `Admin đã bình chọn cửa [${choiceLabel}] cho trận ${team1} vs ${team2}. Hãy tham khảo và chốt kèo ngay!`;
+
+      // Gửi thông báo đẩy và lưu vào DB cho mọi người (sender là admin)
+      sendBroadcastNotification(title, body, `/`, user_id).catch(err => {
+        console.error('Error sending admin prediction broadcast notification:', err);
+      });
+    }
+
     res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
