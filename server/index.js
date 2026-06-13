@@ -76,7 +76,19 @@ async function patchDatabase() {
     await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS ou_value NUMERIC(4,2) DEFAULT 0.0`);
     await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS ou_text VARCHAR(50)`);
 
-    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội, Chat Image, bảo mật tài khoản và kèo cược thành công.');
+    // Tạo bảng prediction_history lưu vết lịch sử đổi kèo
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS prediction_history (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        match_id INTEGER REFERENCES matches(id) ON DELETE CASCADE,
+        old_choice VARCHAR(10),
+        new_choice VARCHAR(10),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội, Chat Image, bảo mật tài khoản, kèo cược và lịch sử đổi kèo thành công.');
   } catch (err) {
     console.error('⚠️ [DB Fix Error]', err.message);
   }

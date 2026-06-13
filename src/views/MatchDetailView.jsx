@@ -81,6 +81,22 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
     }
   }, [userPrediction]);
 
+  const [editHistory, setEditHistory] = useState([]);
+
+  const fetchEditHistory = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/predictions/history/${matchId}`, {
+        headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEditHistory(data);
+      }
+    } catch (err) {
+      console.error('Lỗi lấy lịch sử đổi kèo:', err);
+    }
+  };
+
   useEffect(() => {
     const fetchAllPreds = async () => {
       try {
@@ -98,6 +114,7 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
       }
     };
     fetchAllPreds();
+    fetchEditHistory();
   }, [matchId, userPrediction]);
 
   if (!match) return <div className="p-10 text-center">Không tìm thấy trận đấu</div>;
@@ -502,6 +519,45 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
               })()
             )}
           </div>
+
+          {/* Lịch sử sửa đổi bình chọn */}
+          {editHistory.length > 0 && (
+            <div className="edit-history-section card-box">
+              <h3 className="section-title">
+                <Clock size={18} /> Lịch sử thay đổi bình chọn ({editHistory.length})
+              </h3>
+              <div className="everyone-preds-list">
+                {editHistory.map(h => {
+                  const getChoiceText = (c) => {
+                    if (c === '1') return t1.name;
+                    if (c === '2') return t2.name;
+                    if (c === 'X') return 'Hòa';
+                    return 'Không rõ';
+                  };
+                  const dateLocal = new Date(h.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                  const dayLocal = new Date(h.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                  return (
+                    <div key={h.id} className="everyone-pred-item" style={{ padding: '10px 14px' }}>
+                      <div className="user-info-mini">
+                        <UserAvatar src={h.user_avatar} size={24} style={{ borderRadius: '50%' }} />
+                        <span className="user-name-choice" style={{ fontWeight: 800 }}>{h.user_name}</span>
+                      </div>
+                      
+                      <div className="choice-pill-revealed" style={{ fontSize: '0.75rem', background: 'rgba(255, 255, 255, 0.02)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                        Đã đổi: <span style={{ textDecoration: 'line-through', opacity: 0.5 }}>{getChoiceText(h.old_choice)}</span>
+                        <span style={{ margin: '0 6px', color: '#00d2ff' }}>➡️</span>
+                        <strong style={{ color: '#00d2ff', fontWeight: 900 }}>{getChoiceText(h.new_choice)}</strong>
+                      </div>
+                      
+                      <span className="time-ago-log" style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>
+                        {dateLocal} {dayLocal}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="detail-comments-section card-box">
             <h3 className="section-title">Phòng Gáy</h3>

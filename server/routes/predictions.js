@@ -70,6 +70,19 @@ router.post('/', authenticateUser, async (req, res) => {
       return res.status(400).json({ error: 'Trận đấu đã bắt đầu hoặc quá giờ thi đấu, không thể chốt kèo nữa!' });
     }
 
+    const oldPredRes = await db.query(
+      'SELECT predicted_home_score, predicted_away_score FROM predictions WHERE user_id = $1 AND match_id = $2',
+      [user_id, match_id]
+    );
+    let oldChoice = null;
+    if (oldPredRes.rows.length > 0) {
+      const op = oldPredRes.rows[0];
+      if (op.predicted_home_score !== -1) {
+        oldChoice = op.predicted_home_score > op.predicted_away_score ? '1' :
+                    (op.predicted_home_score < op.predicted_away_score ? '2' : 'X');
+      }
+    }
+
     const result = await db.query(
       `INSERT INTO predictions (user_id, match_id, predicted_home_score, predicted_away_score)
        VALUES ($1, $2, $3, $4)
@@ -78,6 +91,36 @@ router.post('/', authenticateUser, async (req, res) => {
        RETURNING *`,
       [user_id, match_id, home_score, away_score]
     );
+
+    // Ghi nhận lịch sử đổi cược
+    const newChoice = home_score > away_score ? '1' :
+                      (home_score < away_score ? '2' : 'X');
+
+    if (oldChoice && oldChoice !== newChoice) {
+      await db.query(
+        'INSERT INTO prediction_history (user_id, match_id, old_choice, new_choice) VALUES ($1, $2, $3, $4)',
+        [user_id, match_id, oldChoice, newChoice]
+      );
+
+      // Phát cảnh báo hệ thống và push notification cho tất cả user
+      const userRes = await db.query('SELECT name FROM users WHERE id = $1', [user_id]);
+      const userName = userRes.rows[0]?.name || 'Thành viên';
+      const team1 = match.team1_name;
+      const team2 = match.team2_name;
+
+      const getChoiceName = (c) => {
+        if (c === '1') return team1;
+        if (c === '2') return team2;
+        return 'Hòa';
+      };
+
+      const title = `🔄 Thay đổi bình chọn: ${userName}`;
+      const body = `${userName} đã THAY ĐỔI bình chọn trận ${team1} vs ${team2} từ cửa [${getChoiceName(oldChoice)}] sang [${getChoiceName(newChoice)}]`;
+      
+      sendBroadcastNotification(title, body, `/`, user_id).catch(err => {
+        console.error('Error sending prediction change broadcast:', err);
+      });
+    }
 
     // Gửi thông báo nếu Admin bình chọn/dự đoán
     if (req.user.role === 'admin') {
@@ -203,6 +246,31 @@ router.get('/leaderboard', async (req, res) => {
       GROUP BY u.id, u.name, u.avatar
       ORDER BY total_points DESC
     `);
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Lấy lịch sử thay đổi bình chọn của một trận đấu
+router.get('/history/:matchId', authenticateUser, async (req, res) => {
+  const { matchId } = req.params;
+  try {
+    const result = await db.query(`
+      SELECT 
+        h.id,
+        h.user_id,
+        h.match_id,
+        h.old_choice,
+        h.new_choice,
+        h.created_at,
+        u.name as user_name,
+        u.avatar as user_avatar
+      FROM prediction_history h
+      JOIN users u ON h.user_id = u.id
+      WHERE h.match_id = $1
+      ORDER BY h.created_at DESC
+    `, [matchId]);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
