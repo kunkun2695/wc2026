@@ -77,20 +77,28 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
 
 
   const handleSave = async (choice) => {
-    if (isPredicted || isClosed) return;
+    if (isClosed) return;
+    if (choice === selectedChoice) return;
     
     let h = 0, a = 0, label = '';
     if (choice === '1') { h = 1; a = 0; label = t1.name + ' thắng'; }
     else if (choice === 'X') { h = 0; a = 0; label = 'Hòa'; }
     else if (choice === '2') { h = 0; a = 1; label = t2.name + ' thắng'; }
 
-    const confirmSave = window.confirm(`Bạn muốn bình chọn cửa: ${label}?`);
+    const promptMsg = isPredicted 
+      ? `Bạn đã chốt kèo trước đó. Bạn có chắc muốn THAY ĐỔI bình chọn sang: ${label}?` 
+      : `Bạn muốn bình chọn cửa: ${label}?`;
+
+    const confirmSave = window.confirm(promptMsg);
     if (!confirmSave) return;
 
     setIsSaving(true);
     const success = await onSavePrediction(match.id, h, a);
     if (success) {
       setSelectedChoice(choice);
+      if (onRefreshMatches) {
+        onRefreshMatches();
+      }
     }
     setIsSaving(false);
   };
@@ -263,7 +271,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <button 
               className={`choice-btn-v2 ${selectedChoice === '1' ? 'active-1' : ''}`}
               onClick={(e) => { e.stopPropagation(); handleSave('1'); }}
-              disabled={isClosed || isPredicted}
+              disabled={isClosed}
               title={`${t1.name} thắng`}
             >
               <div className="btn-team-flag"><FlagIcon flag={t1.flag} /></div>
@@ -288,7 +296,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <button 
               className={`choice-btn-v2 draw ${selectedChoice === 'X' ? 'active-X' : ''}`}
               onClick={(e) => { e.stopPropagation(); handleSave('X'); }}
-              disabled={isClosed || isPredicted}
+              disabled={isClosed}
             >
               <span className="choice-btn-v2-draw-label">HÒA</span>
             </button>
@@ -306,7 +314,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <button 
               className={`choice-btn-v2 ${selectedChoice === '2' ? 'active-2' : ''}`}
               onClick={(e) => { e.stopPropagation(); handleSave('2'); }}
-              disabled={isClosed || isPredicted}
+              disabled={isClosed}
               title={`${t2.name} thắng`}
             >
               <div className="btn-team-flag"><FlagIcon flag={t2.flag} /></div>

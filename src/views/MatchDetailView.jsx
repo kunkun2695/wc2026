@@ -159,6 +159,14 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
     return null;
   };
 
+  const hasAlreadyVoted = userPrediction !== undefined && userPrediction.predicted_home_score !== -1;
+  const currentPredictionChoice = userPrediction ? (
+    userPrediction.predicted_home_score === -1 ? 'MISSED' :
+    userPrediction.predicted_home_score > userPrediction.predicted_away_score ? '1' :
+    userPrediction.predicted_home_score < userPrediction.predicted_away_score ? '2' : 'X'
+  ) : null;
+  const isSelectionChanged = selectedChoice !== currentPredictionChoice;
+
   const renderPredictionOutcome = () => {
     if (isMissed) {
       return (
@@ -197,14 +205,18 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   };
 
   const handleVote = async () => {
-    if (!selectedChoice || isSaving) return;
+    if (!selectedChoice || isSaving || isClosed || !isSelectionChanged) return;
 
     let label = '';
     if (selectedChoice === '1') label = t1.name + ' thắng';
     else if (selectedChoice === 'X') label = 'Hòa';
     else if (selectedChoice === '2') label = t2.name + ' thắng';
 
-    const confirmSave = window.confirm(`Bạn muốn bình chọn cửa: ${label}?`);
+    const promptMsg = hasAlreadyVoted
+      ? `Bạn đã chốt kèo trước đó. Bạn có chắc muốn THAY ĐỔI bình chọn sang: ${label}?`
+      : `Bạn muốn bình chọn cửa: ${label}?`;
+
+    const confirmSave = window.confirm(promptMsg);
     if (!confirmSave) return;
 
     setIsSaving(true);
@@ -219,6 +231,10 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
           else setSelectedChoice('X');
         } else {
           setSelectedChoice(null);
+        }
+      } else {
+        if (onRefreshMatches) {
+          onRefreshMatches();
         }
       }
     } finally {
@@ -296,11 +312,11 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
             <div className="voting-options">
               <button 
                 onClick={() => {
-                  if (!isClosed && !userPrediction) {
+                  if (!isClosed) {
                     setSelectedChoice('1');
                   }
                 }}
-                className={`vote-opt ${selectedChoice === '1' ? 'active' : ''} ${isClosed || userPrediction ? 'readonly' : ''}`}
+                className={`vote-opt ${selectedChoice === '1' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
               >
                 <div className="opt-flag"><FlagIcon flag={t1.flag} /></div>
                 <span className="opt-name">{t1.name}</span>
@@ -311,11 +327,11 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
               
               <button 
                 onClick={() => {
-                  if (!isClosed && !userPrediction) {
+                  if (!isClosed) {
                     setSelectedChoice('X');
                   }
                 }}
-                className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''} ${isClosed || userPrediction ? 'readonly' : ''}`}
+                className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
               >
                 <div className="opt-flag draw">HÒA</div>
                 <span className="opt-name">Bất phân thắng bại</span>
@@ -323,11 +339,11 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
               
               <button 
                 onClick={() => {
-                  if (!isClosed && !userPrediction) {
+                  if (!isClosed) {
                     setSelectedChoice('2');
                   }
                 }}
-                className={`vote-opt ${selectedChoice === '2' ? 'active' : ''} ${isClosed || userPrediction ? 'readonly' : ''}`}
+                className={`vote-opt ${selectedChoice === '2' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
               >
                 <div className="opt-flag"><FlagIcon flag={t2.flag} /></div>
                 <span className="opt-name">{t2.name}</span>
@@ -344,16 +360,20 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
             )}
 
             <button 
-              className={`confirm-vote-btn ${!selectedChoice || userPrediction || isClosed ? 'disabled' : ''}`}
-              disabled={!selectedChoice || !!userPrediction || isSaving || isClosed}
+              className={`confirm-vote-btn ${!selectedChoice || !isSelectionChanged || isClosed ? 'disabled' : ''}`}
+              disabled={!selectedChoice || !isSelectionChanged || isSaving || isClosed}
               onClick={handleVote}
             >
               {isSaving 
                 ? 'Đang gửi...' 
-                : (userPrediction 
-                  ? (userPrediction.predicted_home_score === -1 ? 'BỎ LỠ DỰ ĐOÁN (Đóng góp 30 bánh)' : 'Lựa chọn của bạn') 
-                  : (isClosed ? 'Đã đóng dự đoán' : 'CHỐT KÈO NGAY'))}
-              {!isSaving && !userPrediction && !isClosed && <Send size={18} />}
+                : (isClosed 
+                  ? 'Đã đóng dự đoán' 
+                  : (!selectedChoice 
+                    ? 'CHỌN CỬA BẤT KỲ' 
+                    : (!isSelectionChanged 
+                      ? 'LỰA CHỌN CỦA BẠN (Đã chốt)' 
+                      : (hasAlreadyVoted ? 'THAY ĐỔI LỰA CHỌN' : 'CHỐT KÈO NGAY'))))}
+              {!isSaving && isSelectionChanged && !isClosed && <Send size={18} />}
             </button>
 
             {renderPredictionOutcome()}
