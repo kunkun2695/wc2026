@@ -82,7 +82,24 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
       : matches.filter(m => predictions.some(p => p.match_id === m.id));
 
     if (hideFinished) {
-      filtered = filtered.filter(m => m.status !== 'FT' && m.status !== 'FINISHED');
+      const isTodayOrYesterday = (matchDate) => {
+        const today = new Date();
+        const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const yesterdayZero = new Date(todayZero);
+        yesterdayZero.setDate(yesterdayZero.getDate() - 1);
+        const matchZero = new Date(matchDate.getFullYear(), matchDate.getMonth(), matchDate.getDate());
+        return matchZero.getTime() >= yesterdayZero.getTime();
+      };
+
+      filtered = filtered.filter(m => {
+        // Nếu trận chưa đá xong, luôn giữ lại
+        if (m.status !== 'FT' && m.status !== 'FINISHED') {
+          return true;
+        }
+        // Nếu trận đã kết thúc, chỉ giữ lại nếu thuộc ngày hôm nay hoặc hôm qua
+        const matchDate = parseMatchTime(m.match_time);
+        return isTodayOrYesterday(matchDate);
+      });
     }
 
     // Sắp xếp theo thời gian TĂNG DẦN (Trận gần hiện tại nhất lên đầu)
@@ -157,7 +174,7 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
                 onChange={(e) => setHideFinished(e.target.checked)}
                 style={{ cursor: 'pointer', accentColor: '#00d2ff' }}
               />
-              <span>ẨN TRẬN ĐÃ KẾT THÚC</span>
+              <span>ẨN TRẬN KẾT THÚC CŨ</span>
             </label>
           </div>
         </div>
