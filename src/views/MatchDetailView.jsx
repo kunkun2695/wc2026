@@ -262,312 +262,324 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   return (
     <div className="match-detail-page">
       <header className="detail-header">
-        <button onClick={onBack} className="back-btn"><ArrowLeft size={24} /></button>
-        <h2 className="font-outfit font-bold text-lg">Chi tiết trận đấu</h2>
-        <div style={{ width: 24 }}></div>
+        <div className="detail-header-inner">
+          <button onClick={onBack} className="back-btn"><ArrowLeft size={24} /></button>
+          <h2 className="font-outfit font-bold text-lg">Chi tiết trận đấu</h2>
+          <div style={{ width: 24 }}></div>
+        </div>
       </header>
 
       <div className="detail-scroll-container">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }} 
-          animate={{ opacity: 1, scale: 1 }}
-          className="score-hero"
-        >
-          <div className="hero-team">
-            <div className="hero-flag-container">
-              <FlagIcon flag={t1.flag} />
-            </div>
-            <span className="hero-team-name">{t1.name}</span>
-          </div>
-
-          <div className="hero-score">
-            <div className="score-main">
-              {match.status === 'FT' || match.status === 'LIVE' ? (
-                <span>{t1.score} - {t2.score}</span>
-              ) : (
-                <span>VS</span>
-              )}
-            </div>
-            <div className={`match-status-badge ${match.status === 'LIVE' ? 'is-live' : ''}`}>
-              {match.status === 'LIVE' && <span className="live-dot"></span>}
-              {match.status}
-            </div>
-          </div>
-
-          <div className="hero-team">
-            <div className="hero-flag-container">
-              <FlagIcon flag={t2.flag} />
-            </div>
-            <span className="hero-team-name">{t2.name}</span>
-          </div>
-        </motion.div>
-
-        <div className="detail-sections-container">
-          {/* Voting Section */}
-          <div className="voting-section card-box">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="section-title mb-0"><Trophy size={18} /> Bình chọn thắng thua</h3>
-              {userPrediction && <span className="voted-tag"><Check size={12} /> Đã chốt</span>}
-            </div>
-
-            {/* Handicap info */}
-            <div className="handicap-info-bar">
-              <div className="info-badge handicap" style={{ width: '100%', justifyContent: 'center' }}>
-                <span className="badge-label">Tỷ lệ kèo</span>
-                <span className="badge-value">
-                  {match.handicap_favorite && parseFloat(match.handicap_value) !== 0 ? (
-                    match.handicap_favorite === t1.name 
-                      ? `${t1.name} chấp ${t2.name} ${match.handicap_text || match.handicap_value} trái`
-                      : `${t2.name} chấp ${t1.name} ${match.handicap_text || match.handicap_value} trái`
-                  ) : (
-                    'Đồng banh (Không chấp)'
-                  )}
-                </span>
+        <div className="detail-content-inner">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }} 
+            animate={{ opacity: 1, scale: 1 }}
+            className="score-hero"
+          >
+            <div className="hero-team">
+              <div className="hero-flag-container">
+                <FlagIcon flag={t1.flag} />
               </div>
+              <span className="hero-team-name">{t1.name}</span>
             </div>
-            
-            <div className="voting-options">
-              <button 
-                onClick={() => {
-                  if (!isClosed) {
-                    setSelectedChoice('1');
-                  }
-                }}
-                className={`vote-opt ${selectedChoice === '1' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
-              >
-                <div className="opt-flag"><FlagIcon flag={t1.flag} /></div>
-                <span className="opt-name">{t1.name}</span>
-                {getHandicapLabel(t1.name) && (
-                  <span className="opt-handicap-label">({getHandicapLabel(t1.name)})</span>
+
+            <div className="hero-score">
+              <div className="score-main">
+                {match.status === 'FT' || match.status === 'LIVE' ? (
+                  <span>{t1.score} - {t2.score}</span>
+                ) : (
+                  <span>VS</span>
                 )}
-              </button>
-              
-              <button 
-                onClick={() => {
-                  if (!isClosed) {
-                    setSelectedChoice('X');
-                  }
-                }}
-                className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
-              >
-                <div className="opt-flag draw">HÒA</div>
-                <span className="opt-name">Bất phân thắng bại</span>
-              </button>
-              
-              <button 
-                onClick={() => {
-                  if (!isClosed) {
-                    setSelectedChoice('2');
-                  }
-                }}
-                className={`vote-opt ${selectedChoice === '2' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
-              >
-                <div className="opt-flag"><FlagIcon flag={t2.flag} /></div>
-                <span className="opt-name">{t2.name}</span>
-                {getHandicapLabel(t2.name) && (
-                  <span className="opt-handicap-label">({getHandicapLabel(t2.name)})</span>
-                )}
-              </button>
-            </div>
-
-            {getHandicapHint() && (
-              <div className="handicap-hint-label">
-                {getHandicapHint()}
               </div>
-            )}
-
-            <button 
-              className={`confirm-vote-btn ${!selectedChoice || !isSelectionChanged || isClosed ? 'disabled' : ''}`}
-              disabled={!selectedChoice || !isSelectionChanged || isSaving || isClosed}
-              onClick={handleVote}
-            >
-              {isSaving 
-                ? 'Đang gửi...' 
-                : (isClosed 
-                  ? 'Đã đóng dự đoán' 
-                  : (!selectedChoice 
-                    ? 'CHỌN CỬA BẤT KỲ' 
-                    : (!isSelectionChanged 
-                      ? 'LỰA CHỌN CỦA BẠN (Đã chốt)' 
-                      : (hasAlreadyVoted ? 'THAY ĐỔI LỰA CHỌN' : 'CHỐT KÈO NGAY'))))}
-              {!isSaving && isSelectionChanged && !isClosed && <Send size={18} />}
-            </button>
-
-            {renderPredictionOutcome()}
-          </div>
-
-          <div className="info-grid">
-            <div className="info-item">
-              <Calendar size={18} className="text-cyan-400" />
-              <div className="info-text">
-                <span className="info-label">Ngày thi đấu</span>
-                <span className="info-value">
-                  {match.match_time ? (match.match_time.includes(' - ') ? match.match_time.split(' - ')[1] : match.match_time.split(' ')[1]) : '---'}
-                </span>
+              <div className={`match-status-badge ${match.status === 'LIVE' ? 'is-live' : ''}`}>
+                {match.status === 'LIVE' && <span className="live-dot"></span>}
+                {match.status}
               </div>
             </div>
-            <div className="info-item">
-              <Clock size={18} className="text-purple-400" />
-              <div className="info-text">
-                <span className="info-label">Giờ bắt đầu</span>
-                <span className="info-value">
-                  {match.match_time ? (match.match_time.includes(' - ') ? match.match_time.split(' - ')[0] : match.match_time.split(' ')[0]) : '---'}
-                </span>
+
+            <div className="hero-team">
+              <div className="hero-flag-container">
+                <FlagIcon flag={t2.flag} />
               </div>
+              <span className="hero-team-name">{t2.name}</span>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="stats-section card-box">
-            <h3 className="section-title"><Zap size={18} /> Tỉ lệ bình chọn</h3>
-            <div className="stats-bars">
-              <div className="stat-bar-item">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-bold text-slate-300">{t1.name}</span>
-                  <span className="text-sm font-black text-cyan-400">{Math.round((match.home_votes / (match.total_votes || 1)) * 100)}%</span>
-                </div>
-                <div className="bar-bg"><div className="bar-fill home" style={{ width: `${(match.home_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
-              </div>
-              <div className="stat-bar-item">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-bold text-slate-300">Hòa</span>
-                  <span className="text-sm font-black text-yellow-400">{Math.round((match.draw_votes / (match.total_votes || 1)) * 100)}%</span>
-                </div>
-                <div className="bar-bg"><div className="bar-fill draw" style={{ width: `${(match.draw_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
-              </div>
-              <div className="stat-bar-item">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-bold text-slate-300">{t2.name}</span>
-                  <span className="text-sm font-black text-emerald-400">{Math.round((match.away_votes / (match.total_votes || 1)) * 100)}%</span>
-                </div>
-                <div className="bar-bg"><div className="bar-fill away" style={{ width: `${(match.away_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
-              </div>
-            </div>
-          </div>
+          <div className="detail-sections-container">
+            <div className="detail-grid-layout">
+              <div className="detail-grid-left">
+                {/* Voting Section */}
+                <div className="voting-section card-box">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="section-title mb-0"><Trophy size={18} /> Bình chọn thắng thua</h3>
+                    {userPrediction && <span className="voted-tag"><Check size={12} /> Đã chốt</span>}
+                  </div>
 
-          {/* Everyone's predictions section */}
-          <div className="everyone-preds-section card-box">
-            {loadingPreds ? (
-              <div className="text-center p-4 text-slate-500 text-xs">Đang tải dự đoán...</div>
-            ) : (
-              (() => {
-                const displayPreds = users.map(u => {
-                  const existingPred = allPredictions.find(p => p.user_id === u.id);
-                  if (existingPred) return existingPred;
-                  
-                  if (isClosed) {
-                    return {
-                      prediction_id: `missed_${u.id}_${matchId}`,
-                      user_id: u.id,
-                      user_name: u.name,
-                      user_avatar: u.avatar || '',
-                      match_id: matchId,
-                      predicted_home_score: -1,
-                      predicted_away_score: -1,
-                      points: 30,
-                      is_hidden: false
-                    };
-                  }
-                  return null;
-                }).filter(Boolean);
-
-                return (
-                  <>
-                    <h3 className="section-title">
-                      <Users size={18} /> Dự đoán từ bạn bè ({displayPreds.length})
-                    </h3>
-                    {displayPreds.length > 0 ? (
-                      <div className="everyone-preds-list">
-                        {displayPreds.map(p => {
-                          const isCorrect = p.points === 10;
-                          const choice = getOutcomeLabel(p);
-                          const teamSelected = choice === 'MISSED' 
-                            ? 'Bỏ lỡ dự đoán' 
-                            : (choice === '1' ? t1.name : (choice === '2' ? t2.name : 'Hòa'));
-
-                          return (
-                            <div key={p.prediction_id} className="everyone-pred-item">
-                              <div className="user-info-mini">
-                                <UserAvatar src={p.user_avatar} size={28} style={{ borderRadius: '50%' }} />
-                                <span className="user-name-choice">{p.user_name}</span>
-                              </div>
-                              
-                              {p.is_hidden ? (
-                                <div className="choice-pill-locked">
-                                  🔒 ĐÃ KHÓA (ẨN)
-                                </div>
-                              ) : (
-                                <div className="choice-pill-revealed">
-                                  <span>Chọn: </span>
-                                  <strong style={{ color: choice === 'MISSED' ? '#ef4444' : 'white' }}>{teamSelected}</strong>
-                                </div>
-                              )}
-
-                              {isClosed && !p.is_hidden && (
-                                <span className={`outcome-lbl ${isCorrect ? 'correct' : 'wrong'}`}>
-                                  {choice === 'MISSED' ? 'BỎ LỠ' : (isCorrect ? 'ĐÚNG' : 'SAI')}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="text-center p-4 text-slate-500 text-xs">Chưa có ai dự đoán trận đấu này.</div>
-                    )}
-                  </>
-                );
-              })()
-            )}
-          </div>
-
-          {/* Lịch sử sửa đổi bình chọn */}
-          {editHistory.length > 0 && (
-            <div className="edit-history-section card-box">
-              <h3 className="section-title">
-                <Clock size={18} /> Lịch sử thay đổi bình chọn ({editHistory.length})
-              </h3>
-              <div className="everyone-preds-list">
-                {editHistory.map(h => {
-                  const getChoiceText = (c) => {
-                    if (c === '1') return t1.name;
-                    if (c === '2') return t2.name;
-                    if (c === 'X') return 'Hòa';
-                    return 'Không rõ';
-                  };
-                  const dateLocal = new Date(h.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                  const dayLocal = new Date(h.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-                  return (
-                    <div key={h.id} className="everyone-pred-item" style={{ padding: '10px 14px' }}>
-                      <div className="user-info-mini">
-                        <UserAvatar src={h.user_avatar} size={24} style={{ borderRadius: '50%' }} />
-                        <span className="user-name-choice" style={{ fontWeight: 800 }}>{h.user_name}</span>
-                      </div>
-                      
-                      <div className="choice-pill-revealed" style={{ fontSize: '0.75rem', background: 'rgba(255, 255, 255, 0.02)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                        Đã đổi: <span style={{ textDecoration: 'line-through', opacity: 0.5 }}>{getChoiceText(h.old_choice)}</span>
-                        <span style={{ margin: '0 6px', color: '#00d2ff' }}>➡️</span>
-                        <strong style={{ color: '#00d2ff', fontWeight: 900 }}>{getChoiceText(h.new_choice)}</strong>
-                      </div>
-                      
-                      <span className="time-ago-log" style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>
-                        {dateLocal} {dayLocal}
+                  {/* Handicap info */}
+                  <div className="handicap-info-bar">
+                    <div className="info-badge handicap" style={{ width: '100%', justifyContent: 'center' }}>
+                      <span className="badge-label">Tỷ lệ kèo</span>
+                      <span className="badge-value">
+                        {match.handicap_favorite && parseFloat(match.handicap_value) !== 0 ? (
+                          match.handicap_favorite === t1.name 
+                            ? `${t1.name} chấp ${t2.name} ${match.handicap_text || match.handicap_value} trái`
+                            : `${t2.name} chấp ${t1.name} ${match.handicap_text || match.handicap_value} trái`
+                        ) : (
+                          'Đồng banh (Không chấp)'
+                        )}
                       </span>
                     </div>
-                  );
-                })}
+                  </div>
+                  
+                  <div className="voting-options">
+                    <button 
+                      onClick={() => {
+                        if (!isClosed) {
+                          setSelectedChoice('1');
+                        }
+                      }}
+                      className={`vote-opt ${selectedChoice === '1' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
+                    >
+                      <div className="opt-flag"><FlagIcon flag={t1.flag} /></div>
+                      <span className="opt-name">{t1.name}</span>
+                      {getHandicapLabel(t1.name) && (
+                        <span className="opt-handicap-label">({getHandicapLabel(t1.name)})</span>
+                      )}
+                    </button>
+                    
+                    <button 
+                      onClick={() => {
+                        if (!isClosed) {
+                          setSelectedChoice('X');
+                        }
+                      }}
+                      className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
+                    >
+                      <div className="opt-flag draw">HÒA</div>
+                      <span className="opt-name">Bất phân thắng bại</span>
+                    </button>
+                    
+                    <button 
+                      onClick={() => {
+                        if (!isClosed) {
+                          setSelectedChoice('2');
+                        }
+                      }}
+                      className={`vote-opt ${selectedChoice === '2' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
+                    >
+                      <div className="opt-flag"><FlagIcon flag={t2.flag} /></div>
+                      <span className="opt-name">{t2.name}</span>
+                      {getHandicapLabel(t2.name) && (
+                        <span className="opt-handicap-label">({getHandicapLabel(t2.name)})</span>
+                      )}
+                    </button>
+                  </div>
+
+                  {getHandicapHint() && (
+                    <div className="handicap-hint-label">
+                      {getHandicapHint()}
+                    </div>
+                  )}
+
+                  <button 
+                    className={`confirm-vote-btn ${!selectedChoice || !isSelectionChanged || isClosed ? 'disabled' : ''}`}
+                    disabled={!selectedChoice || !isSelectionChanged || isSaving || isClosed}
+                    onClick={handleVote}
+                  >
+                    {isSaving 
+                      ? 'Đang gửi...' 
+                      : (isClosed 
+                        ? 'Đã đóng dự đoán' 
+                        : (!selectedChoice 
+                          ? 'CHỌN CỬA BẤT KỲ' 
+                          : (!isSelectionChanged 
+                            ? 'LỰA CHỌN CỦA BẠN (Đã chốt)' 
+                            : (hasAlreadyVoted ? 'THAY ĐỔI LỰA CHỌN' : 'CHỐT KÈO NGAY'))))}
+                    {!isSaving && isSelectionChanged && !isClosed && <Send size={18} />}
+                  </button>
+
+                  {renderPredictionOutcome()}
+                </div>
+
+                {/* Info Grid */}
+                <div className="info-grid">
+                  <div className="info-item">
+                    <Calendar size={18} className="text-cyan-400" />
+                    <div className="info-text">
+                      <span className="info-label">Ngày thi đấu</span>
+                      <span className="info-value">
+                        {match.match_time ? (match.match_time.includes(' - ') ? match.match_time.split(' - ')[1] : match.match_time.split(' ')[1]) : '---'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="info-item">
+                    <Clock size={18} className="text-purple-400" />
+                    <div className="info-text">
+                      <span className="info-label">Giờ bắt đầu</span>
+                      <span className="info-value">
+                        {match.match_time ? (match.match_time.includes(' - ') ? match.match_time.split(' - ')[0] : match.match_time.split(' ')[0]) : '---'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="detail-grid-right">
+                {/* Stats Section */}
+                <div className="stats-section card-box">
+                  <h3 className="section-title"><Zap size={18} /> Tỉ lệ bình chọn</h3>
+                  <div className="stats-bars">
+                    <div className="stat-bar-item">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-bold text-slate-300">{t1.name}</span>
+                        <span className="text-sm font-black text-cyan-400">{Math.round((match.home_votes / (match.total_votes || 1)) * 100)}%</span>
+                      </div>
+                      <div className="bar-bg"><div className="bar-fill home" style={{ width: `${(match.home_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
+                    </div>
+                    <div className="stat-bar-item">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-bold text-slate-300">Hòa</span>
+                        <span className="text-sm font-black text-yellow-400">{Math.round((match.draw_votes / (match.total_votes || 1)) * 100)}%</span>
+                      </div>
+                      <div className="bar-bg"><div className="bar-fill draw" style={{ width: `${(match.draw_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
+                    </div>
+                    <div className="stat-bar-item">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-bold text-slate-300">{t2.name}</span>
+                        <span className="text-sm font-black text-emerald-400">{Math.round((match.away_votes / (match.total_votes || 1)) * 100)}%</span>
+                      </div>
+                      <div className="bar-bg"><div className="bar-fill away" style={{ width: `${(match.away_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Everyone's predictions section */}
+                <div className="everyone-preds-section card-box">
+                  {loadingPreds ? (
+                    <div className="text-center p-4 text-slate-500 text-xs">Đang tải dự đoán...</div>
+                  ) : (
+                    (() => {
+                      const displayPreds = users.map(u => {
+                        const existingPred = allPredictions.find(p => p.user_id === u.id);
+                        if (existingPred) return existingPred;
+                        
+                        if (isClosed) {
+                          return {
+                            prediction_id: `missed_${u.id}_${matchId}`,
+                            user_id: u.id,
+                            user_name: u.name,
+                            user_avatar: u.avatar || '',
+                            match_id: matchId,
+                            predicted_home_score: -1,
+                            predicted_away_score: -1,
+                            points: 30,
+                            is_hidden: false
+                          };
+                        }
+                        return null;
+                      }).filter(Boolean);
+
+                      return (
+                        <>
+                          <h3 className="section-title">
+                            <Users size={18} /> Dự đoán từ bạn bè ({displayPreds.length})
+                          </h3>
+                          {displayPreds.length > 0 ? (
+                            <div className="everyone-preds-list">
+                              {displayPreds.map(p => {
+                                const isCorrect = p.points === 10;
+                                const choice = getOutcomeLabel(p);
+                                const teamSelected = choice === 'MISSED' 
+                                  ? 'Bỏ lỡ dự đoán' 
+                                  : (choice === '1' ? t1.name : (choice === '2' ? t2.name : 'Hòa'));
+
+                                return (
+                                  <div key={p.prediction_id} className="everyone-pred-item">
+                                    <div className="user-info-mini">
+                                      <UserAvatar src={p.user_avatar} size={28} style={{ borderRadius: '50%' }} />
+                                      <span className="user-name-choice">{p.user_name}</span>
+                                    </div>
+                                    
+                                    {p.is_hidden ? (
+                                      <div className="choice-pill-locked">
+                                        🔒 ĐÃ KHÓA (ẨN)
+                                      </div>
+                                    ) : (
+                                      <div className="choice-pill-revealed">
+                                        <span>Chọn: </span>
+                                        <strong style={{ color: choice === 'MISSED' ? '#ef4444' : 'white' }}>{teamSelected}</strong>
+                                      </div>
+                                    )}
+
+                                    {isClosed && !p.is_hidden && (
+                                      <span className={`outcome-lbl ${isCorrect ? 'correct' : 'wrong'}`}>
+                                        {choice === 'MISSED' ? 'BỎ LỠ' : (isCorrect ? 'ĐÚNG' : 'SAI')}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-center p-4 text-slate-500 text-xs">Chưa có ai dự đoán trận đấu này.</div>
+                          )}
+                        </>
+                      );
+                    })()
+                  )}
+                </div>
+
+                {/* Lịch sử sửa đổi bình chọn */}
+                {editHistory.length > 0 && (
+                  <div className="edit-history-section card-box">
+                    <h3 className="section-title">
+                      <Clock size={18} /> Lịch sử thay đổi bình chọn ({editHistory.length})
+                    </h3>
+                    <div className="everyone-preds-list">
+                      {editHistory.map(h => {
+                        const getChoiceText = (c) => {
+                          if (c === '1') return t1.name;
+                          if (c === '2') return t2.name;
+                          if (c === 'X') return 'Hòa';
+                          return 'Không rõ';
+                        };
+                        const dateLocal = new Date(h.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                        const dayLocal = new Date(h.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                        return (
+                          <div key={h.id} className="everyone-pred-item" style={{ padding: '10px 14px' }}>
+                            <div className="user-info-mini">
+                              <UserAvatar src={h.user_avatar} size={24} style={{ borderRadius: '50%' }} />
+                              <span className="user-name-choice" style={{ fontWeight: 800 }}>{h.user_name}</span>
+                            </div>
+                            
+                            <div className="choice-pill-revealed" style={{ fontSize: '0.75rem', background: 'rgba(255, 255, 255, 0.02)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                              Đã đổi: <span style={{ textDecoration: 'line-through', opacity: 0.5 }}>{getChoiceText(h.old_choice)}</span>
+                              <span style={{ margin: '0 6px', color: '#00d2ff' }}>➡️</span>
+                              <strong style={{ color: '#00d2ff', fontWeight: 900 }}>{getChoiceText(h.new_choice)}</strong>
+                            </div>
+                            
+                            <span className="time-ago-log" style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>
+                              {dateLocal} {dayLocal}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          )}
 
-          <div className="detail-comments-section card-box">
-            <h3 className="section-title">Phòng Gáy</h3>
-            <div className="detail-comment-wrapper">
-              <CommentSection 
-                matchId={matchId} 
-                matchTitle={`${t1.name} vs ${t2.name}`} 
-                onCommentChange={onRefreshMatches}
-                isInline={true}
-              />
+            <div className="detail-comments-section card-box">
+              <h3 className="section-title">Phòng Gáy</h3>
+              <div className="detail-comment-wrapper">
+                <CommentSection 
+                  matchId={matchId} 
+                  matchTitle={`${t1.name} vs ${t2.name}`} 
+                  onCommentChange={onRefreshMatches}
+                  isInline={true}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -575,7 +587,8 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
 
       <style dangerouslySetInnerHTML={{ __html: `
         .match-detail-page {
-          background: #020617;
+          background: rgba(8, 12, 24, 0.85);
+          backdrop-filter: blur(25px);
           height: 100vh;
           width: 100%;
           display: flex;
@@ -588,19 +601,37 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
         .detail-header {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 15px 20px;
+          justify-content: center;
+          padding: 15px 0;
           border-bottom: 1px solid rgba(255,255,255,0.05);
-          background: rgba(15, 23, 42, 0.9);
-          backdrop-filter: blur(10px);
+          background: rgba(15, 23, 42, 0.6);
+          backdrop-filter: blur(15px);
           flex-shrink: 0;
           padding-top: calc(15px + env(safe-area-inset-top, 0px));
+          width: 100%;
+        }
+        .detail-header-inner {
+          width: 100%;
+          max-width: 1100px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 24px;
+          box-sizing: border-box;
         }
         .back-btn { background: none; border: none; color: white; cursor: pointer; }
         .detail-scroll-container {
           flex: 1;
           overflow-y: auto;
           padding-bottom: env(safe-area-inset-bottom, 20px);
+          width: 100%;
+        }
+        .detail-content-inner {
+          width: 100%;
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 20px 24px;
+          box-sizing: border-box;
         }
         .score-hero {
           display: flex;
@@ -608,7 +639,9 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
           align-items: center;
           padding: 30px 20px;
           background: linear-gradient(180deg, rgba(58, 134, 255, 0.15) 0%, transparent 100%);
-          margin-bottom: 10px;
+          margin-bottom: 24px;
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .hero-team {
           display: flex;
@@ -653,7 +686,29 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
         .live-dot { width: 6px; height: 6px; background: #ef4444; border-radius: 50%; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        .detail-sections-container { padding: 0 16px 20px; display: flex; flex-direction: column; gap: 16px; }
+        .detail-sections-container {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+        .detail-grid-layout {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+        @media (min-width: 900px) {
+          .detail-grid-layout {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 24px;
+            align-items: start;
+          }
+          .detail-grid-left, .detail-grid-right {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+          }
+        }
         .card-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 20px; }
         
         /* Voting Styles */
