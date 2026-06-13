@@ -72,6 +72,21 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   const isMissed = (userPrediction && userPrediction.predicted_home_score === -1) ||
                    (!userPrediction && isClosed);
 
+  const matchTimeStr = match ? match.match_time : '';
+  let timePart = '---';
+  let datePart = '---';
+  if (matchTimeStr) {
+    if (matchTimeStr.includes(' - ')) {
+      const parts = matchTimeStr.split(' - ');
+      datePart = parts[0] || '---';
+      timePart = parts[1] || '---';
+    } else {
+      const parts = matchTimeStr.split(' ');
+      timePart = parts[0] || '---';
+      datePart = parts[1] || '---';
+    }
+  }
+
   useEffect(() => {
     if (userPrediction) {
       if (userPrediction.predicted_home_score === -1) setSelectedChoice('MISSED');
@@ -407,18 +422,14 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
                     <Calendar size={18} className="text-cyan-400" />
                     <div className="info-text">
                       <span className="info-label">Ngày thi đấu</span>
-                      <span className="info-value">
-                        {match.match_time ? (match.match_time.includes(' - ') ? match.match_time.split(' - ')[1] : match.match_time.split(' ')[1]) : '---'}
-                      </span>
+                      <span className="info-value">{datePart}</span>
                     </div>
                   </div>
                   <div className="info-item">
                     <Clock size={18} className="text-purple-400" />
                     <div className="info-text">
                       <span className="info-label">Giờ bắt đầu</span>
-                      <span className="info-value">
-                        {match.match_time ? (match.match_time.includes(' - ') ? match.match_time.split(' - ')[0] : match.match_time.split(' ')[0]) : '---'}
-                      </span>
+                      <span className="info-value">{timePart}</span>
                     </div>
                   </div>
                 </div>
