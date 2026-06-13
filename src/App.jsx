@@ -315,7 +315,7 @@ const App = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
                 <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
-                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.41</span>
+                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.42</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -343,7 +343,7 @@ const App = () => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
               <h1 className="brand-name">KizzBugs</h1>
-              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.41</span>
+              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.42</span>
             </div>
           </div>
         </div>
@@ -571,26 +571,9 @@ const App = () => {
             <History size={20} />
             <span>Lịch sử</span>
           </button>
-          <button onClick={() => setActiveTab('ai')} className={`nav-item-bet ${activeTab === 'ai' ? 'active' : ''}`}>
-            <Sparkles size={20} color={activeTab === 'ai' ? '#00d2ff' : 'currentColor'} />
-            <span>Trợ lý AI</span>
-          </button>
-          <button onClick={() => setActiveTab('social')} className={`nav-item-bet ${activeTab === 'social' ? 'active' : ''}`}>
-            <Users size={20} />
-            <span>Cộng đồng</span>
-          </button>
-          <button onClick={() => setActiveTab('bracket')} className={`nav-item-bet ${activeTab === 'bracket' ? 'active' : ''}`}>
-            <GitBranch size={20} />
-            <span>Nhánh đấu</span>
-          </button>
           <button onClick={() => setActiveTab('rules')} className={`nav-item-bet ${activeTab === 'rules' ? 'active' : ''}`}>
             <BookOpen size={20} />
             <span>Luật chơi</span>
-          </button>
-          <button onClick={() => setActiveTab('chat')} className={`nav-item-bet ${activeTab === 'chat' ? 'active' : ''}`} style={{ position: 'relative' }}>
-            <MessageSquare size={20} />
-            <span>Chat</span>
-            {unreadChatCount > 0 && <span className="notif-badge-mini" style={{ top: '5px', right: '15px' }}></span>}
           </button>
         </div>
       </nav>
@@ -719,6 +702,7 @@ const App = () => {
           height: 100vh;
           height: 100dvh;
           overflow: ${activeTab === 'chat' || activeTab === 'ai' ? 'hidden' : 'auto'};
+          overflow-x: hidden;
           display: flex;
           flex-direction: column;
           background: transparent;
@@ -735,6 +719,7 @@ const App = () => {
             height: 100vh;
             height: 100dvh;
             overflow: ${activeTab === 'chat' || activeTab === 'ai' ? 'hidden' : 'auto'};
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
           }
