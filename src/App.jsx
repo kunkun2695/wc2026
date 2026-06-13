@@ -43,6 +43,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [commentMatch, setCommentMatch] = useState(null);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [showAdminMenu, setShowAdminMenu] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -315,10 +316,19 @@ const App = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
                 <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
-                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.42</span>
+                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.44</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {user?.role === 'admin' && (
+                <button 
+                  onClick={() => setShowAdminMenu(!showAdminMenu)} 
+                  className={`mobile-admin-btn ${showAdminMenu ? 'active' : ''}`}
+                  title="Quản trị viên"
+                >
+                  <Shield size={18} />
+                </button>
+              )}
               <button onClick={() => { setShowNotifications(true); requestNotificationPermission(); }} className="mobile-notif-btn">
                 <Bell size={18} />
                 {notifications.some(n => !n.is_read) && <span className="notif-badge-mini" style={{ top: '6px', right: '6px' }}></span>}
@@ -331,6 +341,48 @@ const App = () => {
               </button>
             </div>
           </div>
+          {/* Admin Dropdown Panel */}
+          {showAdminMenu && user?.role === 'admin' && (
+            <>
+              <div className="admin-menu-overlay" onClick={() => setShowAdminMenu(false)} />
+              <div className="mobile-admin-dropdown">
+                <div className="admin-dropdown-header">
+                  <Shield size={14} color="#ffd200" />
+                  <span>BẢNG ĐIỀU HÀNH ADMIN</span>
+                </div>
+                <div className="admin-dropdown-list">
+                  <button 
+                    onClick={() => { setActiveTab('admin_matches'); setShowAdminMenu(false); }} 
+                    className={`admin-dropdown-item ${activeTab === 'admin_matches' ? 'active' : ''}`}
+                  >
+                    <Play size={16} />
+                    <span>Quản lý trận đấu</span>
+                  </button>
+                  <button 
+                    onClick={() => { setActiveTab('admin_teams'); setShowAdminMenu(false); }} 
+                    className={`admin-dropdown-item ${activeTab === 'admin_teams' ? 'active' : ''}`}
+                  >
+                    <Shield size={16} />
+                    <span>Quản lý đội bóng</span>
+                  </button>
+                  <button 
+                    onClick={() => { setActiveTab('admin_users'); setShowAdminMenu(false); }} 
+                    className={`admin-dropdown-item ${activeTab === 'admin_users' ? 'active' : ''}`}
+                  >
+                    <Users size={16} />
+                    <span>Quản lý thành viên</span>
+                  </button>
+                  <button 
+                    onClick={() => { setActiveTab('admin_system'); setShowAdminMenu(false); }} 
+                    className={`admin-dropdown-item ${activeTab === 'admin_system' ? 'active' : ''}`}
+                  >
+                    <Settings size={16} />
+                    <span>Cài đặt hệ thống</span>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </header>
       )}
 
@@ -343,7 +395,7 @@ const App = () => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
               <h1 className="brand-name">KizzBugs</h1>
-              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.42</span>
+              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.44</span>
             </div>
           </div>
         </div>
@@ -729,6 +781,102 @@ const App = () => {
             padding-top: env(safe-area-inset-top, 20px);
             height: calc(60px + env(safe-area-inset-top, 20px));
           }
+        }
+
+        /* Mobile Admin Menu Styles */
+        .mobile-admin-btn {
+          background: rgba(0, 210, 255, 0.08);
+          border: 1px solid rgba(0, 210, 255, 0.2);
+          color: #00d2ff;
+          width: 38px;
+          height: 38px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: 0.2s;
+          position: relative;
+        }
+        .mobile-admin-btn:hover, .mobile-admin-btn.active {
+          background: rgba(255, 210, 0, 0.12);
+          border-color: #ffd200;
+          color: #ffd200;
+          box-shadow: 0 0 10px rgba(255, 210, 0, 0.2);
+        }
+
+        .admin-menu-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(2px);
+          z-index: 1999;
+        }
+
+        .mobile-admin-dropdown {
+          position: absolute;
+          top: calc(100% + 5px);
+          right: 15px;
+          width: 220px;
+          background: #172033;
+          border: 1px solid rgba(255, 210, 0, 0.3);
+          border-radius: 16px;
+          padding: 8px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+          z-index: 2000;
+          animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .admin-dropdown-header {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 12px 6px 12px;
+          font-size: 0.7rem;
+          font-weight: 900;
+          color: #64748b;
+          letter-spacing: 1px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          margin-bottom: 6px;
+        }
+
+        .admin-dropdown-list {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .admin-dropdown-item {
+          width: 100%;
+          border: none;
+          background: transparent;
+          padding: 10px 12px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #94a3b8;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: left;
+        }
+
+        .admin-dropdown-item:hover {
+          background: rgba(255, 255, 255, 0.03);
+          color: white;
+        }
+
+        .admin-dropdown-item.active {
+          background: rgba(255, 210, 0, 0.08);
+          color: #ffd200;
+          font-weight: 700;
         }
       `}</style>
     </div>
