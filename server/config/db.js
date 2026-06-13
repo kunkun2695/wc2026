@@ -10,6 +10,13 @@ const pool = process.env.DATABASE_URL
       port: process.env.DB_PORT || 5432,
     });
 
+// Thiết lập múi giờ Việt Nam cho mọi kết nối trong Pool
+pool.on('connect', (client) => {
+  client.query("SET TIME ZONE 'Asia/Ho_Chi_Minh'").catch(err => {
+    console.error('Lỗi thiết lập múi giờ Asia/Ho_Chi_Minh cho kết nối DB:', err.message);
+  });
+});
+
 // Hàm query có cơ chế tự thử lại nếu mất kết nối
 const query = async (text, params) => {
   try {

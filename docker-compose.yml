@@ -15,6 +15,7 @@ services:
       - JWT_SECRET=worldcup2026_secret_key_prod_by_antigravity
       - VAPID_PUBLIC_KEY=BE_cpojus2_nYd4aTJdzHTL-b9f-Csp5RTBez_2cmyB96lkrJN3AW-GBuDNOr7L9sTug9kmNmZud0Y6e90TbUj0
       - VAPID_PRIVATE_KEY=ixGqkAeBMHOD7KKUwYmONKxpwjQC9j6DVDhrvNFYTWY
+      - TZ=Asia/Ho_Chi_Minh
     depends_on: # <--- Chữ d này cũng thẳng hàng
       - db
 
@@ -24,6 +25,7 @@ services:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=pass
       - POSTGRES_DB=worldcup2026
+      - TZ=Asia/Ho_Chi_Minh
     ports:
       - "5433:5432"
     volumes:

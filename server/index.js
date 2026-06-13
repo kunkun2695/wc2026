@@ -1,3 +1,6 @@
+// Thiết lập múi giờ Việt Nam mặc định cho Node.js
+process.env.TZ = 'Asia/Ho_Chi_Minh';
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
