@@ -73,11 +73,17 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
     }
   };
 
+  const [hideFinished, setHideFinished] = useState(true);
+
   // Sắp xếp và lọc trận đấu
   const displayMatches = useMemo(() => {
     let filtered = activeTab === 'all' 
       ? matches 
       : matches.filter(m => predictions.some(p => p.match_id === m.id));
+
+    if (hideFinished) {
+      filtered = filtered.filter(m => m.status !== 'FT' && m.status !== 'FINISHED');
+    }
 
     // Sắp xếp theo thời gian TĂNG DẦN (Trận gần hiện tại nhất lên đầu)
     return [...filtered].sort((a, b) => {
@@ -85,16 +91,25 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
       const timeB = parseMatchTime(b.match_time);
       return timeA - timeB; // Tăng dần
     });
-  }, [matches, predictions, activeTab]);
+  }, [matches, predictions, activeTab, hideFinished]);
 
   // Nhóm theo ngày để hiển thị tiêu đề ngày
-  const groupedByDate = useMemo(() => {
-    return displayMatches.reduce((acc, match) => {
-      const dateStr = match.match_time ? match.match_time.split(' ')[1] : 'Sắp tới';
-      if (!acc[dateStr]) acc[dateStr] = [];
-      acc[dateStr].push(match);
-      return acc;
-    }, {});
+  const groupedMatches = useMemo(() => {
+    const groups = [];
+    displayMatches.forEach(m => {
+      const getMatchDate = (timeStr) => {
+        if (!timeStr) return 'Sắp tới';
+        return timeStr.includes(' - ') ? timeStr.split(' - ')[0] : (timeStr.split(' ')[1] || timeStr);
+      };
+      const matchDate = getMatchDate(m.match_time);
+      let group = groups.find(g => g.date === matchDate);
+      if (!group) {
+        group = { date: matchDate, matches: [] };
+        groups.push(group);
+      }
+      group.matches.push(m);
+    });
+    return groups;
   }, [displayMatches]);
 
   const predictedCount = predictions.length;
@@ -125,57 +140,61 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
             </div>
           </div>
 
-          <div className="filter-tabs">
-            <button className={`filter-tab-btn ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>
-              <LayoutGrid size={18} /> TẤT CẢ TRẬN ĐẤU
-            </button>
-            <button className={`filter-tab-btn ${activeTab === 'predicted' ? 'active' : ''}`} onClick={() => setActiveTab('predicted')}>
-              <CheckCircle2 size={18} /> ĐÃ DỰ ĐOÁN
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '30px' }}>
+            <div className="filter-tabs" style={{ marginBottom: 0 }}>
+              <button className={`filter-tab-btn ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>
+                <LayoutGrid size={18} /> TẤT CẢ TRẬN ĐẤU
+              </button>
+              <button className={`filter-tab-btn ${activeTab === 'predicted' ? 'active' : ''}`} onClick={() => setActiveTab('predicted')}>
+                <CheckCircle2 size={18} /> ĐÃ DỰ ĐOÁN
+              </button>
+            </div>
+            
+            <label className="toggle-hide-finished">
+              <input 
+                type="checkbox" 
+                checked={hideFinished} 
+                onChange={(e) => setHideFinished(e.target.checked)}
+                style={{ cursor: 'pointer', accentColor: '#00d2ff' }}
+              />
+              <span>ẨN TRẬN ĐÃ KẾT THÚC</span>
+            </label>
           </div>
         </div>
       </div>
 
       <div className="timeline-container">
-        {displayMatches.length > 0 ? (
-          <div className="matches-timeline">
-            {displayMatches.map((m, idx) => {
-              const pred = predictions.find(p => p.match_id === m.id);
-              
-              // Improved date detection
-              const getMatchDate = (timeStr) => {
-                if (!timeStr) return 'Sắp tới';
-                return timeStr.includes(' - ') ? timeStr.split(' - ')[0] : (timeStr.split(' ')[1] || timeStr);
-              };
-              const matchDate = getMatchDate(m.match_time);
-              const prevMatchDate = idx > 0 ? getMatchDate(displayMatches[idx-1].match_time) : null;
-
-              const showDateLabel = idx === 0 || matchDate !== prevMatchDate;
-
-              return (
-                <div key={m.id} className="timeline-item">
-                  {showDateLabel && (
-                    <div className="timeline-date-label">
-                      <div className="date-pill">
-                        <Calendar size={14} />
-                        <span>{matchDate ? `NGÀY ${matchDate}` : 'CHƯA XÁC ĐỊNH'}</span>
-                      </div>
-                      <div className="date-line" />
-                    </div>
-                  )}
-                  <div className="match-card-wrapper">
-                    <MatchCard 
-                      match={m} 
-                      userPrediction={pred}
-                      onSavePrediction={onSavePrediction}
-                      onRefreshMatches={onRefreshMatches}
-                      onOpenComments={onOpenComments}
-                      onViewDetails={onViewDetails}
-                    />
+        {groupedMatches.length > 0 ? (
+          <div className="matches-timeline-groups">
+            {groupedMatches.map((group, idx) => (
+              <div key={group.date} className="date-group-section" style={{ marginBottom: '45px' }}>
+                <div className="timeline-date-label">
+                  <div className="date-pill">
+                    <Calendar size={14} />
+                    <span>{group.date ? `NGÀY ${group.date}` : 'CHƯA XÁC ĐỊNH'}</span>
                   </div>
+                  <div className="date-line" />
                 </div>
-              );
-            })}
+                
+                <div className="matches-grid">
+                  {group.matches.map(m => {
+                    const pred = predictions.find(p => p.match_id === m.id);
+                    return (
+                      <div key={m.id} className="match-card-wrapper">
+                        <MatchCard 
+                          match={m} 
+                          userPrediction={pred}
+                          onSavePrediction={onSavePrediction}
+                          onRefreshMatches={onRefreshMatches}
+                          onOpenComments={onOpenComments}
+                          onViewDetails={onViewDetails}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="empty-state">
@@ -194,18 +213,39 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
         
         .prediction-counter { display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 210, 255, 0.1); padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; color: #00d2ff; font-weight: 900; letter-spacing: 1px; border: 1px solid rgba(0, 210, 255, 0.2); }
         
-        .filter-tabs { display: flex; background: rgba(255, 255, 255, 0.03); padding: 6px; border-radius: 16px; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 40px; width: fit-content; }
+        .filter-tabs { display: flex; background: rgba(255, 255, 255, 0.03); padding: 6px; border-radius: 16px; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.05); width: fit-content; }
         .filter-tab-btn { display: flex; align-items: center; gap: 10px; padding: 10px 20px; border: none; background: transparent; color: #64748b; font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: 0.3s; border-radius: 12px; }
         .filter-tab-btn.active { background: #00d2ff; color: #020617; box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); }
 
+        .toggle-hide-finished {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          cursor: pointer;
+          font-size: 0.75rem;
+          font-weight: 900;
+          color: #94a3b8;
+          background: rgba(255, 255, 255, 0.03);
+          padding: 10px 18px;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          user-select: none;
+          transition: 0.2s;
+        }
+        .toggle-hide-finished:hover {
+          color: white;
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.12);
+        }
+
         .timeline-container { position: relative; }
-        .matches-timeline { display: flex; flex-direction: column; gap: 30px; }
+        .matches-timeline-groups { display: flex; flex-direction: column; }
         
         .timeline-date-label { 
           display: flex; 
           align-items: center; 
           gap: 15px; 
-          margin: 30px 0 15px 0;
+          margin: 10px 0 20px 0;
         }
         .date-pill {
           display: flex;
@@ -227,13 +267,29 @@ const HomeView = ({ matches, predictions = [], onSavePrediction, onRefreshMatche
           background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
         }
 
+        .matches-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+        }
+
         .match-card-wrapper { transition: transform 0.3s; }
         .match-card-wrapper:hover { transform: scale(1.01); }
+
+        @media (max-width: 1024px) {
+          .matches-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
 
         @media (max-width: 768px) {
           .home-view-bet { padding: 80px 15px; }
           .title-section h2 { font-size: 1.4rem; }
-          .filter-tabs { width: 100%; }
+          .filter-tabs { width: 100%; justify-content: center; }
+          .toggle-hide-finished { width: 100%; justify-content: center; }
+          .matches-grid {
+            grid-template-columns: 1fr;
+          }
         }
       ` }} />
     </div>
