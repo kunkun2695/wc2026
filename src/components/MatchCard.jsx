@@ -140,7 +140,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
     if (isMissed) {
       return (
         <div style={{ 
-          fontSize: '0.75rem', 
+          fontSize: '0.85rem', 
           fontWeight: 900, 
           marginTop: '15px', 
           textAlign: 'center', 
@@ -158,7 +158,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
     const isCorrect = userPrediction.points === 10;
     return (
       <div style={{ 
-        fontSize: '0.75rem', 
+        fontSize: '0.85rem', 
         fontWeight: 900, 
         marginTop: '15px', 
         textAlign: 'center', 
@@ -212,9 +212,9 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
               <span className="vs-label">VS</span>
               <span style={{ 
-                fontSize: '0.75rem', 
+                fontSize: '0.85rem', 
                 fontWeight: 800, 
-                color: 'rgba(0, 210, 255, 0.6)', 
+                color: 'rgba(0, 210, 255, 0.8)', 
                 fontFamily: 'monospace',
                 background: 'rgba(0, 210, 255, 0.04)',
                 padding: '2px 8px',
@@ -243,7 +243,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
       </div>
 
       {/* Handicap Display Row */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '-10px 0 18px 0', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '-10px 0 18px 0', fontSize: '0.85rem', fontWeight: 800, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
         {match.handicap_favorite && parseFloat(match.handicap_value) !== 0 ? (
           <span>Kèo chấp: <strong style={{ color: '#00d2ff' }}>
             {match.handicap_favorite === t1.name 
@@ -269,7 +269,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
               <div className="btn-team-flag"><FlagIcon flag={t1.flag} /></div>
               <span className="btn-choice-text">{t1.name}</span>
               {getHandicapLabel(t1.name) && (
-                <span style={{ fontSize: '0.65rem', opacity: 0.8, marginLeft: '2px', fontWeight: 800, color: selectedChoice === '1' ? 'inherit' : '#00d2ff' }}>
+                <span style={{ fontSize: '0.75rem', opacity: 0.9, marginLeft: '2px', fontWeight: 800, color: selectedChoice === '1' ? 'inherit' : '#00d2ff' }}>
                   ({getHandicapLabel(t1.name)})
                 </span>
               )}
@@ -312,7 +312,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
               <div className="btn-team-flag"><FlagIcon flag={t2.flag} /></div>
               <span className="btn-choice-text">{t2.name}</span>
               {getHandicapLabel(t2.name) && (
-                <span style={{ fontSize: '0.65rem', opacity: 0.8, marginLeft: '2px', fontWeight: 800, color: selectedChoice === '2' ? 'inherit' : '#00d2ff' }}>
+                <span style={{ fontSize: '0.75rem', opacity: 0.9, marginLeft: '2px', fontWeight: 800, color: selectedChoice === '2' ? 'inherit' : '#00d2ff' }}>
                   ({getHandicapLabel(t2.name)})
                 </span>
               )}
@@ -339,7 +339,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <div className="missed-tag" style={{
               background: 'rgba(239, 68, 68, 0.08)',
               color: '#ef4444',
-              fontSize: '0.65rem',
+              fontSize: '0.75rem',
               fontWeight: 800,
               padding: '4px 10px',
               border: '1px solid rgba(239, 68, 68, 0.15)',
@@ -416,8 +416,8 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           color: #00d2ff;
           padding: 4px 10px;
           border-radius: 8px;
-          font-size: 0.75rem;
-          font-weight: 800;
+          font-size: 0.85rem;
+          font-weight: 900;
           border: 1px solid rgba(0, 210, 255, 0.15);
         }
         
@@ -426,7 +426,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           align-items: center;
           gap: 6px;
           color: #ef4444;
-          font-size: 0.7rem;
+          font-size: 0.8rem;
           font-weight: 900;
           letter-spacing: 1px;
         }
@@ -445,8 +445,8 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
         
         .finished-badge {
-          color: rgba(255, 255, 255, 0.3);
-          font-size: 0.7rem;
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 0.8rem;
           font-weight: 800;
         }
 
@@ -492,8 +492,8 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
         
         .team-name-label {
-          font-size: 1rem;
-          font-weight: 700;
+          font-size: 1.15rem;
+          font-weight: 800;
           color: white;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -509,9 +509,9 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
         
         .vs-label {
-          font-size: 0.8rem;
+          font-size: 0.9rem;
           font-weight: 900;
-          color: rgba(255, 255, 255, 0.2);
+          color: rgba(255, 255, 255, 0.4);
           letter-spacing: 2px;
           background: rgba(255, 255, 255, 0.02);
           padding: 4px 10px;
@@ -523,12 +523,12 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           display: flex;
           align-items: center;
           gap: 6px;
-          font-size: 1.3rem;
+          font-size: 1.6rem;
           font-weight: 900;
           color: #00d2ff;
           font-family: 'Outfit', sans-serif;
           background: rgba(0, 210, 255, 0.08);
-          padding: 4px 12px;
+          padding: 4px 14px;
           border-radius: 10px;
           border: 1px solid rgba(0, 210, 255, 0.15);
           box-shadow: 0 0 15px rgba(0, 210, 255, 0.05);
@@ -608,9 +608,9 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
         
         .choice-btn-v2-draw-label {
-          font-size: 0.75rem;
+          font-size: 0.85rem;
           font-weight: 800;
-          color: rgba(255, 255, 255, 0.5);
+          color: rgba(255, 255, 255, 0.75);
           letter-spacing: 0.5px;
         }
         
@@ -644,12 +644,12 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
         
         .btn-choice-text {
-          font-size: 0.75rem;
+          font-size: 0.85rem;
           font-weight: 800;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          max-width: 65px;
+          max-width: 80px;
           display: inline-block;
         }
         
@@ -665,9 +665,9 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         .vote-bar-fill.away { background: #34d399; }
         
         .vote-percent {
-          font-size: 0.7rem;
+          font-size: 0.85rem;
           font-weight: 800;
-          color: rgba(255, 255, 255, 0.25);
+          color: rgba(255, 255, 255, 0.6);
           text-align: center;
         }
         
@@ -682,15 +682,15 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           display: flex;
           align-items: center;
           gap: 6px;
-          font-size: 0.7rem;
-          color: rgba(255, 255, 255, 0.25);
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.6);
           font-weight: 700;
         }
         
         .voted-tag {
           background: rgba(52, 211, 153, 0.08);
           color: #34d399;
-          font-size: 0.65rem;
+          font-size: 0.75rem;
           font-weight: 800;
           padding: 4px 10px;
           border-radius: 6px;
@@ -706,7 +706,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           color: #00d2ff;
           padding: 8px 18px;
           border-radius: 10px;
-          font-size: 0.75rem;
+          font-size: 0.85rem;
           font-weight: 800;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -749,23 +749,23 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             padding: 5px;
           }
           .team-name-label {
-            font-size: 0.85rem;
+            font-size: 0.95rem;
           }
           .score-display-premium {
-            font-size: 1.1rem;
+            font-size: 1.35rem;
             padding: 3px 8px;
           }
           .choice-btn-v2 {
             height: 44px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             border-radius: 10px;
           }
           .choice-grid-v2 {
             gap: 8px;
           }
           .btn-choice-text {
-            max-width: 50px;
-            font-size: 0.7rem;
+            max-width: 65px;
+            font-size: 0.8rem;
           }
         }
       ` }} />
