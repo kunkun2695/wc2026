@@ -145,22 +145,24 @@ app.use((req, res) => {
 const parseMatchTimeStr = (timeStr) => {
   if (!timeStr) return new Date(0);
   try {
+    let day, month, hour, min;
     if (timeStr.includes('/')) {
       const [datePart, timePart] = timeStr.split(' - ');
-      const [day, month] = datePart.split('/');
-      const [hour, min] = timePart.split(':');
-      return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
-    }
-    if (timeStr.includes('.')) {
+      [day, month] = datePart.split('/');
+      [hour, min] = timePart.split(':');
+    } else if (timeStr.includes('.')) {
       const [datePart, timePart] = timeStr.split(' - ');
-      const [day, month] = datePart.split('.');
-      const [hour, min] = timePart.split(':');
-      return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+      [day, month] = datePart.split('.');
+      [hour, min] = timePart.split(':');
+    } else {
+      const parts = timeStr.split(/[\s-]/);
+      const [time, d, m] = parts.filter(Boolean);
+      [hour, min] = time.split(':');
+      day = d;
+      month = m;
     }
-    const parts = timeStr.split(/[\s-]/);
-    const [time, day, month] = parts.filter(Boolean);
-    const [hour, min] = time.split(':');
-    return new Date(2026, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min));
+    const isoStr = `2026-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${min.padStart(2, '0')}:00+07:00`;
+    return new Date(isoStr);
   } catch (e) {
     return new Date(0);
   }
