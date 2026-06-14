@@ -308,16 +308,6 @@ const PaymentView = () => {
                 {submitting ? <RefreshCw className="animate-spin" size={16} /> : <Send size={16} />}
                 XÁC NHẬN ĐÃ CHUYỂN TIỀN
               </button>
-
-              <a 
-                href={deepLinkUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="deeplink-btn"
-              >
-                <ExternalLink size={16} />
-                MỞ APP NGÂN HÀNG
-              </a>
             </div>
 
             {msg.text && (
@@ -681,28 +671,6 @@ const PaymentView = () => {
         
         .submit-payment-btn:hover {
           box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
-          transform: translateY(-1px);
-        }
-        
-        .deeplink-btn {
-          flex: 0.8;
-          background: rgba(255, 255, 255, 0.05);
-          color: white;
-          font-weight: 700;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          padding: 14px 20px;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          text-decoration: none;
-          transition: 0.2s;
-        }
-        
-        .deeplink-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
           transform: translateY(-1px);
         }
         
