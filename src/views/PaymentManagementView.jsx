@@ -120,8 +120,8 @@ const PaymentManagementView = () => {
         <div className="summary-stat-box">
           <DollarSign size={20} color="#00d2ff" />
           <div>
-            <span className="stat-label">Số tiền chờ đối soát</span>
-            <span className="stat-value font-monospace text-info">{pendingSum.toLocaleString('vi-VN')} đ</span>
+            <span className="stat-label">Số bánh chờ đối soát</span>
+            <span className="stat-value font-monospace text-info">{Math.floor(pendingSum / 1000)} bánh ({pendingSum.toLocaleString('vi-VN')} đ)</span>
           </div>
         </div>
         <button onClick={fetchPayments} className="refresh-btn">
@@ -177,7 +177,7 @@ const PaymentManagementView = () => {
           <div className="admin-pay-table">
             <div className="table-header">
               <span>Thành viên</span>
-              <span>Số tiền</span>
+              <span>Số bánh</span>
               <span>Nội dung chuyển</span>
               <span>Thời gian</span>
               <span>Trạng thái / Ghi chú</span>
@@ -199,7 +199,7 @@ const PaymentManagementView = () => {
 
                 {/* Amount */}
                 <div className="amount-col font-monospace font-bold">
-                  {pay.amount.toLocaleString('vi-VN')}đ
+                  {Math.floor(pay.amount / 1000)} bánh ({pay.amount.toLocaleString('vi-VN')}đ)
                 </div>
 
                 {/* Transfer code / Custom Memo */}

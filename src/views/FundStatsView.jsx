@@ -83,17 +83,17 @@ const FundStatsView = () => {
       <div className="stats-summary-row">
         <div className="summary-card pool">
           <span className="summary-label">Tổng quỹ giải (Phạt phát sinh)</span>
-          <span className="summary-value">{totalFines.toLocaleString('vi-VN')} đ</span>
+          <span className="summary-value">{Math.floor(totalFines / 1000)} bánh</span>
           <div className="card-decoration pool-glow" />
         </div>
         <div className="summary-card collected">
           <span className="summary-label">Quỹ đã thu thực tế</span>
-          <span className="summary-value highlight-green">{totalPaid.toLocaleString('vi-VN')} đ</span>
+          <span className="summary-value highlight-green">{Math.floor(totalPaid / 1000)} bánh</span>
           <div className="card-decoration success-glow" />
         </div>
         <div className="summary-card remaining">
           <span className="summary-label">Tổng quỹ còn nợ</span>
-          <span className="summary-value highlight-orange">{totalRemaining.toLocaleString('vi-VN')} đ</span>
+          <span className="summary-value highlight-orange">{Math.floor(totalRemaining / 1000)} bánh</span>
           <div className="card-decoration warning-glow" />
         </div>
       </div>
@@ -148,7 +148,7 @@ const FundStatsView = () => {
               <div className="public-history-table">
                 <div className="table-header">
                   <span>Thành viên</span>
-                  <span>Số tiền</span>
+                  <span>Số bánh</span>
                   <span>Mã nội dung</span>
                   <span>Ngày đóng</span>
                   <span>Trạng thái</span>
@@ -168,7 +168,7 @@ const FundStatsView = () => {
                     </div>
                     
                     <span className="amount-col font-monospace font-bold">
-                      {pay.amount.toLocaleString('vi-VN')}đ
+                      {Math.floor(pay.amount / 1000)} bánh
                     </span>
                     
                     <span className="code-col font-monospace text-info">
@@ -231,9 +231,9 @@ const FundStatsView = () => {
               <div className="members-stats-table">
                 <div className="table-header">
                   <span>Thành viên</span>
-                  <span className="text-right">Tổng phạt phát sinh</span>
-                  <span className="text-right">Đã đóng quỹ</span>
-                  <span className="text-right">Còn nợ quỹ</span>
+                  <span className="text-right">Tổng phạt (Bánh)</span>
+                  <span className="text-right">Đã đóng (Bánh)</span>
+                  <span className="text-right">Còn nợ (Bánh)</span>
                   <span className="text-center">Tình trạng</span>
                 </div>
                 
@@ -250,15 +250,15 @@ const FundStatsView = () => {
                       </div>
                       
                       <span className="text-right font-monospace font-bold text-slate">
-                        {(parseInt(mem.total_fines || 0)).toLocaleString('vi-VN')}đ
+                        {Math.floor(parseInt(mem.total_fines || 0) / 1000)} bánh
                       </span>
                       
                       <span className="text-right font-monospace font-bold text-success">
-                        {(parseInt(mem.total_paid || 0)).toLocaleString('vi-VN')}đ
+                        {Math.floor(parseInt(mem.total_paid || 0) / 1000)} bánh
                       </span>
                       
                       <span className={`text-right font-monospace font-bold ${parseInt(mem.remaining_fines || 0) > 0 ? 'text-danger' : 'text-success-light'}`}>
-                        {(parseInt(mem.remaining_fines || 0)).toLocaleString('vi-VN')}đ
+                        {Math.floor(parseInt(mem.remaining_fines || 0) / 1000)} bánh
                       </span>
                       
                       <div className="text-center">

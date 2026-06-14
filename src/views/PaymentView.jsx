@@ -177,17 +177,17 @@ const PaymentView = () => {
       <div className="payment-summary-row">
         <div className="summary-card fine">
           <span className="summary-label">Tổng phạt tích lũy</span>
-          <span className="summary-value">{(userFines.total).toLocaleString('vi-VN')} đ</span>
+          <span className="summary-value">{Math.floor(userFines.total / 1000)} bánh</span>
           <div className="card-decoration error-glow" />
         </div>
         <div className="summary-card paid">
           <span className="summary-label">Đã đóng quỹ</span>
-          <span className="summary-value">{(userFines.paid).toLocaleString('vi-VN')} đ</span>
+          <span className="summary-value">{Math.floor(userFines.paid / 1000)} bánh</span>
           <div className="card-decoration success-glow" />
         </div>
         <div className="summary-card remaining">
           <span className="summary-label">Còn nợ quỹ</span>
-          <span className="summary-value highlight">{(userFines.remaining).toLocaleString('vi-VN')} đ</span>
+          <span className="summary-value highlight">{Math.floor(userFines.remaining / 1000)} bánh</span>
           <div className="card-decoration info-glow" />
         </div>
       </div>
@@ -209,7 +209,7 @@ const PaymentView = () => {
                   }}
                   className={`selector-btn ${paymentMode === 'full' ? 'active' : ''}`}
                 >
-                  Đóng toàn bộ nợ phạt ({userFines.remaining.toLocaleString('vi-VN')}đ)
+                  Đóng toàn bộ nợ phạt ({Math.floor(userFines.remaining / 1000)} bánh)
                 </button>
                 <button
                   type="button"
@@ -282,7 +282,7 @@ const PaymentView = () => {
               <div className="copy-row">
                 <span className="copy-label">Số tiền:</span>
                 <div className="copy-action-wrapper">
-                  <span className="copy-val font-monospace" style={{ color: '#ffd200' }}>{amount.toLocaleString('vi-VN')} đ</span>
+                  <span className="copy-val font-monospace" style={{ color: '#ffd200' }}>{amount.toLocaleString('vi-VN')} đ ({Math.floor(amount / 1000)} bánh)</span>
                   <button type="button" onClick={() => handleCopy(amount.toString(), 'amount')} className="copy-btn">
                     {copiedField === 'amount' ? <Check size={14} color="#00ff64" /> : <Copy size={14} />}
                   </button>
@@ -365,7 +365,7 @@ const PaymentView = () => {
             <div className="history-table">
               <div className="table-header">
                 <span>Ngày tạo</span>
-                <span>Số tiền</span>
+                <span>Số lượng (Bánh)</span>
                 <span>Nội dung chuyển</span>
                 <span>Trạng thái</span>
                 <span>Ghi chú duyệt</span>
@@ -377,7 +377,7 @@ const PaymentView = () => {
                     {new Date(pay.created_at).toLocaleString('vi-VN', { hour12: false })}
                   </span>
                   <span className="font-monospace font-bold">
-                    {pay.amount.toLocaleString('vi-VN')}đ
+                    {Math.floor(pay.amount / 1000)} bánh ({pay.amount.toLocaleString('vi-VN')}đ)
                   </span>
                   <span className="font-monospace text-info">{pay.transfer_code}</span>
                   <span>

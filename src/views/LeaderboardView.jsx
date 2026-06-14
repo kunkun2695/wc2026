@@ -52,9 +52,9 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
             <div>
               <h4 className="banner-title">Quỹ phạt của bạn</h4>
               <p className="banner-desc">
-                Tổng phạt: <strong>{(myData.total_fines || 0).toLocaleString('vi-VN')}đ</strong> | 
-                Đã đóng: <strong>{(myData.total_paid || 0).toLocaleString('vi-VN')}đ</strong> | 
-                Còn nợ: <strong style={{ color: myData.remaining_fines > 0 ? '#ef4444' : '#10b981' }}>{(myData.remaining_fines || 0).toLocaleString('vi-VN')}đ</strong>
+                Tổng phạt: <strong>{Math.floor((myData.total_fines || 0) / 1000)} bánh</strong> | 
+                Đã đóng: <strong>{Math.floor((myData.total_paid || 0) / 1000)} bánh</strong> | 
+                Còn nợ: <strong style={{ color: myData.remaining_fines > 0 ? '#ef4444' : '#10b981' }}>{Math.floor((myData.remaining_fines || 0) / 1000)} bánh</strong>
               </p>
             </div>
           </div>
@@ -86,7 +86,7 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
               <span className="podium-points">{topThree[1].total_points || 0} ĐIỂM</span>
               <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
                 <span style={{ color: topThree[1].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
-                  {Math.floor(topThree[1].remaining_fines / 1000)}k
+                  {Math.floor(topThree[1].remaining_fines / 1000)} bánh
                 </span>
                 <span className="fine-sub">còn nợ</span>
               </div>
@@ -111,7 +111,7 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
               <span className="podium-points">{topThree[0].total_points || 0} ĐIỂM</span>
               <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
                 <span style={{ color: topThree[0].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
-                  {Math.floor(topThree[0].remaining_fines / 1000)}k
+                  {Math.floor(topThree[0].remaining_fines / 1000)} bánh
                 </span>
                 <span className="fine-sub">còn nợ</span>
               </div>
@@ -135,7 +135,7 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
               <span className="podium-points">{topThree[2].total_points || 0} ĐIỂM</span>
               <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
                 <span style={{ color: topThree[2].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
-                  {Math.floor(topThree[2].remaining_fines / 1000)}k
+                  {Math.floor(topThree[2].remaining_fines / 1000)} bánh
                 </span>
                 <span className="fine-sub">còn nợ</span>
               </div>
@@ -151,7 +151,7 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
             <div className="lb-table-header">
               <span className="col-rank">HẠNG</span>
               <span className="col-user">THÀNH VIÊN</span>
-              <span className="col-fines text-right">TIỀN PHẠT</span>
+              <span className="col-fines text-right">PHẠT (BÁNH)</span>
               <span className="col-points text-right">TỔNG ĐIỂM</span>
             </div>
             
@@ -178,11 +178,11 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
 
                   <div className="col-fines text-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
                     <span className="fine-value-mini" style={{ color: user.remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
-                      {Math.floor(user.remaining_fines / 1000)}k
+                      {Math.floor(user.remaining_fines / 1000)} bánh
                     </span>
                     {user.total_paid > 0 && (
                       <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', marginTop: '2px', fontWeight: 600 }}>
-                        đã đóng {Math.floor(user.total_paid / 1000)}k
+                        đã đóng {Math.floor(user.total_paid / 1000)} bánh
                       </span>
                     )}
                   </div>
