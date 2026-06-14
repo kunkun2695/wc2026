@@ -108,10 +108,10 @@ async function patchDatabase() {
 
     // Khởi tạo các cấu hình ngân hàng mặc định nếu chưa có
     const defaultConfigs = [
-      ['BANK_ID', 'MB'],
-      ['BANK_ACCOUNT_NO', '1234567890'],
-      ['BANK_ACCOUNT_NAME', 'NGUYEN VAN A'],
-      ['BANK_NAME', 'MB Bank'],
+      ['BANK_ID', 'VCB'],
+      ['BANK_ACCOUNT_NO', '1048875209'],
+      ['BANK_ACCOUNT_NAME', 'NGUYEN THI HAI'],
+      ['BANK_NAME', 'Vietcombank'],
       ['MEMO_PREFIX', 'KBPAY'],
       ['MEMO_TEMPLATE', 'KBPAY {username}']
     ];
@@ -122,6 +122,12 @@ async function patchDatabase() {
         ON CONFLICT (key) DO NOTHING
       `, [key, value]);
     }
+
+    // Tự động cập nhật nếu cơ sở dữ liệu hiện tại đang sử dụng cấu hình mẫu cũ (MB Bank)
+    await db.query(`UPDATE system_config SET value = 'VCB' WHERE key = 'BANK_ID' AND value = 'MB'`);
+    await db.query(`UPDATE system_config SET value = '1048875209' WHERE key = 'BANK_ACCOUNT_NO' AND value = '1234567890'`);
+    await db.query(`UPDATE system_config SET value = 'NGUYEN THI HAI' WHERE key = 'BANK_ACCOUNT_NAME' AND value = 'NGUYEN VAN A'`);
+    await db.query(`UPDATE system_config SET value = 'Vietcombank' WHERE key = 'BANK_NAME' AND value = 'MB Bank'`);
 
     console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội, Chat Image, bảo mật tài khoản, kèo cược, lịch sử đổi kèo và bảng thanh toán thành công.');
   } catch (err) {

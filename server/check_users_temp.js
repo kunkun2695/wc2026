@@ -6,8 +6,8 @@ async function run() {
   try {
     const dbInfo = await db.query('SELECT current_database(), current_user');
     console.log('Connected to DB info:', dbInfo.rows[0]);
-    const res = await db.query('SELECT username, name, role FROM users');
-    console.log('Users in DB:');
+    const res = await db.query('SELECT * FROM system_config');
+    console.log('Config in DB:');
     console.log(res.rows);
     process.exit(0);
   } catch (err) {

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { mockAuth } from '../data/mockAuth';
 import API_URL from '../config';
+import UserAvatar from '../components/UserAvatar';
 
 const FundStatsView = () => {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -157,7 +158,9 @@ const FundStatsView = () => {
                 {filteredHistory.map((pay, i) => (
                   <div key={i} className="table-row">
                     <div className="user-info-col">
-                      <span className="user-avatar">{pay.user_avatar || '👤'}</span>
+                      <div className="user-avatar" style={{ borderRadius: '50%', overflow: 'hidden' }}>
+                        <UserAvatar src={pay.user_avatar} size={32} />
+                      </div>
                       <div className="user-details">
                         <span className="name">{pay.user_name || pay.username}</span>
                         <span className="username font-monospace">@{pay.username}</span>
@@ -240,7 +243,9 @@ const FundStatsView = () => {
                   .map((mem, i) => (
                     <div key={i} className="table-row">
                       <div className="user-info-col">
-                        <span className="user-avatar">{mem.avatar || '👤'}</span>
+                        <div className="user-avatar" style={{ borderRadius: '50%', overflow: 'hidden' }}>
+                          <UserAvatar src={mem.avatar} size={32} />
+                        </div>
                         <span className="name font-bold">{mem.name}</span>
                       </div>
                       

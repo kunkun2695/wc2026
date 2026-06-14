@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { mockAuth } from '../data/mockAuth';
 import API_URL from '../config';
+import UserAvatar from '../components/UserAvatar';
 
 const PaymentManagementView = () => {
   const [payments, setPayments] = useState([]);
@@ -187,7 +188,9 @@ const PaymentManagementView = () => {
               <div key={pay.id} className="table-row">
                 {/* User column */}
                 <div className="user-col">
-                  <span className="avatar-preview">{pay.user_avatar || '👤'}</span>
+                  <div className="avatar-preview" style={{ borderRadius: '50%', overflow: 'hidden' }}>
+                    <UserAvatar src={pay.user_avatar} size={32} />
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span className="user-name">{pay.user_name || pay.username}</span>
                     <span className="username font-monospace">@{pay.username}</span>
