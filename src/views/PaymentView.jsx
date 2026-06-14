@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   CreditCard, QrCode, AlertCircle, CheckCircle, 
-  XCircle, Clock, RefreshCw, Copy, Check, ExternalLink, DollarSign 
+  XCircle, Clock, RefreshCw, Copy, Check, ExternalLink, DollarSign, Send 
 } from 'lucide-react';
 import { mockAuth } from '../data/mockAuth';
 import API_URL from '../config';
