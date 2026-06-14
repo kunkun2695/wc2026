@@ -239,6 +239,12 @@ const syncMatches = async () => {
         [homeName, awayName]
       );
 
+      // Nếu trận đấu đã kết thúc nhưng API trả về tỷ số null (lỗi cache của API), bỏ qua không cập nhật tỷ số
+      if (m.status === 'FINISHED' && (m.score.fullTime.home === null || m.score.fullTime.away === null)) {
+        console.warn(`[SYNC] Bỏ qua trận đấu ${homeName} vs ${awayName} do trạng thái FINISHED nhưng tỷ số từ API trả về null (lỗi cache API).`);
+        continue;
+      }
+
       const homeScore = m.score.fullTime.home ?? 0;
       const awayScore = m.score.fullTime.away ?? 0;
       const status = m.status === 'FINISHED' ? 'FT' : (m.status === 'IN_PLAY' ? 'LIVE' : 'UPCOMING');
@@ -257,6 +263,12 @@ const syncMatches = async () => {
         const oldStatus = matchCheck.rows[0].status;
         const oldHomeScore = matchCheck.rows[0].team1_score ?? 0;
         const oldAwayScore = matchCheck.rows[0].team2_score ?? 0;
+
+        // Phòng chống lỗi giật lùi trạng thái (ví dụ từ FT quay lại UPCOMING/LIVE do lỗi dữ liệu API)
+        if (oldStatus === 'FT' && status !== 'FT') {
+          console.warn(`[SYNC] Ngăn chặn cập nhật trạng thái từ FT về ${status} cho trận ${homeName} vs ${awayName}`);
+          continue;
+        }
 
         const scoreChanged = oldHomeScore !== homeScore || oldAwayScore !== awayScore;
 
