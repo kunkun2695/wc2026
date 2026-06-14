@@ -15,13 +15,23 @@ const AdminView = () => {
   const [configLoading, setConfigLoading] = useState(false);
   const [configMsg, setConfigMsg] = useState('');
 
+  // Bank Config States
+  const [bankId, setBankId] = useState('');
+  const [bankNo, setBankNo] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [bankHolder, setBankHolder] = useState('');
+  const [memoPrefix, setMemoPrefix] = useState('');
+  const [memoTemplate, setMemoTemplate] = useState('');
+  const [bankLoading, setBankLoading] = useState(false);
+  const [bankMsg, setBankMsg] = useState('');
+
   // Reset System States
   const [resetLoading, setResetLoading] = useState(false);
   const [resetConfirmCode, setResetConfirmCode] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetMsg, setResetMsg] = useState('');
 
-  // Fetch AI Config on Load
+  // Fetch Configs on Load
   React.useEffect(() => {
     const fetchConfig = async () => {
       const finalApiUrl = API_URL || window.location.origin;
@@ -34,7 +44,26 @@ const AdminView = () => {
         if (res.ok) setAiKey(data.apiKey);
       } catch (err) { console.error('Lỗi lấy cấu hình AI'); }
     };
+    const fetchBankConfig = async () => {
+      const finalApiUrl = API_URL || window.location.origin;
+      try {
+        const token = localStorage.getItem('wc2026_token');
+        const res = await fetch(`${finalApiUrl}/api/config/bank`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setBankId(data.BANK_ID || '');
+          setBankNo(data.BANK_ACCOUNT_NO || '');
+          setBankName(data.BANK_NAME || '');
+          setBankHolder(data.BANK_ACCOUNT_NAME || '');
+          setMemoPrefix(data.MEMO_PREFIX || '');
+          setMemoTemplate(data.MEMO_TEMPLATE || '');
+        }
+      } catch (err) { console.error('Lỗi lấy cấu hình ngân hàng'); }
+    };
     fetchConfig();
+    fetchBankConfig();
   }, []);
 
   const handleSaveAiKey = async () => {
@@ -56,6 +85,44 @@ const AdminView = () => {
       setConfigMsg('❌ Lỗi kết nối');
     } finally {
       setConfigLoading(false);
+    }
+  };
+
+  const handleSaveBankConfig = async () => {
+    if (!bankId || !bankNo || !bankHolder) {
+      alert('Vui lòng điền đầy đủ Mã ngân hàng, Số tài khoản và Tên chủ tài khoản!');
+      return;
+    }
+    setBankLoading(true);
+    setBankMsg('');
+    const finalApiUrl = API_URL || window.location.origin;
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${finalApiUrl}/api/config/bank`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          bankId,
+          bankAccountNo: bankNo,
+          bankAccountName: bankHolder,
+          bankName,
+          memoPrefix,
+          memoTemplate
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBankMsg('✅ Cập nhật thông tin ngân hàng thành công!');
+      } else {
+        setBankMsg('❌ ' + (data.error || 'Lỗi lưu cấu hình'));
+      }
+    } catch (err) {
+      setBankMsg('❌ Lỗi kết nối');
+    } finally {
+      setBankLoading(false);
     }
   };
 
@@ -202,7 +269,92 @@ const AdminView = () => {
           </div>
         </section>
 
-        {/* 3. DANGER ZONE */}
+        {/* 3. CẤU HÌNH THÔNG TIN NGÂN HÀNG (QUỸ PHẠT) */}
+        <section style={{ background: '#1a1f2e', padding: '30px', borderRadius: '24px', marginBottom: '30px', border: '1px solid rgba(0,210,255,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <Settings size={20} color="#00d2ff" />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white', margin: 0 }}>CẤU HÌNH THÔNG TIN NGÂN HÀNG (QUỸ PHẠT)</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+              Thiết lập thông tin tài khoản nhận tiền quỹ phạt để người dùng quét VietQR tự động hoặc mở app ngân hàng trực tiếp.
+            </p>
+            <div style={{ background: '#000', padding: '20px', borderRadius: '16px', border: '1px solid #222', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>MÃ NGÂN HÀNG VIETQR (VIẾT TẮT)</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: MB, VCB, ACB, TCB..."
+                    value={bankId}
+                    onChange={e => setBankId(e.target.value)}
+                    style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#0f172a', border: '1px solid #1e293b', color: '#00d2ff', fontWeight: 650 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>TÊN NGÂN HÀNG ĐẦY ĐỦ</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: MB Bank, Vietcombank..."
+                    value={bankName}
+                    onChange={e => setBankName(e.target.value)}
+                    style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#0f172a', border: '1px solid #1e293b', color: 'white' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>SỐ TÀI KHOẢN</label>
+                  <input
+                    type="text"
+                    placeholder="Nhập số tài khoản nhận tiền..."
+                    value={bankNo}
+                    onChange={e => setBankNo(e.target.value)}
+                    style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#0f172a', border: '1px solid #1e293b', color: 'white', fontFamily: 'monospace' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>TÊN CHỦ TÀI KHOẢN (KHÔNG DẤU)</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: NGUYEN VAN A..."
+                    value={bankHolder}
+                    onChange={e => setBankHolder(e.target.value.toUpperCase())}
+                    style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#0f172a', border: '1px solid #1e293b', color: 'white', fontWeight: 650 }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>CẤU HÌNH MẪU NỘI DUNG CHUYỂN TIỀN (MEMO TEMPLATE)</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: chuyen tien mua banh {username} {amount}"
+                    value={memoTemplate}
+                    onChange={e => setMemoTemplate(e.target.value)}
+                    style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#0f172a', border: '1px solid #1e293b', color: 'white' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveBankConfig}
+                    disabled={bankLoading}
+                    style={{ padding: '0 25px', borderRadius: '10px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', transition: '0.2s' }}
+                  >
+                    {bankLoading ? <RefreshCw size={16} className="animate-spin" /> : 'LƯU THÔNG TIN'}
+                  </button>
+                </div>
+                <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', marginTop: '6px' }}>
+                  * Hỗ trợ các từ khóa tự động thay thế: <code>{'{username}'}</code> (tên đăng nhập) và <code>{'{amount}'}</code> (số tiền chuyển). Ví dụ: <code>chuyen tien mua banh {'{username}'}</code>
+                </span>
+              </div>
+            </div>
+            {bankMsg && <div style={{ fontSize: '0.8rem', fontWeight: 700, color: bankMsg.includes('✅') ? '#00ff64' : '#ff4d4d' }}>{bankMsg}</div>}
+          </div>
+        </section>
+
+        {/* 4. DANGER ZONE */}
         <section style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
             <AlertTriangle size={20} color="#ef4444" />

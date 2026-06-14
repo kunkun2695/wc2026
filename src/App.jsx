@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Trophy, Search, Edit3, Settings,
-  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles, GitBranch, Calendar, BookOpen
+  Play, Star, LogOut, Shield, History, Bell, MessageSquare, Users, Sparkles, GitBranch, Calendar, BookOpen, CreditCard, BarChart2
 } from 'lucide-react';
 import BracketView from './views/BracketView';
 import NotificationsDrawer from './components/NotificationsDrawer';
@@ -22,6 +22,9 @@ import AiAssistantView from './views/AiAssistantView';
 import UsersManagementView from './views/UsersManagementView';
 import DailyStatsView from './views/DailyStatsView';
 import RulesView from './views/RulesView';
+import PaymentView from './views/PaymentView';
+import PaymentManagementView from './views/PaymentManagementView';
+import FundStatsView from './views/FundStatsView';
 import CommentSection from './components/CommentSection';
 import UserAvatar from './components/UserAvatar';
 import { mockAuth } from './data/mockAuth';
@@ -216,8 +219,16 @@ const App = () => {
         headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
       });
       fetchNotifications();
-      setSelectedMatchId(notif.match_id);
-      setActiveTab('match_detail');
+      
+      if (notif.url === '/payment') {
+        setActiveTab('payment');
+      } else if (notif.url === '/admin_payments') {
+        setActiveTab('admin_payments');
+      } else if (notif.match_id) {
+        setSelectedMatchId(notif.match_id);
+        setActiveTab('match_detail');
+      }
+      
       setShowNotifications(false);
       requestNotificationPermission(); // Request on interaction
     } catch (err) { }
@@ -316,7 +327,7 @@ const App = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
                 <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
-                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.46</span>
+                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.47</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -373,6 +384,13 @@ const App = () => {
                     <span>Quản lý thành viên</span>
                   </button>
                   <button 
+                    onClick={() => { setActiveTab('admin_payments'); setShowAdminMenu(false); }} 
+                    className={`admin-dropdown-item ${activeTab === 'admin_payments' ? 'active' : ''}`}
+                  >
+                    <CreditCard size={16} color="#ffd200" />
+                    <span>Xác thực đóng quỹ</span>
+                  </button>
+                  <button 
                     onClick={() => { setActiveTab('admin_system'); setShowAdminMenu(false); }} 
                     className={`admin-dropdown-item ${activeTab === 'admin_system' ? 'active' : ''}`}
                   >
@@ -395,7 +413,7 @@ const App = () => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
               <h1 className="brand-name">KizzBugs</h1>
-              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.46</span>
+              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.47</span>
             </div>
           </div>
         </div>
@@ -410,6 +428,10 @@ const App = () => {
             <button onClick={() => setActiveTab('leaderboard')} className={`nav-item ${activeTab === 'leaderboard' ? 'active' : ''}`}>
               <div className="active-indicator" />
               <Trophy size={18} className="nav-icon" /> <span>Bảng xếp hạng</span>
+            </button>
+            <button onClick={() => setActiveTab('fund_stats')} className={`nav-item ${activeTab === 'fund_stats' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <BarChart2 size={18} className="nav-icon" color="#ffd200" /> <span>Thống kê quỹ 📊</span>
             </button>
             <button onClick={() => setActiveTab('stats')} className={`nav-item ${activeTab === 'stats' ? 'active' : ''}`}>
               <div className="active-indicator" />
@@ -444,6 +466,10 @@ const App = () => {
               <div className="active-indicator" />
               <History size={18} className="nav-icon" /> <span>Lịch sử dự đoán</span>
             </button>
+            <button onClick={() => setActiveTab('payment')} className={`nav-item ${activeTab === 'payment' ? 'active' : ''}`}>
+              <div className="active-indicator" />
+              <CreditCard size={18} className="nav-icon" color="#00d2ff" /> <span>Đóng quỹ 💸</span>
+            </button>
             <button onClick={() => setActiveTab('settings')} className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}>
               <div className="active-indicator" />
               <Settings size={18} className="nav-icon" /> <span>Cài đặt hồ sơ</span>
@@ -476,6 +502,10 @@ const App = () => {
               <button onClick={() => setActiveTab('admin_users')} className={`nav-item ${activeTab === 'admin_users' ? 'active' : ''}`}>
                 <div className="active-indicator" />
                 <Users size={18} className="nav-icon" /> <span>Quản lý thành viên</span>
+              </button>
+              <button onClick={() => setActiveTab('admin_payments')} className={`nav-item ${activeTab === 'admin_payments' ? 'active' : ''}`}>
+                <div className="active-indicator" />
+                <CreditCard size={18} className="nav-icon" color="#ffd200" /> <span>Xác thực đóng quỹ</span>
               </button>
               <button onClick={() => setActiveTab('admin_system')} className={`nav-item ${activeTab === 'admin_system' ? 'active' : ''}`}>
                 <div className="active-indicator" />
@@ -523,7 +553,22 @@ const App = () => {
           )}
           {activeTab === 'leaderboard' && (
             <motion.div key="l" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <LeaderboardView leaderboard={leaderboard} />
+              <LeaderboardView leaderboard={leaderboard} onNavigate={setActiveTab} />
+            </motion.div>
+          )}
+          {activeTab === 'fund_stats' && (
+            <motion.div key="fs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <FundStatsView />
+            </motion.div>
+          )}
+          {activeTab === 'payment' && (
+            <motion.div key="pay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <PaymentView />
+            </motion.div>
+          )}
+          {activeTab === 'admin_payments' && (
+            <motion.div key="ap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <PaymentManagementView />
             </motion.div>
           )}
           {activeTab === 'stats' && (

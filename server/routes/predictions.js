@@ -239,7 +239,9 @@ router.get('/leaderboard', async (req, res) => {
         u.name, 
         u.avatar, 
         COALESCE(SUM(CASE WHEN m.status = 'FT' AND p.points = 10 THEN 1 ELSE 0 END), 0) as total_points,
-        COALESCE(SUM(CASE WHEN m.status = 'FT' THEN p.points * 1000 ELSE 0 END), 0) as total_fines
+        COALESCE(SUM(CASE WHEN m.status = 'FT' THEN p.points * 1000 ELSE 0 END), 0) as total_fines,
+        COALESCE((SELECT SUM(amount) FROM payments WHERE user_id = u.id AND status = 'COMPLETED'), 0) as total_paid,
+        (COALESCE(SUM(CASE WHEN m.status = 'FT' THEN p.points * 1000 ELSE 0 END), 0) - COALESCE((SELECT SUM(amount) FROM payments WHERE user_id = u.id AND status = 'COMPLETED'), 0)) as remaining_fines
       FROM users u
       LEFT JOIN predictions p ON u.id = p.user_id
       LEFT JOIN matches m ON p.match_id = m.id

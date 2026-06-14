@@ -88,7 +88,42 @@ async function patchDatabase() {
       )
     `);
 
-    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội, Chat Image, bảo mật tài khoản, kèo cược và lịch sử đổi kèo thành công.');
+    // Tạo bảng payments
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS payments (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        amount INTEGER NOT NULL,
+        status VARCHAR(20) DEFAULT 'PENDING',
+        transfer_code VARCHAR(100) UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        verified_at TIMESTAMP,
+        verified_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        notes TEXT
+      )
+    `);
+
+    // Đảm bảo bảng system_config tồn tại
+    await db.query(`CREATE TABLE IF NOT EXISTS system_config (key TEXT PRIMARY KEY, value TEXT)`);
+
+    // Khởi tạo các cấu hình ngân hàng mặc định nếu chưa có
+    const defaultConfigs = [
+      ['BANK_ID', 'MB'],
+      ['BANK_ACCOUNT_NO', '1234567890'],
+      ['BANK_ACCOUNT_NAME', 'NGUYEN VAN A'],
+      ['BANK_NAME', 'MB Bank'],
+      ['MEMO_PREFIX', 'KBPAY'],
+      ['MEMO_TEMPLATE', 'KBPAY {username}']
+    ];
+    for (const [key, value] of defaultConfigs) {
+      await db.query(`
+        INSERT INTO system_config (key, value)
+        VALUES ($1, $2)
+        ON CONFLICT (key) DO NOTHING
+      `, [key, value]);
+    }
+
+    console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội, Chat Image, bảo mật tài khoản, kèo cược, lịch sử đổi kèo và bảng thanh toán thành công.');
   } catch (err) {
     console.error('⚠️ [DB Fix Error]', err.message);
   }
@@ -118,6 +153,7 @@ const postsRoutes = require('./routes/posts');
 const aiRoutes = require('./routes/ai');
 const adminRoutes = require('./routes/admin');
 const configRoutes = require('./routes/config');
+const paymentsRoutes = require('./routes/payments');
 
 const app = express();
 const PORT = process.env.PORT || 5005;
@@ -144,6 +180,7 @@ app.use('/api/posts', postsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/payments', paymentsRoutes);
 
 // Serve Static Files
 const distPath = path.join(__dirname, '../dist');

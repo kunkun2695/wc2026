@@ -3,7 +3,11 @@ import { motion } from 'framer-motion';
 import { Trophy, Medal, Star, AlertTriangle } from 'lucide-react';
 import UserAvatar from '../components/UserAvatar';
 
-const LeaderboardView = ({ leaderboard }) => {
+const LeaderboardView = ({ leaderboard, onNavigate }) => {
+  // Tìm thông tin của user hiện tại
+  const currentUser = JSON.parse(localStorage.getItem('wc2026_session') || 'null');
+  const myData = currentUser ? leaderboard.find(u => u.id === currentUser.id) : null;
+
   // Tách 3 vị trí đầu tiên để đưa lên bục vinh quang (podium)
   const topThree = leaderboard.slice(0, 3);
   const remaining = leaderboard.slice(3);
@@ -16,7 +20,51 @@ const LeaderboardView = ({ leaderboard }) => {
         </div>
         <h1 className="font-outfit lb-title">BẢNG XẾP HẠNG TIÊN TRI</h1>
         <p className="lb-subtitle">Hệ thống tính điểm & phạt ăn nhậu tự động theo thời gian thực</p>
+        {onNavigate && (
+          <button 
+            onClick={() => onNavigate('fund_stats')} 
+            style={{
+              marginTop: '15px',
+              background: 'rgba(255, 210, 0, 0.12)',
+              border: '1px solid rgba(255, 210, 0, 0.25)',
+              color: '#ffd200',
+              padding: '8px 18px',
+              borderRadius: '20px',
+              fontSize: '0.8rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: '0.2s'
+            }}
+            className="stats-btn-glow"
+          >
+            <span>📊 BÁO CÁO THU CHI QUỸ</span>
+          </button>
+        )}
       </header>
+
+      {myData && (
+        <div className="personal-fine-banner">
+          <div className="banner-left">
+            <span className="banner-emoji">💸</span>
+            <div>
+              <h4 className="banner-title">Quỹ phạt của bạn</h4>
+              <p className="banner-desc">
+                Tổng phạt: <strong>{(myData.total_fines || 0).toLocaleString('vi-VN')}đ</strong> | 
+                Đã đóng: <strong>{(myData.total_paid || 0).toLocaleString('vi-VN')}đ</strong> | 
+                Còn nợ: <strong style={{ color: myData.remaining_fines > 0 ? '#ef4444' : '#10b981' }}>{(myData.remaining_fines || 0).toLocaleString('vi-VN')}đ</strong>
+              </p>
+            </div>
+          </div>
+          {onNavigate && (
+            <button onClick={() => onNavigate('payment')} className="banner-pay-btn">
+              ĐÓNG QUỸ NGAY
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Bục vinh quang (Top 3) */}
       {leaderboard.length > 0 && (
@@ -36,9 +84,11 @@ const LeaderboardView = ({ leaderboard }) => {
               <span className="podium-name">{topThree[1].name}</span>
               <span className="podium-role">Á Quân</span>
               <span className="podium-points">{topThree[1].total_points || 0} ĐIỂM</span>
-              <div className="podium-fines">
-                <span>{Math.floor(topThree[1].total_fines / 1000)}k</span>
-                <span className="fine-sub">phạt</span>
+              <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
+                <span style={{ color: topThree[1].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
+                  {Math.floor(topThree[1].remaining_fines / 1000)}k
+                </span>
+                <span className="fine-sub">còn nợ</span>
               </div>
             </motion.div>
           )}
@@ -59,9 +109,11 @@ const LeaderboardView = ({ leaderboard }) => {
               <span className="podium-name">{topThree[0].name}</span>
               <span className="podium-role golden-text">Tiên Tri</span>
               <span className="podium-points">{topThree[0].total_points || 0} ĐIỂM</span>
-              <div className="podium-fines">
-                <span>{Math.floor(topThree[0].total_fines / 1000)}k</span>
-                <span className="fine-sub">phạt</span>
+              <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
+                <span style={{ color: topThree[0].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
+                  {Math.floor(topThree[0].remaining_fines / 1000)}k
+                </span>
+                <span className="fine-sub">còn nợ</span>
               </div>
             </motion.div>
           )}
@@ -81,9 +133,11 @@ const LeaderboardView = ({ leaderboard }) => {
               <span className="podium-name">{topThree[2].name}</span>
               <span className="podium-role">Hạng 3</span>
               <span className="podium-points">{topThree[2].total_points || 0} ĐIỂM</span>
-              <div className="podium-fines">
-                <span>{Math.floor(topThree[2].total_fines / 1000)}k</span>
-                <span className="fine-sub">phạt</span>
+              <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
+                <span style={{ color: topThree[2].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
+                  {Math.floor(topThree[2].remaining_fines / 1000)}k
+                </span>
+                <span className="fine-sub">còn nợ</span>
               </div>
             </motion.div>
           )}
@@ -122,8 +176,15 @@ const LeaderboardView = ({ leaderboard }) => {
                     <span className="user-name-mini">{user.name}</span>
                   </div>
 
-                  <div className="col-fines text-right">
-                    <span className="fine-value-mini">{Math.floor(user.total_fines / 1000)}k</span>
+                  <div className="col-fines text-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                    <span className="fine-value-mini" style={{ color: user.remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
+                      {Math.floor(user.remaining_fines / 1000)}k
+                    </span>
+                    {user.total_paid > 0 && (
+                      <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', marginTop: '2px', fontWeight: 600 }}>
+                        đã đóng {Math.floor(user.total_paid / 1000)}k
+                      </span>
+                    )}
                   </div>
 
                   <div className="col-points text-right">
@@ -432,6 +493,72 @@ const LeaderboardView = ({ leaderboard }) => {
           .col-fines { width: 70px; }
           .col-points { width: 70px; }
           .user-name-mini { font-size: 0.8rem; }
+        }
+
+        .personal-fine-banner {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: linear-gradient(135deg, rgba(26, 31, 46, 0.9) 0%, rgba(17, 21, 34, 0.9) 100%);
+          border: 1px solid rgba(0, 210, 255, 0.15);
+          border-radius: 20px;
+          padding: 20px 25px;
+          margin-bottom: 35px;
+          gap: 15px;
+          box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .banner-left {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+        }
+        .banner-emoji {
+          font-size: 2rem;
+        }
+        .banner-title {
+          margin: 0;
+          color: white;
+          font-size: 1rem;
+          font-weight: 850;
+          letter-spacing: 0.5px;
+          font-family: 'Outfit', sans-serif;
+        }
+        .banner-desc {
+          margin: 5px 0 0 0;
+          color: #94a3b8;
+          font-size: 0.85rem;
+        }
+        .banner-pay-btn {
+          background: #00d2ff;
+          color: black;
+          font-weight: 950;
+          font-size: 0.75rem;
+          border: none;
+          border-radius: 10px;
+          padding: 10px 18px;
+          cursor: pointer;
+          transition: 0.2s;
+          white-space: nowrap;
+          box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+        .banner-pay-btn:hover {
+          box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+          transform: translateY(-1px);
+        }
+        @media (max-width: 600px) {
+          .personal-fine-banner {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            padding: 15px;
+          }
+          .banner-left {
+            flex-direction: column;
+            gap: 10px;
+          }
+          .banner-pay-btn {
+            width: 100%;
+          }
         }
       ` }} />
     </div>
