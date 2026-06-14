@@ -192,17 +192,31 @@ const MatchManagementView = ({ matches, onUpdateScore, onSync }) => {
     }
   };
 
-  const filteredMatches = matches.filter(m => {
+  const sortedMatches = matches.filter(m => {
     if (filter === 'all') return true;
     if (filter === 'live') return m.status === 'LIVE';
     if (filter === 'upcoming') return m.status === 'UPCOMING';
     if (filter === 'ft') return m.status === 'FT' || m.status === 'FINISHED';
     return true;
   }).sort((a, b) => {
-    const now = new Date();
-    const diffA = Math.abs(parseMatchTime(a.match_time) - now);
-    const diffB = Math.abs(parseMatchTime(b.match_time) - now);
-    return diffA - diffB;
+    const timeA = parseMatchTime(a.match_time);
+    const timeB = parseMatchTime(b.match_time);
+    return timeA - timeB;
+  });
+
+  const groupedMatches = [];
+  sortedMatches.forEach(m => {
+    const getMatchDate = (timeStr) => {
+      if (!timeStr) return 'CHƯA XÁC ĐỊNH';
+      return timeStr.includes(' - ') ? timeStr.split(' - ')[0] : (timeStr.split(' ')[1] || timeStr);
+    };
+    const matchDate = getMatchDate(m.match_time);
+    let group = groupedMatches.find(g => g.date === matchDate);
+    if (!group) {
+      group = { date: matchDate, matches: [] };
+      groupedMatches.push(group);
+    }
+    group.matches.push(m);
   });
 
   return (
@@ -243,10 +257,26 @@ const MatchManagementView = ({ matches, onUpdateScore, onSync }) => {
           <button onClick={() => setFilter('ft')} style={{ padding: '8px 20px', borderRadius: '30px', border: 'none', background: filter === 'ft' ? '#ffd200' : 'rgba(255,255,255,0.05)', color: filter === 'ft' ? 'black' : '#94a3b8', fontWeight: 800, cursor: 'pointer', transition: '0.2s', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>KẾT THÚC ({matches.filter(m => m.status === 'FT' || m.status === 'FINISHED').length})</button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          {filteredMatches.length > 0 ? filteredMatches.map(m => (
-            <MatchCard key={m.id} match={m} isAdmin={true} onEdit={setEditingMatch} />
-          )) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+          {groupedMatches.length > 0 ? (
+            groupedMatches.map(group => (
+              <div key={group.date} style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', margin: '10px 0 20px 0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '6px 16px', borderRadius: '30px', color: '#94a3b8', fontWeight: 900, fontSize: '0.7rem', letterSpacing: '1.5px', border: '1px solid rgba(255, 255, 255, 0.05)', whiteSpace: 'nowrap' }}>
+                    <Calendar size={14} />
+                    <span>NGÀY {group.date}</span>
+                  </div>
+                  <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' }} />
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  {group.matches.map(m => (
+                    <MatchCard key={m.id} match={m} isAdmin={true} onEdit={setEditingMatch} />
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
             <div style={{ textAlign: 'center', padding: '100px 0', color: '#475569', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px dashed rgba(255,255,255,0.1)' }}>
               <p>Không tìm thấy trận đấu nào phù hợp.</p>
             </div>
