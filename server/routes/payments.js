@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { authenticateUser } = require('../middleware/auth');
+const { sendAdminNotification, sendPushNotification } = require('./notifications');
 
 // 1. Tạo yêu cầu thanh toán (Đóng quỹ)
 router.post('/', authenticateUser, async (req, res) => {
@@ -37,23 +38,11 @@ router.post('/', authenticateUser, async (req, res) => {
       [userId, parseInt(amount), cleanMemo, notes || '']
     );
 
-    // Gửi thông báo đến Admin
-    const adminUsers = await db.query("SELECT id FROM users WHERE role = 'admin'");
-    for (const admin of adminUsers.rows) {
-      await db.query(
-        `INSERT INTO notifications (user_id, sender_id, type, title, message, content, url) 
-         VALUES ($1, $2, 'payment', $3, $4, $5, $6)`,
-        [
-          admin.id,
-          userId,
-          'payment',
-          'Yêu cầu đóng quỹ mới',
-          `${req.user.username} đã gửi yêu cầu đóng quỹ ${parseInt(amount).toLocaleString('vi-VN')}đ`,
-          `${req.user.username} đã gửi yêu cầu đóng quỹ ${parseInt(amount).toLocaleString('vi-VN')}đ`,
-          '/admin_payments'
-        ]
-      ).catch(e => console.error('Lỗi tạo thông báo Admin:', e.message));
-    }
+    // Gửi thông báo đến Admin (bao gồm cả database notification và Web Push notification)
+    const amountBanh = Math.floor(parseInt(amount) / 1000);
+    const title = '💰 Yêu cầu đóng quỹ mới';
+    const message = `${req.user.name || req.user.username} đã gửi yêu cầu đóng quỹ ${amountBanh} bánh (${parseInt(amount).toLocaleString('vi-VN')}đ).`;
+    await sendAdminNotification(title, message, '/admin_payments', userId);
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -134,6 +123,7 @@ router.put('/:id/verify', authenticateUser, async (req, res) => {
     // Gửi thông báo kết quả phê duyệt cho người dùng
     const statusText = status === 'COMPLETED' ? 'được phê duyệt thành công' : 'bị từ chối';
     const amountFormatted = currentPayment.amount.toLocaleString('vi-VN');
+    const amountBanh = Math.floor(currentPayment.amount / 1000);
     
     await db.query(
       `INSERT INTO notifications (user_id, sender_id, type, title, message, content, url) 
@@ -143,11 +133,19 @@ router.put('/:id/verify', authenticateUser, async (req, res) => {
         req.user.id,
         'payment',
         status === 'COMPLETED' ? 'Đóng quỹ thành công 🎉' : 'Đóng quỹ không thành công ❌',
-        `Yêu cầu đóng quỹ ${amountFormatted}đ của bạn đã ${statusText}.`,
-        `Yêu cầu đóng quỹ ${amountFormatted}đ của bạn đã ${statusText}.`,
+        `Yêu cầu đóng quỹ ${amountBanh} bánh (${amountFormatted}đ) của bạn đã ${statusText}.`,
+        `Yêu cầu đóng quỹ ${amountBanh} bánh (${amountFormatted}đ) của bạn đã ${statusText}.`,
         '/payment'
       ]
     ).catch(e => console.error('Lỗi tạo thông báo kết quả phê duyệt:', e.message));
+
+    // Bắn thêm thông báo đẩy (Web Push) cho người dùng
+    sendPushNotification(
+      currentPayment.user_id,
+      status === 'COMPLETED' ? 'Đóng quỹ thành công 🎉' : 'Đóng quỹ không thành công ❌',
+      `Yêu cầu đóng quỹ ${amountBanh} bánh (${amountFormatted}đ) của bạn đã ${statusText}.`,
+      '/payment'
+    ).catch(e => console.error('Lỗi gửi push notification cho user:', e.message));
 
     res.json(result.rows[0]);
   } catch (error) {
