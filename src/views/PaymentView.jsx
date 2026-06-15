@@ -7,6 +7,18 @@ import {
 import { mockAuth } from '../data/mockAuth';
 import API_URL from '../config';
 
+const cleanVietnameseString = (str) => {
+  if (!str) return '';
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 const PaymentView = () => {
   const [user, setUser] = useState(null);
   const [bankConfig, setBankConfig] = useState({
@@ -43,8 +55,9 @@ const PaymentView = () => {
   useEffect(() => {
     if (!user) return;
     const template = bankConfig.MEMO_TEMPLATE || 'KBPAY {username}';
+    const userDisplayName = cleanVietnameseString(user.name || user.username);
     const cleanMemo = template
-      .replace(/{username}/gi, user.username)
+      .replace(/{username}/gi, userDisplayName)
       .replace(/{amount}/gi, amount)
       .toUpperCase();
     setMemo(cleanMemo);

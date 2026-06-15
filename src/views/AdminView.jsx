@@ -346,7 +346,7 @@ const AdminView = () => {
                   </button>
                 </div>
                 <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', marginTop: '6px' }}>
-                  * Hỗ trợ các từ khóa tự động thay thế: <code>{'{username}'}</code> (tên đăng nhập) và <code>{'{amount}'}</code> (số tiền chuyển). Ví dụ: <code>chuyen tien mua banh {'{username}'}</code>
+                  * Hỗ trợ các từ khóa tự động thay thế: <code>{'{username}'}</code> (tên hiển thị) và <code>{'{amount}'}</code> (số tiền chuyển). Ví dụ: <code>chuyen tien mua banh {'{username}'}</code>
                 </span>
               </div>
             </div>
