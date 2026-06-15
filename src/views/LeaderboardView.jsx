@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Trophy, Medal, Star, AlertTriangle } from 'lucide-react';
 import UserAvatar from '../components/UserAvatar';
 
-const LeaderboardView = ({ leaderboard, onNavigate }) => {
+const LeaderboardView = ({ leaderboard, onNavigate, showFundFeatures = true }) => {
   // Tìm thông tin của user hiện tại
   const currentUser = JSON.parse(localStorage.getItem('wc2026_session') || 'null');
   const myData = currentUser ? leaderboard.find(u => u.id === currentUser.id) : null;
@@ -20,7 +20,7 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
         </div>
         <h1 className="font-outfit lb-title">BẢNG XẾP HẠNG TIÊN TRI</h1>
         <p className="lb-subtitle">Hệ thống tính điểm & phạt ăn nhậu tự động theo thời gian thực</p>
-        {onNavigate && (
+        {onNavigate && showFundFeatures && (
           <button 
             onClick={() => onNavigate('fund_stats')} 
             style={{
@@ -45,7 +45,7 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
         )}
       </header>
 
-      {myData && (
+      {myData && showFundFeatures && (
         <div className="personal-fine-banner">
           <div className="banner-left">
             <span className="banner-emoji">💸</span>
@@ -84,12 +84,14 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
               <span className="podium-name">{topThree[1].name}</span>
               <span className="podium-role">Á Quân</span>
               <span className="podium-points">{topThree[1].total_points || 0} ĐIỂM</span>
-              <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
-                <span style={{ color: topThree[1].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
-                  {Math.floor(topThree[1].remaining_fines / 1000)} bánh
-                </span>
-                <span className="fine-sub">còn nợ</span>
-              </div>
+              {showFundFeatures && (
+                <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
+                  <span style={{ color: topThree[1].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
+                    {Math.floor(topThree[1].remaining_fines / 1000)} bánh
+                  </span>
+                  <span className="fine-sub">còn nợ</span>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -109,12 +111,14 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
               <span className="podium-name">{topThree[0].name}</span>
               <span className="podium-role golden-text">Tiên Tri</span>
               <span className="podium-points">{topThree[0].total_points || 0} ĐIỂM</span>
-              <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
-                <span style={{ color: topThree[0].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
-                  {Math.floor(topThree[0].remaining_fines / 1000)} bánh
-                </span>
-                <span className="fine-sub">còn nợ</span>
-              </div>
+              {showFundFeatures && (
+                <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
+                  <span style={{ color: topThree[0].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
+                    {Math.floor(topThree[0].remaining_fines / 1000)} bánh
+                  </span>
+                  <span className="fine-sub">còn nợ</span>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -133,12 +137,14 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
               <span className="podium-name">{topThree[2].name}</span>
               <span className="podium-role">Hạng 3</span>
               <span className="podium-points">{topThree[2].total_points || 0} ĐIỂM</span>
-              <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
-                <span style={{ color: topThree[2].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
-                  {Math.floor(topThree[2].remaining_fines / 1000)} bánh
-                </span>
-                <span className="fine-sub">còn nợ</span>
-              </div>
+              {showFundFeatures && (
+                <div className="podium-fines" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '45px' }}>
+                  <span style={{ color: topThree[2].remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
+                    {Math.floor(topThree[2].remaining_fines / 1000)} bánh
+                  </span>
+                  <span className="fine-sub">còn nợ</span>
+                </div>
+              )}
             </motion.div>
           )}
         </div>
@@ -151,7 +157,7 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
             <div className="lb-table-header">
               <span className="col-rank">HẠNG</span>
               <span className="col-user">THÀNH VIÊN</span>
-              <span className="col-fines text-right">PHẠT (BÁNH)</span>
+              {showFundFeatures && <span className="col-fines text-right">PHẠT (BÁNH)</span>}
               <span className="col-points text-right">TỔNG ĐIỂM</span>
             </div>
             
@@ -176,16 +182,18 @@ const LeaderboardView = ({ leaderboard, onNavigate }) => {
                     <span className="user-name-mini">{user.name}</span>
                   </div>
 
-                  <div className="col-fines text-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                    <span className="fine-value-mini" style={{ color: user.remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
-                      {Math.floor(user.remaining_fines / 1000)} bánh
-                    </span>
-                    {user.total_paid > 0 && (
-                      <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', marginTop: '2px', fontWeight: 600 }}>
-                        đã đóng {Math.floor(user.total_paid / 1000)} bánh
+                  {showFundFeatures && (
+                    <div className="col-fines text-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                      <span className="fine-value-mini" style={{ color: user.remaining_fines > 0 ? '#ef4444' : '#10b981' }}>
+                        {Math.floor(user.remaining_fines / 1000)} bánh
                       </span>
-                    )}
-                  </div>
+                      {user.total_paid > 0 && (
+                        <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', marginTop: '2px', fontWeight: 600 }}>
+                          đã đóng {Math.floor(user.total_paid / 1000)} bánh
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   <div className="col-points text-right">
                     <span className="points-value-mini">{user.total_points || 0}</span>

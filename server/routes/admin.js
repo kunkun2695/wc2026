@@ -214,6 +214,7 @@ router.get('/users', authenticateAdmin, async (req, res) => {
         u.name, 
         u.role, 
         u.avatar, 
+        u.is_verified,
         COALESCE(SUM(CASE WHEN m.status = 'FT' AND p.points = 10 THEN 1 ELSE 0 END), 0) as points,
         u.created_at 
       FROM users u
@@ -225,6 +226,40 @@ router.get('/users', authenticateAdmin, async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: 'Lỗi lấy danh sách user: ' + error.message });
+  }
+});
+
+// API Phê duyệt/Xác thực người dùng
+router.put('/users/:id/verify', authenticateAdmin, async (req, res) => {
+  const userId = req.params.id;
+  const { isVerified } = req.body; // boolean
+  
+  if (parseInt(userId) === req.user.id) {
+    return res.status(400).json({ error: 'Bạn không thể tự xác thực/hủy xác thực chính mình!' });
+  }
+
+  try {
+    const checkUser = await db.query('SELECT id, username, name FROM users WHERE id = $1', [userId]);
+    if (checkUser.rows.length === 0) {
+      return res.status(404).json({ error: 'Người dùng không tồn tại' });
+    }
+    
+    await db.query('UPDATE users SET is_verified = $1 WHERE id = $2', [isVerified, userId]);
+    
+    // Gửi thông báo hệ thống nếu được phê duyệt thành công
+    if (isVerified) {
+      const title = '🎉 Tài khoản đã được phê duyệt';
+      const message = 'Chào mừng bạn! Tài khoản của bạn đã được phê duyệt thành công và hiện tại đã có thể truy cập toàn bộ chức năng.';
+      await db.query(
+        `INSERT INTO notifications (user_id, sender_id, type, title, message, content, url)
+         VALUES ($1, $2, 'system', $3, $4, $4, '/')`,
+        [userId, req.user.id, title, message]
+      ).catch(e => console.error('Lỗi tạo thông báo khi phê duyệt user:', e.message));
+    }
+
+    res.json({ message: isVerified ? 'Đã phê duyệt người dùng thành công' : 'Đã hủy phê duyệt người dùng' });
+  } catch (error) {
+    res.status(500).json({ error: 'Lỗi cập nhật trạng thái người dùng: ' + error.message });
   }
 });
 

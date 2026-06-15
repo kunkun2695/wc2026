@@ -47,6 +47,7 @@ const App = () => {
   const [commentMatch, setCommentMatch] = useState(null);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [showAdminMenu, setShowAdminMenu] = useState(false);
+  const [showFundFeatures, setShowFundFeatures] = useState(true);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -99,18 +100,39 @@ const App = () => {
   const fetchData = async () => {
     try {
       const host = window.location.hostname;
-      const [teamsRes, matchesRes, predsRes, lbRes] = await Promise.all([
+      const token = mockAuth.getToken();
+      
+      const fetchPromises = [
         fetch(`${API_URL}/api/teams`),
         fetch(`${API_URL}/api/matches`),
         fetch(`${API_URL}/api/predictions/my`, {
-          headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
+          headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch(`${API_URL}/api/predictions/leaderboard`)
-      ]);
-      const teamsData = await teamsRes.json();
-      const matchesData = await matchesRes.json();
-      const predsData = await predsRes.json();
-      const lbData = await lbRes.json();
+      ];
+
+      if (token) {
+        fetchPromises.push(
+          fetch(`${API_URL}/api/config/bank`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        );
+      }
+
+      const results = await Promise.all(fetchPromises);
+      const teamsData = await results[0].json();
+      const matchesData = await results[1].json();
+      const predsData = await results[2].json();
+      const lbData = await results[3].json();
+
+      if (token && results[4]) {
+        try {
+          const bankData = await results[4].json();
+          setShowFundFeatures(bankData.SHOW_FUND_FEATURES !== 'false');
+        } catch (e) {
+          console.error('Lỗi phân tích config bank:', e);
+        }
+      }
 
       setTeams(Array.isArray(teamsData) ? teamsData : []);
       setMatches(Array.isArray(matchesData) ? matchesData : []);
@@ -327,7 +349,7 @@ const App = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
                 <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
-                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.53</span>
+                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.54</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -383,13 +405,15 @@ const App = () => {
                     <Users size={16} />
                     <span>Quản lý thành viên</span>
                   </button>
-                  <button 
-                    onClick={() => { setActiveTab('admin_payments'); setShowAdminMenu(false); }} 
-                    className={`admin-dropdown-item ${activeTab === 'admin_payments' ? 'active' : ''}`}
-                  >
-                    <CreditCard size={16} color="#ffd200" />
-                    <span>Xác thực đóng quỹ</span>
-                  </button>
+                  {showFundFeatures && (
+                    <button 
+                      onClick={() => { setActiveTab('admin_payments'); setShowAdminMenu(false); }} 
+                      className={`admin-dropdown-item ${activeTab === 'admin_payments' ? 'active' : ''}`}
+                    >
+                      <CreditCard size={16} color="#ffd200" />
+                      <span>Xác thực đóng quỹ</span>
+                    </button>
+                  )}
                   <button 
                     onClick={() => { setActiveTab('admin_system'); setShowAdminMenu(false); }} 
                     className={`admin-dropdown-item ${activeTab === 'admin_system' ? 'active' : ''}`}
@@ -413,7 +437,7 @@ const App = () => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
               <h1 className="brand-name">KizzBugs</h1>
-              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.53</span>
+              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.54</span>
             </div>
           </div>
         </div>
@@ -429,10 +453,12 @@ const App = () => {
               <div className="active-indicator" />
               <Trophy size={18} className="nav-icon" /> <span>Bảng xếp hạng</span>
             </button>
-            <button onClick={() => setActiveTab('fund_stats')} className={`nav-item ${activeTab === 'fund_stats' ? 'active' : ''}`}>
-              <div className="active-indicator" />
-              <BarChart2 size={18} className="nav-icon" color="#ffd200" /> <span>Thống kê quỹ 📊</span>
-            </button>
+             {showFundFeatures && (
+              <button onClick={() => setActiveTab('fund_stats')} className={`nav-item ${activeTab === 'fund_stats' ? 'active' : ''}`}>
+                <div className="active-indicator" />
+                <BarChart2 size={18} className="nav-icon" color="#ffd200" /> <span>Thống kê quỹ 📊</span>
+              </button>
+            )}
             <button onClick={() => setActiveTab('stats')} className={`nav-item ${activeTab === 'stats' ? 'active' : ''}`}>
               <div className="active-indicator" />
               <Calendar size={18} className="nav-icon" /> <span>Thống kê hằng ngày</span>
@@ -466,10 +492,12 @@ const App = () => {
               <div className="active-indicator" />
               <History size={18} className="nav-icon" /> <span>Lịch sử dự đoán</span>
             </button>
-            <button onClick={() => setActiveTab('payment')} className={`nav-item ${activeTab === 'payment' ? 'active' : ''}`}>
-              <div className="active-indicator" />
-              <CreditCard size={18} className="nav-icon" color="#00d2ff" /> <span>Đóng quỹ 💸</span>
-            </button>
+             {showFundFeatures && (
+              <button onClick={() => setActiveTab('payment')} className={`nav-item ${activeTab === 'payment' ? 'active' : ''}`}>
+                <div className="active-indicator" />
+                <CreditCard size={18} className="nav-icon" color="#00d2ff" /> <span>Đóng quỹ 💸</span>
+              </button>
+            )}
             <button onClick={() => setActiveTab('settings')} className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}>
               <div className="active-indicator" />
               <Settings size={18} className="nav-icon" /> <span>Cài đặt hồ sơ</span>
@@ -503,10 +531,12 @@ const App = () => {
                 <div className="active-indicator" />
                 <Users size={18} className="nav-icon" /> <span>Quản lý thành viên</span>
               </button>
-              <button onClick={() => setActiveTab('admin_payments')} className={`nav-item ${activeTab === 'admin_payments' ? 'active' : ''}`}>
-                <div className="active-indicator" />
-                <CreditCard size={18} className="nav-icon" color="#ffd200" /> <span>Xác thực đóng quỹ</span>
-              </button>
+              {showFundFeatures && (
+                <button onClick={() => setActiveTab('admin_payments')} className={`nav-item ${activeTab === 'admin_payments' ? 'active' : ''}`}>
+                  <div className="active-indicator" />
+                  <CreditCard size={18} className="nav-icon" color="#ffd200" /> <span>Xác thực đóng quỹ</span>
+                </button>
+              )}
               <button onClick={() => setActiveTab('admin_system')} className={`nav-item ${activeTab === 'admin_system' ? 'active' : ''}`}>
                 <div className="active-indicator" />
                 <Settings size={18} className="nav-icon" /> <span>Cài đặt hệ thống</span>
@@ -553,7 +583,7 @@ const App = () => {
           )}
           {activeTab === 'leaderboard' && (
             <motion.div key="l" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <LeaderboardView leaderboard={leaderboard} onNavigate={setActiveTab} />
+              <LeaderboardView leaderboard={leaderboard} onNavigate={setActiveTab} showFundFeatures={showFundFeatures} />
             </motion.div>
           )}
           {activeTab === 'fund_stats' && (
@@ -660,10 +690,12 @@ const App = () => {
             <Trophy size={20} />
             <span>Xếp hạng</span>
           </button>
-          <button onClick={() => setActiveTab('payment')} className={`nav-item-bet ${activeTab === 'payment' ? 'active' : ''}`}>
-            <CreditCard size={20} color="#00d2ff" />
-            <span style={{ color: activeTab === 'payment' ? '#00d2ff' : 'inherit' }}>Đóng quỹ</span>
-          </button>
+          {showFundFeatures && (
+            <button onClick={() => setActiveTab('payment')} className={`nav-item-bet ${activeTab === 'payment' ? 'active' : ''}`}>
+              <CreditCard size={20} color="#00d2ff" />
+              <span style={{ color: activeTab === 'payment' ? '#00d2ff' : 'inherit' }}>Đóng quỹ</span>
+            </button>
+          )}
           <button onClick={() => setActiveTab('stats')} className={`nav-item-bet ${activeTab === 'stats' ? 'active' : ''}`}>
             <Calendar size={20} />
             <span>Thống kê</span>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Trash2, Key, Search, Users } from 'lucide-react';
+import { RefreshCw, Trash2, Key, Search, Users, UserCheck, UserX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -65,6 +65,33 @@ const UsersManagementView = () => {
       alert('❌ Lỗi kết nối');
     } finally {
       setDeleteLoading(null);
+    }
+  };
+
+  const handleToggleVerify = async (userId, currentStatus) => {
+    const actionText = currentStatus ? 'hủy xác thực' : 'xác thực';
+    if (!confirm(`Bạn có chắc chắn muốn ${actionText} tài khoản này không?`)) return;
+
+    const finalApiUrl = API_URL || window.location.origin;
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${finalApiUrl}/api/admin/users/${userId}/verify`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ isVerified: !currentStatus })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+        fetchUsers();
+      } else {
+        alert('❌ ' + data.error);
+      }
+    } catch (_err) {
+      alert('❌ Lỗi kết nối');
     }
   };
 
@@ -204,7 +231,23 @@ const UsersManagementView = () => {
                             alt="" 
                           />
                           <div>
-                            <div style={{ fontWeight: 800, color: 'white', fontSize: '0.9rem' }}>{u.name || u.username}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontWeight: 800, color: 'white', fontSize: '0.9rem' }}>{u.name || u.username}</span>
+                              {!u.is_verified && (
+                                <span style={{ 
+                                  padding: '2px 6px', 
+                                  borderRadius: '6px', 
+                                  fontSize: '0.6rem', 
+                                  fontWeight: 900,
+                                  background: 'rgba(234, 179, 8, 0.1)',
+                                  color: '#eab308',
+                                  border: '1px solid rgba(234, 179, 8, 0.2)',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  CHỜ DUYỆT
+                                </span>
+                              )}
+                            </div>
                             <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '2px' }}>@{u.username}</div>
                           </div>
                         </div>
@@ -223,11 +266,32 @@ const UsersManagementView = () => {
                       <td style={{ padding: '15px 20px', textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', gap: '8px' }}>
                           <button
+                            onClick={() => handleToggleVerify(u.id, u.is_verified)}
+                            disabled={u.role === 'admin'}
+                            title={u.is_verified ? "Hủy xác thực tài khoản" : "Xác thực tài khoản"}
+                            style={{ 
+                              background: u.is_verified ? 'rgba(16, 185, 129, 0.1)' : 'rgba(234, 179, 8, 0.1)', 
+                              color: u.is_verified ? '#10b981' : '#eab308', 
+                              border: 'none', 
+                              width: '32px', 
+                              height: '32px', 
+                              borderRadius: '8px', 
+                              cursor: u.role === 'admin' ? 'not-allowed' : 'pointer',
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center', 
+                              opacity: u.role === 'admin' ? 0.3 : 1,
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {u.is_verified ? <UserCheck size={14} /> : <UserX size={14} />}
+                          </button>
+                          <button
                             onClick={() => handleOpenResetModal(u)}
                             title="Đặt lại mật khẩu"
                             style={{ 
                               background: 'rgba(0, 210, 255, 0.1)', color: '#00d2ff', border: 'none', 
-                              width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer',
+                               width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer',
                               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                               transition: 'all 0.2s'
                             }}

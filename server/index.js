@@ -69,6 +69,16 @@ async function patchDatabase() {
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS security_question VARCHAR(255)`);
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS security_answer VARCHAR(255)`);
 
+    // Vá bảng users hỗ trợ phê duyệt tài khoản mới
+    const checkIsVerified = await db.query(
+      "SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name='is_verified'"
+    );
+    if (checkIsVerified.rows.length === 0) {
+      await db.query(`ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT TRUE`);
+      await db.query(`ALTER TABLE users ALTER COLUMN is_verified SET DEFAULT FALSE`);
+    }
+    await db.query(`UPDATE users SET is_verified = TRUE WHERE role = 'admin'`);
+
     // Vá bảng matches hỗ trợ kèo chấp (Handicap) & Tài xỉu (Over/Under)
     await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS handicap_favorite VARCHAR(100)`);
     await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS handicap_value NUMERIC(4,2) DEFAULT 0.0`);
@@ -113,7 +123,8 @@ async function patchDatabase() {
       ['BANK_ACCOUNT_NAME', 'NGUYEN THI HAI'],
       ['BANK_NAME', 'Vietcombank'],
       ['MEMO_PREFIX', 'KBPAY'],
-      ['MEMO_TEMPLATE', 'KBPAY {username}']
+      ['MEMO_TEMPLATE', 'KBPAY {username}'],
+      ['SHOW_FUND_FEATURES', 'true']
     ];
     for (const [key, value] of defaultConfigs) {
       await db.query(`

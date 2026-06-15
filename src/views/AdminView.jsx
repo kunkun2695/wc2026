@@ -24,6 +24,7 @@ const AdminView = () => {
   const [memoTemplate, setMemoTemplate] = useState('');
   const [bankLoading, setBankLoading] = useState(false);
   const [bankMsg, setBankMsg] = useState('');
+  const [showFundFeatures, setShowFundFeatures] = useState(true);
 
   // Reset System States
   const [resetLoading, setResetLoading] = useState(false);
@@ -59,6 +60,7 @@ const AdminView = () => {
           setBankHolder(data.BANK_ACCOUNT_NAME || '');
           setMemoPrefix(data.MEMO_PREFIX || '');
           setMemoTemplate(data.MEMO_TEMPLATE || '');
+          setShowFundFeatures(data.SHOW_FUND_FEATURES !== 'false');
         }
       } catch (err) { console.error('Lỗi lấy cấu hình ngân hàng'); }
     };
@@ -110,7 +112,8 @@ const AdminView = () => {
           bankAccountName: bankHolder,
           bankName,
           memoPrefix,
-          memoTemplate
+          memoTemplate,
+          showFundFeatures: showFundFeatures ? 'true' : 'false'
         })
       });
       const data = await res.json();
@@ -279,6 +282,18 @@ const AdminView = () => {
             <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
               Thiết lập thông tin tài khoản nhận tiền quỹ phạt để người dùng quét VietQR tự động hoặc mở app ngân hàng trực tiếp.
             </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(0, 210, 255, 0.05)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.15)', marginTop: '5px', marginBottom: '5px' }}>
+              <input
+                type="checkbox"
+                id="showFundFeatures"
+                checked={showFundFeatures}
+                onChange={e => setShowFundFeatures(e.target.checked)}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              <label htmlFor="showFundFeatures" style={{ color: 'white', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}>
+                Kích hoạt hiển thị chức năng đóng quỹ & báo cáo thu chi (VietQR)
+              </label>
+            </div>
             <div style={{ background: '#000', padding: '20px', borderRadius: '16px', border: '1px solid #222', display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', flexWrap: 'wrap' }}>
                 <div>

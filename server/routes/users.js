@@ -20,6 +20,10 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Mật khẩu không chính xác' });
     }
 
+    if (!user.is_verified) {
+      return res.status(403).json({ error: 'Tài khoản của bạn chưa được Admin xác thực. Vui lòng liên hệ Admin để được phê duyệt.' });
+    }
+
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
     res.json({ 
       token, 
@@ -34,12 +38,10 @@ router.post('/register', async (req, res) => {
   const { username, password, name, avatar, security_question, security_answer } = req.body;
   try {
     const result = await db.query(
-      'INSERT INTO users (username, password, name, avatar, role, security_question, security_answer) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username, name, role',
-      [username, password, name, avatar, 'user', security_question, security_answer]
+      'INSERT INTO users (username, password, name, avatar, role, security_question, security_answer, is_verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, name, role',
+      [username, password, name, avatar, 'user', security_question, security_answer, false]
     );
-    const user = result.rows[0];
-    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
-    res.status(201).json({ token, user });
+    res.status(201).json({ message: 'Đăng ký thành công! Tài khoản của bạn đang chờ Admin xác thực.' });
   } catch (error) {
     res.status(500).json({ error: 'Lỗi đăng ký: ' + error.message });
   }

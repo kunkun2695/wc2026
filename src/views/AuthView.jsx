@@ -29,6 +29,7 @@ const AuthView = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
     setLoading(true);
     try {
       const host = window.location.hostname;
@@ -44,12 +45,24 @@ const AuthView = ({ onLogin }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       
-      mockAuth.setToken(data.token);
-      mockAuth.setUser(data.user);
-      onLogin(data.user);
-      
-      // Đăng ký nhận thông báo đẩy
-      subscribeToPush();
+      if (!isLogin) {
+        setSuccessMsg(data.message || 'Đăng ký thành công! Tài khoản của bạn đang chờ Admin xác thực.');
+        setUsername('');
+        setPassword('');
+        setName('');
+        setRegAnswer('');
+        setTimeout(() => {
+          setIsLogin(true);
+          setSuccessMsg('');
+        }, 3000);
+      } else {
+        mockAuth.setToken(data.token);
+        mockAuth.setUser(data.user);
+        onLogin(data.user);
+        
+        // Đăng ký nhận thông báo đẩy
+        subscribeToPush();
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -343,6 +356,26 @@ const AuthView = ({ onLogin }) => {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {successMsg && (
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }}
+                style={{
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  color: '#10b981',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  textAlign: 'center',
+                  marginBottom: '10px'
+                }}
+              >
+                {successMsg}
+              </motion.div>
+            )}
 
             {error && (
               <motion.div 
