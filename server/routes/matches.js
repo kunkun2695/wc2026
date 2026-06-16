@@ -189,7 +189,7 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
                               
       const ouChanged = oldMatch.ou_text !== (ou_text || '');
 
-      if (isNewHandicapEntered && (isOldHandicapEmpty || handicapChanged || ouChanged)) {
+      if (isNewHandicapEntered && (isOldHandicapEmpty || handicapChanged)) {
         let title = '';
         let body = '';
         const team1 = oldMatch.team1_name;
@@ -198,14 +198,12 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
         const handicapStr = handicap_text 
           ? (handicap_favorite === team1 ? `${team1} chấp ${team2} ${handicap_text}` : `${team2} chấp ${team1} ${handicap_text}`)
           : 'Đồng banh';
-        const ouStr = ou_text || 'Chưa có';
-
         if (isOldHandicapEmpty) {
           title = `🏆 Kèo mới: ${team1} vs ${team2}`;
-          body = `Admin đã vào kèo trận ${team1} vs ${team2}. Kèo chấp: ${handicapStr}. Tài Xỉu: ${ouStr}. Vào chốt kèo ngay!`;
+          body = `Admin đã vào kèo trận ${team1} vs ${team2}. Kèo chấp: ${handicapStr}. Vào chốt kèo ngay!`;
         } else {
           title = `⚡ Cập nhật kèo: ${team1} vs ${team2}`;
-          body = `Admin đã thay đổi tỷ lệ kèo trận ${team1} vs ${team2}. Kèo mới: ${handicapStr}. Tài Xỉu: ${ouStr}. Hãy kiểm tra lại lựa chọn của bạn!`;
+          body = `Admin đã thay đổi tỷ lệ kèo trận ${team1} vs ${team2}. Kèo mới: ${handicapStr}. Hãy kiểm tra lại lựa chọn của bạn!`;
         }
         
         // Gửi thông báo đẩy và lưu vào DB cho mọi người (sender là admin hiện tại)
