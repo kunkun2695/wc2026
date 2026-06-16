@@ -421,7 +421,7 @@ const AuthView = ({ onLogin }) => {
         .auth-background {
           position: absolute;
           inset: 0;
-          background-image: url('/Users/macbook/.gemini/antigravity/brain/250e2b1f-c02c-4e08-b54e-56d11ecc62eb/world_cup_bg_1778304438311.png');
+          background-image: url('/world_cup_bg_1778304438311.png');
           background-size: cover;
           background-position: center;
           opacity: 0.4;
