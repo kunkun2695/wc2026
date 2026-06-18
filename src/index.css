@@ -21,6 +21,7 @@
 
 html {
   font-size: 16px;
+  background-color: #0c101b;
 }
 
 @media (max-width: 768px) {
@@ -32,18 +33,25 @@ html {
 html, body {
   max-width: 100%;
   overflow-x: hidden;
+  background-color: #0c101b;
 }
 
 body {
-  background: linear-gradient(185deg, #7db37e 0%, #a2c695 50%, #c4cca0 100%);
+  background: #0c101b linear-gradient(185deg, #0e1626 0%, #0c101b 100%);
   background-image: url('./assets/chat-bg.png');
   background-repeat: repeat;
   background-size: 350px;
-  background-attachment: fixed;
+  background-attachment: scroll;
   background-blend-mode: multiply;
   color: var(--text-main);
   min-height: 100vh;
   position: relative;
+}
+
+@media (min-width: 1025px) {
+  body {
+    background-attachment: fixed;
+  }
 }
 
 body::before {
