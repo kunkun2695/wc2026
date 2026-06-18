@@ -243,10 +243,10 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         </div>
 
         <div className="scoreboard-team right">
+          <span className="team-name-label">{t2.name}</span>
           <div className="team-flag-round">
             <FlagIcon flag={t2.flag} />
           </div>
-          <span className="team-name-label">{t2.name}</span>
         </div>
       </div>
 
@@ -481,8 +481,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
         
         .scoreboard-team.right {
-          justify-content: flex-end;
-          flex-direction: row-reverse;
+          justify-content: flex-start;
         }
         
         .team-flag-round {
@@ -749,12 +748,15 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           .match-scoreboard {
             margin-bottom: 15px;
           }
+          .scoreboard-team {
+            gap: 6px;
+          }
           .team-flag-round {
-            width: 38px;
-            height: 38px;
-            font-size: 1.3rem;
-            border-radius: 10px;
-            padding: 5px;
+            width: 32px;
+            height: 32px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            padding: 3px;
           }
           .team-name-label {
             font-size: 1.05rem;

@@ -222,7 +222,7 @@ const MatchManagementView = ({ matches, predictions = [], onSavePrediction, onRe
   });
 
   return (
-    <div style={{ padding: '100px 20px 150px' }}>
+    <div className="match-management-container">
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
           <div>
@@ -325,6 +325,17 @@ const MatchManagementView = ({ matches, predictions = [], onSavePrediction, onRe
           />
         )}
       </AnimatePresence>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .match-management-container {
+          padding: 100px 20px 150px;
+        }
+        @media (max-width: 768px) {
+          .match-management-container {
+            padding: 80px 0px 100px;
+          }
+        }
+      ` }} />
     </div>
   );
 };
