@@ -142,6 +142,7 @@ const MatchManagementView = ({ matches, onUpdateScore, onSync }) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSyncingOdds, setIsSyncingOdds] = useState(false);
   const [filter, setFilter] = useState('all'); // all, live, upcoming, ft
+  const [hidePlayed, setHidePlayed] = useState(false);
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -193,6 +194,7 @@ const MatchManagementView = ({ matches, onUpdateScore, onSync }) => {
   };
 
   const sortedMatches = matches.filter(m => {
+    if (hidePlayed && (m.status === 'FT' || m.status === 'FINISHED')) return false;
     if (filter === 'all') return true;
     if (filter === 'live') return m.status === 'LIVE';
     if (filter === 'upcoming') return m.status === 'UPCOMING';
@@ -250,11 +252,26 @@ const MatchManagementView = ({ matches, onUpdateScore, onSync }) => {
           </div>
         </header>
 
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '30px', overflowX: 'auto', paddingBottom: '10px' }}>
-          <button onClick={() => setFilter('all')} style={{ padding: '8px 20px', borderRadius: '30px', border: 'none', background: filter === 'all' ? '#00d2ff' : 'rgba(255,255,255,0.05)', color: filter === 'all' ? 'black' : '#94a3b8', fontWeight: 800, cursor: 'pointer', transition: '0.2s', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>TẤT CẢ ({matches.length})</button>
-          <button onClick={() => setFilter('live')} style={{ padding: '8px 20px', borderRadius: '30px', border: 'none', background: filter === 'live' ? '#ef4444' : 'rgba(255,255,255,0.05)', color: filter === 'live' ? 'white' : '#94a3b8', fontWeight: 800, cursor: 'pointer', transition: '0.2s', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>TRỰC TIẾP ({matches.filter(m => m.status === 'LIVE').length})</button>
-          <button onClick={() => setFilter('upcoming')} style={{ padding: '8px 20px', borderRadius: '30px', border: 'none', background: filter === 'upcoming' ? '#00d2ff' : 'rgba(255,255,255,0.05)', color: filter === 'upcoming' ? 'black' : '#94a3b8', fontWeight: 800, cursor: 'pointer', transition: '0.2s', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>SẮP TỚI ({matches.filter(m => m.status === 'UPCOMING').length})</button>
-          <button onClick={() => setFilter('ft')} style={{ padding: '8px 20px', borderRadius: '30px', border: 'none', background: filter === 'ft' ? '#ffd200' : 'rgba(255,255,255,0.05)', color: filter === 'ft' ? 'black' : '#94a3b8', fontWeight: 800, cursor: 'pointer', transition: '0.2s', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>KẾT THÚC ({matches.filter(m => m.status === 'FT' || m.status === 'FINISHED').length})</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
+          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '5px' }}>
+            <button onClick={() => setFilter('all')} style={{ padding: '8px 20px', borderRadius: '30px', border: 'none', background: filter === 'all' ? '#00d2ff' : 'rgba(255,255,255,0.05)', color: filter === 'all' ? 'black' : '#94a3b8', fontWeight: 800, cursor: 'pointer', transition: '0.2s', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>TẤT CẢ ({matches.length})</button>
+            <button onClick={() => setFilter('live')} style={{ padding: '8px 20px', borderRadius: '30px', border: 'none', background: filter === 'live' ? '#ef4444' : 'rgba(255,255,255,0.05)', color: filter === 'live' ? 'white' : '#94a3b8', fontWeight: 800, cursor: 'pointer', transition: '0.2s', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>TRỰC TIẾP ({matches.filter(m => m.status === 'LIVE').length})</button>
+            <button onClick={() => setFilter('upcoming')} style={{ padding: '8px 20px', borderRadius: '30px', border: 'none', background: filter === 'upcoming' ? '#00d2ff' : 'rgba(255,255,255,0.05)', color: filter === 'upcoming' ? 'black' : '#94a3b8', fontWeight: 800, cursor: 'pointer', transition: '0.2s', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>SẮP TỚI ({matches.filter(m => m.status === 'UPCOMING').length})</button>
+            <button onClick={() => setFilter('ft')} style={{ padding: '8px 20px', borderRadius: '30px', border: 'none', background: filter === 'ft' ? '#ffd200' : 'rgba(255,255,255,0.05)', color: filter === 'ft' ? 'black' : '#94a3b8', fontWeight: 800, cursor: 'pointer', transition: '0.2s', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>KẾT THÚC ({matches.filter(m => m.status === 'FT' || m.status === 'FINISHED').length})</button>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '8px 16px', borderRadius: '30px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+            <input 
+              type="checkbox" 
+              id="hidePlayed"
+              checked={hidePlayed} 
+              onChange={(e) => setHidePlayed(e.target.checked)}
+              style={{ width: '16px', height: '16px', accentColor: '#00d2ff', cursor: 'pointer' }}
+            />
+            <label htmlFor="hidePlayed" style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', userSelect: 'none' }}>
+              ẨN TRẬN ĐÃ ĐÁ
+            </label>
+          </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>

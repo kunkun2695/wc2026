@@ -179,17 +179,27 @@ const PORT = process.env.PORT || 5005;
 // Middleware cấu hình CORS và các Header bảo mật (CSP, HSTS, Clickjacking, nosniff)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin) {
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5005',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5005',
+    'http://192.168.1.101:5005',
+    'http://192.168.1.101:5173'
+  ];
+  
+  if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://192.168.'))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   } else {
+    // Không cho phép credentials đối với origin không tin cậy
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
   
   // Các Header Bảo mật theo tiêu chuẩn OWASP ZAP
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:;");
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; object-src 'none'; base-uri 'self';");
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -201,6 +211,7 @@ app.use((req, res, next) => {
   }
   next();
 });
+
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
