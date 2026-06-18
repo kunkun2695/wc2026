@@ -277,7 +277,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
               <div className="btn-team-flag"><FlagIcon flag={t1.flag} /></div>
               <span className="btn-choice-text">{t1.name}</span>
               {getHandicapLabel(t1.name) && (
-                <span style={{ fontSize: '0.75rem', opacity: 0.9, marginLeft: '2px', fontWeight: 800, color: selectedChoice === '1' ? 'inherit' : '#00d2ff' }}>
+                <span className="btn-handicap-text" style={{ color: selectedChoice === '1' ? 'inherit' : '#00d2ff' }}>
                   ({getHandicapLabel(t1.name)})
                 </span>
               )}
@@ -320,7 +320,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
               <div className="btn-team-flag"><FlagIcon flag={t2.flag} /></div>
               <span className="btn-choice-text">{t2.name}</span>
               {getHandicapLabel(t2.name) && (
-                <span style={{ fontSize: '0.75rem', opacity: 0.9, marginLeft: '2px', fontWeight: 800, color: selectedChoice === '2' ? 'inherit' : '#00d2ff' }}>
+                <span className="btn-handicap-text" style={{ color: selectedChoice === '2' ? 'inherit' : '#00d2ff' }}>
                   ({getHandicapLabel(t2.name)})
                 </span>
               )}
@@ -459,9 +459,9 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
 
         .match-scoreboard {
-          display: flex;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
           align-items: center;
-          justify-content: space-between;
           margin: 0 auto 20px auto;
           gap: 10px;
           width: 100%;
@@ -472,16 +472,15 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           display: flex;
           align-items: center;
           gap: 12px;
-          flex: 1;
           min-width: 0;
         }
         
         .scoreboard-team.left {
-          justify-content: flex-end;
+          justify-content: flex-end !important;
         }
         
         .scoreboard-team.right {
-          justify-content: flex-start;
+          justify-content: flex-start !important;
         }
         
         .team-flag-round {
@@ -505,6 +504,17 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          flex-shrink: 1;
+          min-width: 0;
+        }
+        
+        .btn-handicap-text {
+          font-size: 0.75rem;
+          opacity: 0.9;
+          margin-left: 2px;
+          font-weight: 800;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
         
         .scoreboard-middle {
@@ -766,16 +776,25 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             padding: 3px 8px;
           }
           .choice-btn-v2 {
-            height: 46px;
-            font-size: 0.95rem;
+            height: 44px;
+            font-size: 0.8rem;
             border-radius: 10px;
+            gap: 4px;
+            padding: 0 4px;
           }
           .choice-grid-v2 {
-            gap: 8px;
+            gap: 6px;
+            padding: 8px;
           }
           .btn-choice-text {
-            max-width: 65px;
-            font-size: 0.9rem;
+            max-width: 50px;
+            font-size: 0.75rem;
+          }
+          .btn-handicap-text {
+            font-size: 0.65rem;
+          }
+          .choice-btn-v2-draw-label {
+            font-size: 0.75rem;
           }
         }
       ` }} />
