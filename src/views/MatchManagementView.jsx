@@ -137,7 +137,7 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
   );
 };
 
-const MatchManagementView = ({ matches, onUpdateScore, onSync }) => {
+const MatchManagementView = ({ matches, predictions = [], onSavePrediction, onRefreshMatches, onOpenComments, onUpdateScore, onSync }) => {
   const [editingMatch, setEditingMatch] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSyncingOdds, setIsSyncingOdds] = useState(false);
@@ -287,9 +287,21 @@ const MatchManagementView = ({ matches, onUpdateScore, onSync }) => {
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {group.matches.map(m => (
-                    <MatchCard key={m.id} match={m} isAdmin={true} onEdit={setEditingMatch} />
-                  ))}
+                  {group.matches.map(m => {
+                    const userPrediction = predictions.find(p => p.match_id === m.id);
+                    return (
+                      <MatchCard 
+                        key={m.id} 
+                        match={m} 
+                        isAdmin={true} 
+                        onEdit={setEditingMatch} 
+                        userPrediction={userPrediction}
+                        onSavePrediction={onSavePrediction}
+                        onRefreshMatches={onRefreshMatches}
+                        onOpenComments={onOpenComments}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             ))

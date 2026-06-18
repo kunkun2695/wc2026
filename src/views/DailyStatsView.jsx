@@ -583,8 +583,9 @@ const DailyStatsView = ({ matches = [] }) => {
         }
 
         .stats-header p {
-          color: #64748b;
+          color: #e2e8f0;
           font-weight: 600;
+          font-size: 1rem;
         }
 
         /* Date Selector */
@@ -609,9 +610,9 @@ const DailyStatsView = ({ matches = [] }) => {
           border: 1px solid rgba(255, 255, 255, 0.06);
           padding: 8px 16px;
           border-radius: 12px;
-          color: #94a3b8;
+          color: #e2e8f0;
           font-weight: 800;
-          font-size: 0.8rem;
+          font-size: 0.9rem;
           cursor: pointer;
           transition: all 0.2s;
           white-space: nowrap;
@@ -636,9 +637,9 @@ const DailyStatsView = ({ matches = [] }) => {
         }
 
         .dashboard-card {
-          background: rgba(15, 23, 42, 0.55);
+          background: rgba(17, 24, 39, 0.9);
           backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 20px;
           padding: 16px;
           display: flex;
@@ -670,14 +671,14 @@ const DailyStatsView = ({ matches = [] }) => {
         }
 
         .card-lbl {
-          font-size: 0.65rem;
+          font-size: 0.75rem;
           font-weight: 800;
-          color: #64748b;
+          color: #cbd5e1;
           letter-spacing: 0.5px;
         }
 
         .card-val {
-          font-size: 1.15rem;
+          font-size: 1.35rem;
           font-weight: 900;
           font-family: 'Outfit', sans-serif;
         }
@@ -701,9 +702,9 @@ const DailyStatsView = ({ matches = [] }) => {
         }
 
         .glass-panel {
-          background: rgba(15, 23, 42, 0.45);
+          background: rgba(17, 24, 39, 0.9);
           backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 22px;
           padding: 8px;
           overflow: hidden;
@@ -719,17 +720,18 @@ const DailyStatsView = ({ matches = [] }) => {
           text-align: left;
           padding: 12px 16px;
           font-weight: 800;
-          color: #64748b;
+          color: #cbd5e1;
           border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-          font-size: 0.75rem;
+          font-size: 0.85rem;
           text-transform: uppercase;
         }
 
         .stats-table td {
           padding: 12px 16px;
-          color: #94a3b8;
+          color: #f1f5f9;
           border-bottom: 1px solid rgba(255, 255, 255, 0.02);
           font-weight: 600;
+          font-size: 0.95rem;
         }
 
         .stats-table tr:last-child td {
@@ -779,9 +781,9 @@ const DailyStatsView = ({ matches = [] }) => {
         }
 
         .match-stat-card {
-          background: rgba(15, 23, 42, 0.45);
+          background: rgba(17, 24, 39, 0.9);
           backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 20px;
           padding: 16px;
         }
@@ -806,7 +808,7 @@ const DailyStatsView = ({ matches = [] }) => {
         .teams-info-row .team-name {
           font-weight: 800;
           color: white;
-          font-size: 0.9rem;
+          font-size: 1.05rem;
         }
 
         .score-pill {
@@ -815,17 +817,17 @@ const DailyStatsView = ({ matches = [] }) => {
           padding: 4px 12px;
           border-radius: 8px;
           font-weight: 900;
-          font-size: 0.95rem;
+          font-size: 1.1rem;
           border: 1px solid rgba(0, 210, 255, 0.2);
         }
 
         .vs-pill {
           background: rgba(255, 255, 255, 0.03);
-          color: #475569;
+          color: #94a3b8;
           padding: 4px 10px;
           border-radius: 6px;
           font-weight: 800;
-          font-size: 0.7rem;
+          font-size: 0.8rem;
         }
 
         .odds-row {
@@ -834,7 +836,7 @@ const DailyStatsView = ({ matches = [] }) => {
         }
 
         .odd-badge {
-          font-size: 0.65rem;
+          font-size: 0.75rem;
           font-weight: 800;
           padding: 4px 8px;
           border-radius: 6px;
@@ -865,18 +867,18 @@ const DailyStatsView = ({ matches = [] }) => {
         }
 
         .user-info-choice .name {
-          font-size: 0.75rem;
+          font-size: 0.85rem;
           font-weight: 700;
-          color: #94a3b8;
+          color: #cbd5e1;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
         .choice-badge-locked {
-          font-size: 0.65rem;
+          font-size: 0.75rem;
           font-weight: 800;
-          color: rgba(255,255,255,0.3);
+          color: rgba(255,255,255,0.6);
           background: rgba(255,255,255,0.03);
           padding: 4px 8px;
           border-radius: 6px;
@@ -886,20 +888,20 @@ const DailyStatsView = ({ matches = [] }) => {
         }
 
         .choice-badge-revealed {
-          font-size: 0.7rem;
+          font-size: 0.8rem;
           font-weight: 700;
           color: white;
         }
         .choice-badge-revealed .label {
-          color: #64748b;
+          color: #cbd5e1;
         }
         .choice-badge-revealed .val {
           font-weight: 800;
-          color: #e2e8f0;
+          color: #ffffff;
         }
 
         .outcome-badge {
-          font-size: 0.65rem;
+          font-size: 0.75rem;
           font-weight: 900;
           padding: 4px 8px;
           border-radius: 6px;
@@ -913,17 +915,17 @@ const DailyStatsView = ({ matches = [] }) => {
           grid-column: 1 / -1;
           text-align: center;
           padding: 15px;
-          color: #475569;
-          font-size: 0.75rem;
+          color: #cbd5e1;
+          font-size: 0.85rem;
         }
 
         .empty-state-stats {
           text-align: center;
           padding: 30px;
-          color: #475569;
+          color: #cbd5e1;
           background: rgba(255,255,255,0.01);
           border-radius: 12px;
-          font-size: 0.8rem;
+          font-size: 0.9rem;
         }
 
         .stats-loading {
@@ -956,20 +958,22 @@ const DailyStatsView = ({ matches = [] }) => {
           }
           .stats-grid-dashboard {
             grid-template-columns: 1fr;
+            gap: 12px;
           }
           .stats-table th {
-            padding: 8px 10px;
-            font-size: 0.7rem;
+            padding: 10px 12px;
+            font-size: 0.85rem;
           }
           .stats-table td {
-            padding: 8px 10px;
-            font-size: 0.8rem;
+            padding: 10px 12px;
+            font-size: 0.95rem;
           }
           .fine-cell {
-            font-size: 0.85rem;
+            font-size: 1rem;
           }
           .match-choices-grid {
             grid-template-columns: 1fr;
+            gap: 10px;
           }
         }
 

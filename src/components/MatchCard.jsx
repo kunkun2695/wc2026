@@ -757,15 +757,15 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             padding: 5px;
           }
           .team-name-label {
-            font-size: 0.95rem;
+            font-size: 1.05rem;
           }
           .score-display-premium {
-            font-size: 1.35rem;
+            font-size: 1.45rem;
             padding: 3px 8px;
           }
           .choice-btn-v2 {
-            height: 44px;
-            font-size: 0.85rem;
+            height: 46px;
+            font-size: 0.95rem;
             border-radius: 10px;
           }
           .choice-grid-v2 {
@@ -773,7 +773,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           }
           .btn-choice-text {
             max-width: 65px;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
           }
         }
       ` }} />
