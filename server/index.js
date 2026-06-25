@@ -9,6 +9,8 @@ const path = require('path');
 // Nạp cấu hình ENV ngay đầu tiên
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
+const { apiLimiter, authLimiter, escapeBodyData, ipBanMiddleware } = require('./middleware/security');
+
 const { syncMatches } = require('./services/syncService');
 const db = require('./config/db');
 
@@ -113,6 +115,26 @@ async function patchDatabase() {
       )
     `);
 
+    // Tạo bảng banned_ips và suspicious_activities để theo dõi & chặn IP
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS banned_ips (
+        id SERIAL PRIMARY KEY,
+        ip_address VARCHAR(45) UNIQUE NOT NULL,
+        reason TEXT,
+        banned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS suspicious_activities (
+        id SERIAL PRIMARY KEY,
+        ip_address VARCHAR(45) NOT NULL,
+        activity_type VARCHAR(50) NOT NULL,
+        details TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Đảm bảo bảng system_config tồn tại
     await db.query(`CREATE TABLE IF NOT EXISTS system_config (key TEXT PRIMARY KEY, value TEXT)`);
 
@@ -173,10 +195,18 @@ const configRoutes = require('./routes/config');
 const paymentsRoutes = require('./routes/payments');
 
 const app = express();
+app.use(ipBanMiddleware);
 app.disable('x-powered-by');
 const PORT = process.env.PORT || 5005;
 
-// Middleware cấu hình CORS và các Header bảo mật (CSP, HSTS, Clickjacking, nosniff)
+// Rate Limiter cấu hình bảo mật
+app.use('/api', apiLimiter);
+app.use('/api/users/login', authLimiter);
+app.use('/api/users/register', authLimiter);
+app.use('/api/users/forgot-password/reset', authLimiter);
+app.use('/api/payments', authLimiter);
+
+// Middleware cấu hình CORS và các Header bảo mật (CSP, HSTS, Clickjacking, nosniff, Permissions-Policy, COOP, CORP)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
@@ -198,13 +228,16 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
-  // Các Header Bảo mật theo tiêu chuẩn OWASP ZAP
+  // Các Header Bảo mật theo tiêu chuẩn OWASP ZAP & CSP nâng cao
   res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; object-src 'none'; base-uri 'self';");
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204);
@@ -212,9 +245,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// Giới hạn kích thước payload gửi lên (10mb thay vì 50mb để chống Payload Injection / Denial of Service)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Lọc dữ liệu request body tránh XSS
+app.use('/api', escapeBodyData);
 
 // Routes
 app.use('/api/teams', teamsRoutes);
@@ -238,6 +274,9 @@ app.use(express.static(distPath));
 // Catch-all route for React SPA
 app.use((req, res) => {
   if (req.path.startsWith('/api')) {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
+    const { logSuspiciousActivity } = require('./middleware/security');
+    logSuspiciousActivity(ip, 'NOT_FOUND_SCANNING', `Quét API không tồn tại: ${req.method} ${req.path}`).catch(()=>{});
     return res.status(404).json({ error: 'API endpoint not found' });
   }
   res.sendFile(path.join(distPath, 'index.html'));

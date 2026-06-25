@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { syncOdds } = require('../services/oddsService');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
@@ -13,11 +14,17 @@ const authenticateAdmin = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
     if (decoded.role !== 'admin') {
+      const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
+      const { logSuspiciousActivity } = require('../middleware/security');
+      logSuspiciousActivity(ip, 'UNAUTHORIZED_ACCESS', `Truy cập trái phép admin (user: ${decoded.username})`).catch(()=>{});
       return res.status(403).json({ error: 'Bạn không có quyền Admin' });
     }
     req.user = decoded;
     next();
   } catch (err) {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
+    const { logSuspiciousActivity } = require('../middleware/security');
+    logSuspiciousActivity(ip, 'UNAUTHORIZED_ACCESS', `Truy cập trái phép admin: Token không hợp lệ`).catch(()=>{});
     res.status(401).json({ error: 'Token không hợp lệ' });
   }
 };
@@ -310,9 +317,10 @@ router.put('/users/:id/reset-password', authenticateAdmin, async (req, res) => {
   }
 
   try {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     const result = await db.query(
       'UPDATE users SET password = $1 WHERE id = $2 RETURNING username',
-      [newPassword, userId]
+      [hashedPassword, userId]
     );
 
     if (result.rowCount === 0) {
@@ -334,6 +342,88 @@ router.post('/matches/sync-odds', authenticateAdmin, async (req, res) => {
   } catch (error) {
     console.error('Odds manual sync error:', error);
     res.status(500).json({ error: 'Lỗi đồng bộ tỷ lệ kèo: ' + error.message });
+  }
+});
+
+// ================= SECURITY & IP BAN ENDPOINTS =================
+
+// 1. Lấy danh sách IP nghi vấn (suspicious_activities)
+router.get('/security/suspicious-ips', authenticateAdmin, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT 
+        s.ip_address,
+        COUNT(*) as threat_count,
+        MAX(s.created_at) as last_activity,
+        STRING_AGG(DISTINCT s.activity_type, ', ') as activity_types,
+        EXISTS(SELECT 1 FROM banned_ips b WHERE b.ip_address = s.ip_address) as is_banned
+      FROM suspicious_activities s
+      GROUP BY s.ip_address
+      ORDER BY threat_count DESC, last_activity DESC
+      LIMIT 100
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Fetch suspicious IPs error:', error);
+    res.status(500).json({ error: 'Lỗi lấy danh sách IP nghi vấn: ' + error.message });
+  }
+});
+
+// 2. Lấy danh sách IP bị cấm (banned_ips)
+router.get('/security/banned-ips', authenticateAdmin, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM banned_ips ORDER BY banned_at DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Fetch banned IPs error:', error);
+    res.status(500).json({ error: 'Lỗi lấy danh sách IP bị cấm: ' + error.message });
+  }
+});
+
+// 3. Cấm một IP
+router.post('/security/ban', authenticateAdmin, async (req, res) => {
+  const { ip, reason } = req.body;
+  if (!ip) {
+    return res.status(400).json({ error: 'Thiếu địa chỉ IP để chặn' });
+  }
+
+  try {
+    await db.query(`
+      INSERT INTO banned_ips (ip_address, reason)
+      VALUES ($1, $2)
+      ON CONFLICT (ip_address)
+      DO UPDATE SET reason = $2
+    `, [ip.trim(), reason || 'Bị cấm bởi Quản trị viên']);
+    
+    // Cập nhật bộ nhớ đệm Set
+    const { banIp } = require('../middleware/security');
+    banIp(ip.trim());
+
+    res.json({ message: `Đã cấm IP ${ip} truy cập vào hệ thống.` });
+  } catch (error) {
+    console.error('Ban IP error:', error);
+    res.status(500).json({ error: 'Lỗi cấm IP: ' + error.message });
+  }
+});
+
+// 4. Gỡ cấm một IP
+router.post('/security/unban', authenticateAdmin, async (req, res) => {
+  const { ip } = req.body;
+  if (!ip) {
+    return res.status(400).json({ error: 'Thiếu địa chỉ IP để gỡ chặn' });
+  }
+
+  try {
+    await db.query('DELETE FROM banned_ips WHERE ip_address = $1', [ip.trim()]);
+    
+    // Cập nhật bộ nhớ đệm Set
+    const { unbanIp } = require('../middleware/security');
+    unbanIp(ip.trim());
+
+    res.json({ message: `Đã gỡ cấm IP ${ip} thành công.` });
+  } catch (error) {
+    console.error('Unban IP error:', error);
+    res.status(500).json({ error: 'Lỗi gỡ cấm IP: ' + error.message });
   }
 });
 

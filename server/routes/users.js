@@ -13,10 +13,36 @@ router.post('/login', async (req, res) => {
     const user = result.rows[0];
     
     if (!user) {
+      const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
+      const { logSuspiciousActivity } = require('../middleware/security');
+      await logSuspiciousActivity(ip, 'FAILED_LOGIN', `Đăng nhập thất bại: Tài khoản "${username}" không tồn tại`);
       return res.status(401).json({ error: 'Tài khoản không tồn tại' });
     }
     
-    if (user.password !== password) {
+    // Kiểm tra xem mật khẩu hiện tại trong DB đã được mã hóa bằng bcrypt hay chưa
+    const isBcrypt = user.password.startsWith('$2a$') || user.password.startsWith('$2b$');
+    let isMatch = false;
+    
+    if (isBcrypt) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      // Cơ chế Graceful Migration: Nếu mật khẩu thô trùng khớp, thực hiện mã hóa và lưu lại
+      isMatch = (user.password === password);
+      if (isMatch) {
+        try {
+          const hashedPassword = await bcrypt.hash(password, 10);
+          await db.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, user.id]);
+          console.log(`[Bảo mật] Tự động mã hóa mật khẩu thô cho tài khoản: ${user.username}`);
+        } catch (hashErr) {
+          console.error('[Mã hóa mật khẩu tự động lỗi]', hashErr);
+        }
+      }
+    }
+
+    if (!isMatch) {
+      const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
+      const { logSuspiciousActivity } = require('../middleware/security');
+      await logSuspiciousActivity(ip, 'FAILED_LOGIN', `Đăng nhập thất bại: Sai mật khẩu tài khoản "${username}"`);
       return res.status(401).json({ error: 'Mật khẩu không chính xác' });
     }
 
@@ -37,9 +63,10 @@ router.post('/login', async (req, res) => {
 router.post('/register', async (req, res) => {
   const { username, password, name, avatar, security_question, security_answer } = req.body;
   try {
+    const hashedPassword = await bcrypt.hash(password, 10);
     const result = await db.query(
       'INSERT INTO users (username, password, name, avatar, role, security_question, security_answer, is_verified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, name, role',
-      [username, password, name, avatar, 'user', security_question, security_answer, false]
+      [username, hashedPassword, name, avatar, 'user', security_question, security_answer, false]
     );
     res.status(201).json({ message: 'Đăng ký thành công! Tài khoản của bạn đang chờ Admin xác thực.' });
   } catch (error) {
@@ -65,9 +92,10 @@ router.put('/me', authenticateUser, async (req, res) => {
   try {
     let result;
     if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
       result = await db.query(
         'UPDATE users SET name = $1, avatar = $2, password = $3 WHERE id = $4 RETURNING id, username, name, role, avatar',
-        [name, avatar, password, userId]
+        [name, avatar, hashedPassword, userId]
       );
     } else {
       result = await db.query(
@@ -124,7 +152,8 @@ router.post('/forgot-password/reset', async (req, res) => {
       return res.status(400).json({ error: 'Câu trả lời bảo mật không chính xác' });
     }
     
-    await db.query('UPDATE users SET password = $1 WHERE id = $2', [newPassword, user.id]);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await db.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, user.id]);
     res.json({ message: 'Đặt lại mật khẩu thành công!' });
   } catch (error) {
     res.status(500).json({ error: 'Lỗi hệ thống: ' + error.message });

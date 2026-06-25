@@ -32,6 +32,14 @@ const AdminView = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetMsg, setResetMsg] = useState('');
 
+  // Security States
+  const [suspiciousIps, setSuspiciousIps] = useState([]);
+  const [bannedIps, setBannedIps] = useState([]);
+  const [manualIp, setManualIp] = useState('');
+  const [manualReason, setManualReason] = useState('');
+  const [secLoading, setSecLoading] = useState(false);
+  const [secMsg, setSecMsg] = useState('');
+
   // Fetch Configs on Load
   React.useEffect(() => {
     const fetchConfig = async () => {
@@ -66,6 +74,7 @@ const AdminView = () => {
     };
     fetchConfig();
     fetchBankConfig();
+    loadSecurity();
   }, []);
 
   const handleSaveAiKey = async () => {
@@ -189,6 +198,79 @@ const AdminView = () => {
       setResetMsg('❌ Lỗi kết nối');
     } finally {
       setResetLoading(false);
+    }
+  };
+
+  const loadSecurity = async () => {
+    const finalApiUrl = API_URL || window.location.origin;
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const sRes = await fetch(`${finalApiUrl}/api/admin/security/suspicious-ips`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const bRes = await fetch(`${finalApiUrl}/api/admin/security/banned-ips`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (sRes.ok) setSuspiciousIps(await sRes.json());
+      if (bRes.ok) setBannedIps(await bRes.json());
+    } catch (err) {
+      console.error('Lỗi lấy dữ liệu bảo mật', err);
+    }
+  };
+
+  const handleBanIp = async (ip, reason) => {
+    if (!ip) return;
+    setSecLoading(true);
+    setSecMsg('');
+    const finalApiUrl = API_URL || window.location.origin;
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${finalApiUrl}/api/admin/security/ban`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ ip, reason })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSecMsg(`✅ Đã cấm IP ${ip} thành công!`);
+        if (ip === manualIp) {
+          setManualIp('');
+          setManualReason('');
+        }
+        await loadSecurity();
+      } else {
+        setSecMsg(`❌ ${data.error}`);
+      }
+    } catch (err) {
+      setSecMsg('❌ Lỗi kết nối');
+    } finally {
+      setSecLoading(false);
+    }
+  };
+
+  const handleUnbanIp = async (ip) => {
+    if (!ip) return;
+    setSecLoading(true);
+    setSecMsg('');
+    const finalApiUrl = API_URL || window.location.origin;
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${finalApiUrl}/api/admin/security/unban`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ ip })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSecMsg(`✅ Đã gỡ cấm IP ${ip} thành công!`);
+        await loadSecurity();
+      } else {
+        setSecMsg(`❌ ${data.error}`);
+      }
+    } catch (err) {
+      setSecMsg('❌ Lỗi kết nối');
+    } finally {
+      setSecLoading(false);
     }
   };
 
@@ -369,7 +451,144 @@ const AdminView = () => {
           </div>
         </section>
 
-        {/* 4. DANGER ZONE */}
+        {/* 4. SECURITY & IP BANNING */}
+        <section style={{ background: '#1a1f2e', padding: '30px', borderRadius: '24px', marginBottom: '30px', border: '1px solid rgba(255, 68, 68, 0.15)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <Shield size={20} color="#ff4d4d" />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white', margin: 0 }}>QUẢN LÝ BẢO MẬT & CHẶN IP TRUY CẬP</h3>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+              Theo dõi các IP truy cập bất thường (đăng nhập sai nhiều lần, vượt giới hạn yêu cầu, quét lỗi) và chặn truy cập từ các IP này vào toàn bộ ứng dụng.
+            </p>
+
+            {/* Manual Ban IP Form */}
+            <div style={{ background: '#000', padding: '20px', borderRadius: '16px', border: '1px solid #222' }}>
+              <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '10px', letterSpacing: '1px' }}>CẤM IP THỦ CÔNG</label>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  placeholder="Nhập địa chỉ IP (ví dụ: 1.2.3.4)..."
+                  value={manualIp}
+                  onChange={e => setManualIp(e.target.value)}
+                  style={{ flex: 1, minWidth: '180px', padding: '12px', borderRadius: '10px', background: '#0f172a', border: '1px solid #1e293b', color: 'white' }}
+                />
+                <input
+                  type="text"
+                  placeholder="Lý do cấm..."
+                  value={manualReason}
+                  onChange={e => setManualReason(e.target.value)}
+                  style={{ flex: 2, minWidth: '220px', padding: '12px', borderRadius: '10px', background: '#0f172a', border: '1px solid #1e293b', color: 'white' }}
+                />
+                <button
+                  onClick={() => handleBanIp(manualIp, manualReason)}
+                  disabled={secLoading || !manualIp}
+                  style={{ padding: '0 25px', borderRadius: '10px', background: '#ff4d4d', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', transition: '0.2s' }}
+                >
+                  CẤM IP
+                </button>
+              </div>
+            </div>
+
+            {secMsg && <div style={{ fontSize: '0.8rem', fontWeight: 700, color: secMsg.includes('✅') ? '#00ff64' : '#ff4d4d', background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '8px' }}>{secMsg}</div>}
+
+            {/* Banned IPs List */}
+            <div>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#ff4d4d', marginBottom: '10px' }}>DANH SÁCH IP ĐANG BỊ CHẶN ({bannedIps.length})</h4>
+              {bannedIps.length === 0 ? (
+                <p style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic' }}>Chưa có IP nào bị cấm.</p>
+              ) : (
+                <div style={{ overflowX: 'auto', background: '#000', borderRadius: '12px', border: '1px solid #222' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #222', color: '#64748b' }}>
+                        <th style={{ padding: '12px 15px' }}>Địa chỉ IP</th>
+                        <th style={{ padding: '12px 15px' }}>Lý do cấm</th>
+                        <th style={{ padding: '12px 15px' }}>Thời gian</th>
+                        <th style={{ padding: '12px 15px', textAlign: 'right' }}>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bannedIps.map((b, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid #111', color: 'white' }}>
+                          <td style={{ padding: '12px 15px', fontFamily: 'monospace', fontWeight: 700 }}>{b.ip_address}</td>
+                          <td style={{ padding: '12px 15px', color: '#94a3b8' }}>{b.reason}</td>
+                          <td style={{ padding: '12px 15px', color: '#64748b' }}>{new Date(b.banned_at).toLocaleString('vi-VN')}</td>
+                          <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                            <button
+                              onClick={() => handleUnbanIp(b.ip_address)}
+                              disabled={secLoading}
+                              style={{ padding: '6px 12px', borderRadius: '6px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.7rem' }}
+                            >
+                              GỠ CẤM
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Suspicious Activities IPs */}
+            <div style={{ marginTop: '10px' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#f59e0b', marginBottom: '10px' }}>CẢNH BÁO HOẠT ĐỘNG BẤT THƯỜNG</h4>
+              {suspiciousIps.length === 0 ? (
+                <p style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic' }}>Chưa ghi nhận hoạt động bất thường nào.</p>
+              ) : (
+                <div style={{ overflowX: 'auto', background: '#000', borderRadius: '12px', border: '1px solid #222' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #222', color: '#64748b' }}>
+                        <th style={{ padding: '12px 15px' }}>Địa chỉ IP</th>
+                        <th style={{ padding: '12px 15px' }}>Số lần vi phạm</th>
+                        <th style={{ padding: '12px 15px' }}>Các hành vi</th>
+                        <th style={{ padding: '12px 15px' }}>Hoạt động cuối</th>
+                        <th style={{ padding: '12px 15px', textAlign: 'right' }}>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {suspiciousIps.map((s, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid #111', color: 'white' }}>
+                          <td style={{ padding: '12px 15px', fontFamily: 'monospace', fontWeight: 700 }}>
+                            {s.ip_address} {s.is_banned && <span style={{ fontSize: '0.65rem', background: '#ff4d4d', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '5px' }}>BANNED</span>}
+                          </td>
+                          <td style={{ padding: '12px 15px', fontWeight: 700, color: s.threat_count > 5 ? '#ff4d4d' : '#f59e0b' }}>{s.threat_count}</td>
+                          <td style={{ padding: '12px 15px', color: '#94a3b8', fontSize: '0.75rem' }}>{s.activity_types}</td>
+                          <td style={{ padding: '12px 15px', color: '#64748b' }}>{new Date(s.last_activity).toLocaleString('vi-VN')}</td>
+                          <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                            {!s.is_banned ? (
+                              <button
+                                onClick={() => handleBanIp(s.ip_address, `Bị chặn do ${s.threat_count} lần vi phạm: ${s.activity_types}`)}
+                                disabled={secLoading}
+                                style={{ padding: '6px 12px', borderRadius: '6px', background: '#ff4d4d', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.7rem' }}
+                              >
+                                CHẶN IP
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleUnbanIp(s.ip_address)}
+                                disabled={secLoading}
+                                style={{ padding: '6px 12px', borderRadius: '6px', background: '#334155', color: 'white', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: '0.7rem' }}
+                              >
+                                GỠ CHẶN
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </section>
+
+        {/* 5. DANGER ZONE */}
         <section style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
             <AlertTriangle size={20} color="#ef4444" />
