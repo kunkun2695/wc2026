@@ -35,6 +35,7 @@ const AdminView = () => {
   // Security States
   const [suspiciousIps, setSuspiciousIps] = useState([]);
   const [bannedIps, setBannedIps] = useState([]);
+  const [activeVisitors, setActiveVisitors] = useState([]);
   const [manualIp, setManualIp] = useState('');
   const [manualReason, setManualReason] = useState('');
   const [secLoading, setSecLoading] = useState(false);
@@ -75,6 +76,10 @@ const AdminView = () => {
     fetchConfig();
     fetchBankConfig();
     loadSecurity();
+
+    // Tự động làm mới danh sách IP và khách truy cập mỗi 10 giây
+    const interval = setInterval(loadSecurity, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSaveAiKey = async () => {
@@ -211,8 +216,12 @@ const AdminView = () => {
       const bRes = await fetch(`${finalApiUrl}/api/admin/security/banned-ips`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      const vRes = await fetch(`${finalApiUrl}/api/admin/security/active-visitors`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (sRes.ok) setSuspiciousIps(await sRes.json());
       if (bRes.ok) setBannedIps(await bRes.json());
+      if (vRes.ok) setActiveVisitors(await vRes.json());
     } catch (err) {
       console.error('Lỗi lấy dữ liệu bảo mật', err);
     }
@@ -462,6 +471,82 @@ const AdminView = () => {
             <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
               Theo dõi các IP truy cập bất thường (đăng nhập sai nhiều lần, vượt giới hạn yêu cầu, quét lỗi) và chặn truy cập từ các IP này vào toàn bộ ứng dụng.
             </p>
+
+            {/* Active Visitors List */}
+            <div style={{ marginTop: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#00d2ff', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', animation: 'pulse 1.5s infinite' }}></span>
+                  KHÁCH TRUY CẬP ĐANG HOẠT ĐỘNG ({activeVisitors.length})
+                </h4>
+                <button
+                  onClick={loadSecurity}
+                  disabled={secLoading}
+                  style={{ background: 'transparent', border: 'none', color: '#00d2ff', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <RefreshCw size={12} className={secLoading ? 'animate-spin' : ''} /> LÀM MỚI
+                </button>
+              </div>
+              {activeVisitors.length === 0 ? (
+                <p style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic' }}>Chưa ghi nhận lượt truy cập nào gần đây.</p>
+              ) : (
+                <div style={{ overflowX: 'auto', background: '#000', borderRadius: '12px', border: '1px solid #222' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #222', color: '#64748b' }}>
+                        <th style={{ padding: '12px 15px' }}>Địa chỉ IP</th>
+                        <th style={{ padding: '12px 15px' }}>Số Request</th>
+                        <th style={{ padding: '12px 15px' }}>Dò tìm lỗi hổng</th>
+                        <th style={{ padding: '12px 15px' }}>Đường dẫn cuối</th>
+                        <th style={{ padding: '12px 15px' }}>Thời gian</th>
+                        <th style={{ padding: '12px 15px', textAlign: 'right' }}>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeVisitors.map((v, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid #111', color: 'white' }}>
+                          <td style={{ padding: '12px 15px', fontFamily: 'monospace', fontWeight: 700 }}>
+                            {v.ip_address}
+                            {v.is_banned && <span style={{ fontSize: '0.65rem', background: '#ff4d4d', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '5px' }}>BANNED</span>}
+                          </td>
+                          <td style={{ padding: '12px 15px', color: '#e2e8f0' }}>{v.request_count}</td>
+                          <td style={{ padding: '12px 15px' }}>
+                            {v.scan_count > 0 ? (
+                              <span style={{ color: '#ff4d4d', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <AlertTriangle size={12} color="#ff4d4d" /> {v.scan_count} lần
+                              </span>
+                            ) : (
+                              <span style={{ color: '#10b981' }}>An toàn</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '12px 15px', color: '#94a3b8', fontSize: '0.75rem', fontFamily: 'monospace' }}>{v.last_path}</td>
+                          <td style={{ padding: '12px 15px', color: '#64748b' }}>{new Date(v.last_seen).toLocaleTimeString('vi-VN')}</td>
+                          <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                            {!v.is_banned ? (
+                              <button
+                                onClick={() => handleBanIp(v.ip_address, `Bị chặn từ danh sách hoạt động (đã quét lỗi ${v.scan_count} lần)`)}
+                                disabled={secLoading}
+                                style={{ padding: '6px 12px', borderRadius: '6px', background: '#ff4d4d', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.7rem' }}
+                              >
+                                CHẶN IP
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleUnbanIp(v.ip_address)}
+                                disabled={secLoading}
+                                style={{ padding: '6px 12px', borderRadius: '6px', background: '#334155', color: 'white', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: '0.7rem' }}
+                              >
+                                GỠ CHẶN
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
 
             {/* Manual Ban IP Form */}
             <div style={{ background: '#000', padding: '20px', borderRadius: '16px', border: '1px solid #222' }}>

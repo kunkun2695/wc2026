@@ -427,4 +427,41 @@ router.post('/security/unban', authenticateAdmin, async (req, res) => {
   }
 });
 
+// 5. Lấy danh sách khách truy cập đang hoạt động (active-visitors) kèm số lần quét lỗi (scan_count)
+router.get('/security/active-visitors', authenticateAdmin, async (req, res) => {
+  try {
+    const { activeVisitorsMap, bannedIpsSet } = require('../middleware/security');
+    const visitors = Array.from(activeVisitorsMap.values());
+    
+    if (visitors.length === 0) {
+      return res.json([]);
+    }
+    
+    const ips = visitors.map(v => v.ip_address);
+    const scanCountsRes = await db.query(`
+      SELECT ip_address, COUNT(*) as scan_count
+      FROM suspicious_activities
+      WHERE ip_address = ANY($1) AND activity_type = 'NOT_FOUND_SCANNING'
+      GROUP BY ip_address
+    `, [ips]);
+    
+    const scanCountsMap = {};
+    scanCountsRes.rows.forEach(row => {
+      scanCountsMap[row.ip_address] = parseInt(row.scan_count);
+    });
+    
+    const result = visitors.map(v => ({
+      ...v,
+      scan_count: scanCountsMap[v.ip_address] || 0,
+      is_banned: bannedIpsSet.has(v.ip_address)
+    }));
+    
+    result.sort((a, b) => b.last_seen - a.last_seen);
+    res.json(result);
+  } catch (error) {
+    console.error('Fetch active visitors error:', error);
+    res.status(500).json({ error: 'Lỗi lấy danh sách khách hoạt động: ' + error.message });
+  }
+});
+
 module.exports = router;

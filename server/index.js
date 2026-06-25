@@ -9,7 +9,7 @@ const path = require('path');
 // Nạp cấu hình ENV ngay đầu tiên
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const { apiLimiter, authLimiter, escapeBodyData, ipBanMiddleware } = require('./middleware/security');
+const { apiLimiter, authLimiter, escapeBodyData, ipBanMiddleware, activeVisitorMiddleware } = require('./middleware/security');
 
 const { syncMatches } = require('./services/syncService');
 const db = require('./config/db');
@@ -196,6 +196,7 @@ const paymentsRoutes = require('./routes/payments');
 
 const app = express();
 app.use(ipBanMiddleware);
+app.use(activeVisitorMiddleware);
 app.disable('x-powered-by');
 const PORT = process.env.PORT || 5005;
 

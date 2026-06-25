@@ -2,6 +2,17 @@ const rateLimit = require('express-rate-limit');
 const db = require('../config/db');
 
 const bannedIpsSet = new Set();
+const activeVisitorsMap = new Map();
+
+// Cleanup inactive visitors (inactive > 15 minutes), runs every 5 minutes
+setInterval(() => {
+  const cutoff = Date.now() - 15 * 60 * 1000;
+  for (const [ip, visitor] of activeVisitorsMap.entries()) {
+    if (visitor.last_seen < cutoff) {
+      activeVisitorsMap.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000);
 
 // Load banned IPs from DB
 async function loadBannedIps() {
@@ -34,6 +45,34 @@ const ipBanMiddleware = (req, res, next) => {
   if (bannedIpsSet.has(ip)) {
     console.warn(`🛡️ [Security Block] Request blocked from banned IP: ${ip} for path ${req.path}`);
     return res.status(403).json({ error: 'IP của bạn đã bị cấm khỏi hệ thống do vi phạm bảo mật.' });
+  }
+  next();
+};
+
+// Middleware to track active visitors in memory
+const activeVisitorMiddleware = (req, res, next) => {
+  // Only track actual page loads and API requests, skip static assets with extensions (.js, .css, etc.)
+  if (req.path.startsWith('/api') || req.path === '/' || !req.path.includes('.')) {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    const now = Date.now();
+
+    if (activeVisitorsMap.has(ip)) {
+      const visitor = activeVisitorsMap.get(ip);
+      visitor.last_seen = now;
+      visitor.request_count += 1;
+      visitor.last_path = `${req.method} ${req.path}`;
+      visitor.user_agent = userAgent;
+    } else {
+      activeVisitorsMap.set(ip, {
+        ip_address: ip,
+        first_seen: now,
+        last_seen: now,
+        request_count: 1,
+        last_path: `${req.method} ${req.path}`,
+        user_agent: userAgent
+      });
+    }
   }
   next();
 };
@@ -139,8 +178,11 @@ module.exports = {
   escapeBodyData,
   escapeHtml,
   ipBanMiddleware,
+  activeVisitorMiddleware,
   logSuspiciousActivity,
   banIp,
   unbanIp,
-  loadBannedIps
+  loadBannedIps,
+  activeVisitorsMap,
+  bannedIpsSet
 };
