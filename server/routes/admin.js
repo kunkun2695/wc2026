@@ -464,4 +464,78 @@ router.get('/security/active-visitors', authenticateAdmin, async (req, res) => {
   }
 });
 
+// ================= WHITELIST ENDPOINTS =================
+
+// 6. Lấy danh sách IP trong whitelist
+router.get('/security/whitelist', authenticateAdmin, async (req, res) => {
+  try {
+    // Tự động tạo bảng nếu chưa có (safe-create)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS whitelisted_ips (
+        id          SERIAL PRIMARY KEY,
+        ip_address  VARCHAR(45) NOT NULL UNIQUE,
+        reason      TEXT,
+        added_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    const result = await db.query('SELECT * FROM whitelisted_ips ORDER BY added_at DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Fetch whitelist error:', error);
+    res.status(500).json({ error: 'Lỗi lấy danh sách whitelist: ' + error.message });
+  }
+});
+
+// 7. Thêm IP vào whitelist
+router.post('/security/whitelist', authenticateAdmin, async (req, res) => {
+  const { ip, reason } = req.body;
+  if (!ip) return res.status(400).json({ error: 'Thiếu địa chỉ IP' });
+
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS whitelisted_ips (
+        id          SERIAL PRIMARY KEY,
+        ip_address  VARCHAR(45) NOT NULL UNIQUE,
+        reason      TEXT,
+        added_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await db.query(`
+      INSERT INTO whitelisted_ips (ip_address, reason)
+      VALUES ($1, $2)
+      ON CONFLICT (ip_address) DO UPDATE SET reason = $2
+    `, [ip.trim(), reason || 'Được miễn trừ bởi Quản trị viên']);
+
+    // Cập nhật RAM: thêm vào whitelist, tự động gỡ ban nếu đang bị chặn
+    const { addToWhitelist } = require('../middleware/security');
+    addToWhitelist(ip.trim());
+
+    // Xóa khỏi banned_ips nếu đang bị ban
+    await db.query('DELETE FROM banned_ips WHERE ip_address = $1', [ip.trim()]);
+
+    res.json({ message: `✅ Đã thêm IP ${ip} vào danh sách trắng thành công!` });
+  } catch (error) {
+    console.error('Whitelist IP error:', error);
+    res.status(500).json({ error: 'Lỗi thêm whitelist: ' + error.message });
+  }
+});
+
+// 8. Xóa IP khỏi whitelist
+router.delete('/security/whitelist/:ip', authenticateAdmin, async (req, res) => {
+  const ip = decodeURIComponent(req.params.ip);
+  if (!ip) return res.status(400).json({ error: 'Thiếu địa chỉ IP' });
+
+  try {
+    await db.query('DELETE FROM whitelisted_ips WHERE ip_address = $1', [ip.trim()]);
+
+    const { removeFromWhitelist } = require('../middleware/security');
+    removeFromWhitelist(ip.trim());
+
+    res.json({ message: `✅ Đã xóa IP ${ip} khỏi danh sách trắng.` });
+  } catch (error) {
+    console.error('Remove whitelist IP error:', error);
+    res.status(500).json({ error: 'Lỗi xóa whitelist: ' + error.message });
+  }
+});
+
 module.exports = router;

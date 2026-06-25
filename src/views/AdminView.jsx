@@ -50,8 +50,11 @@ const AdminView = () => {
   const [suspiciousIps, setSuspiciousIps] = useState([]);
   const [bannedIps, setBannedIps] = useState([]);
   const [activeVisitors, setActiveVisitors] = useState([]);
+  const [whitelistedIps, setWhitelistedIps] = useState([]);
   const [manualIp, setManualIp] = useState('');
   const [manualReason, setManualReason] = useState('');
+  const [wlIp, setWlIp] = useState('');
+  const [wlReason, setWlReason] = useState('');
   const [secLoading, setSecLoading] = useState(false);
   const [secMsg, setSecMsg] = useState('');
 
@@ -224,18 +227,16 @@ const AdminView = () => {
     const finalApiUrl = API_URL || window.location.origin;
     try {
       const token = localStorage.getItem('wc2026_token');
-      const sRes = await fetch(`${finalApiUrl}/api/admin/security/suspicious-ips`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const bRes = await fetch(`${finalApiUrl}/api/admin/security/banned-ips`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const vRes = await fetch(`${finalApiUrl}/api/admin/security/active-visitors`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const [sRes, bRes, vRes, wRes] = await Promise.all([
+        fetch(`${finalApiUrl}/api/admin/security/suspicious-ips`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${finalApiUrl}/api/admin/security/banned-ips`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${finalApiUrl}/api/admin/security/active-visitors`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${finalApiUrl}/api/admin/security/whitelist`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      ]);
       if (sRes.ok) setSuspiciousIps(await sRes.json());
       if (bRes.ok) setBannedIps(await bRes.json());
       if (vRes.ok) setActiveVisitors(await vRes.json());
+      if (wRes.ok) setWhitelistedIps(await wRes.json());
     } catch (err) {
       console.error('Lỗi lấy dữ liệu bảo mật', err);
     }
@@ -299,6 +300,59 @@ const AdminView = () => {
       const data = await res.json();
       if (res.ok) {
         setSecMsg(`✅ Đã gỡ cấm IP ${ip} thành công!`);
+        await loadSecurity();
+      } else {
+        setSecMsg(`❌ ${data.error}`);
+      }
+    } catch (err) {
+      setSecMsg('❌ Lỗi kết nối');
+    } finally {
+      setSecLoading(false);
+    }
+  };
+
+  const handleAddToWhitelist = async (ip, reason) => {
+    const target = ip || wlIp;
+    if (!target) return;
+    setSecLoading(true);
+    setSecMsg('');
+    const finalApiUrl = API_URL || window.location.origin;
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${finalApiUrl}/api/admin/security/whitelist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ ip: target, reason: reason || wlReason || 'Được miễn trừ bởi Admin' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSecMsg(`✅ Đã thêm ${target} vào danh sách trắng!`);
+        setWlIp(''); setWlReason('');
+        await loadSecurity();
+      } else {
+        setSecMsg(`❌ ${data.error}`);
+      }
+    } catch (err) {
+      setSecMsg('❌ Lỗi kết nối');
+    } finally {
+      setSecLoading(false);
+    }
+  };
+
+  const handleRemoveFromWhitelist = async (ip) => {
+    if (!ip) return;
+    setSecLoading(true);
+    setSecMsg('');
+    const finalApiUrl = API_URL || window.location.origin;
+    try {
+      const token = localStorage.getItem('wc2026_token');
+      const res = await fetch(`${finalApiUrl}/api/admin/security/whitelist/${encodeURIComponent(ip)}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSecMsg(`✅ Đã xóa ${ip} khỏi danh sách trắng!`);
         await loadSecurity();
       } else {
         setSecMsg(`❌ ${data.error}`);
@@ -537,6 +591,9 @@ const AdminView = () => {
                             {isLanIp(v.ip_address) && (
                               <span style={{ fontSize: '0.6rem', background: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '5px', fontWeight: 700, letterSpacing: '0.05em' }}>LAN</span>
                             )}
+                            {whitelistedIps.some(w => w.ip_address === v.ip_address) && (
+                              <span style={{ fontSize: '0.6rem', background: '#f59e0b', color: '#000', padding: '2px 6px', borderRadius: '4px', marginLeft: '5px', fontWeight: 900 }}>✓ WL</span>
+                            )}
                             {v.is_banned && <span style={{ fontSize: '0.65rem', background: '#ff4d4d', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '5px' }}>BANNED</span>}
                           </td>
                           <td style={{ padding: '12px 15px', color: '#e2e8f0' }}>{v.request_count}</td>
@@ -551,23 +608,43 @@ const AdminView = () => {
                           </td>
                           <td style={{ padding: '12px 15px', color: '#94a3b8', fontSize: '0.75rem', fontFamily: 'monospace' }}>{v.last_path}</td>
                           <td style={{ padding: '12px 15px', color: '#64748b' }}>{new Date(v.last_seen).toLocaleTimeString('vi-VN')}</td>
-                          <td style={{ padding: '12px 15px', textAlign: 'right' }}>
-                            {!v.is_banned ? (
+                          <td style={{ padding: '12px 15px', textAlign: 'right', display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                            {whitelistedIps.some(w => w.ip_address === v.ip_address) ? (
                               <button
-                                onClick={() => handleBanIp(v.ip_address, `Bị chặn từ danh sách hoạt động (đã quét lỗi ${v.scan_count} lần)`)}
+                                onClick={() => handleRemoveFromWhitelist(v.ip_address)}
                                 disabled={secLoading}
-                                style={{ padding: '6px 12px', borderRadius: '6px', background: '#ff4d4d', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.7rem' }}
+                                style={{ padding: '6px 12px', borderRadius: '6px', background: '#78350f', color: '#fbbf24', fontWeight: 900, border: '1px solid #f59e0b', cursor: 'pointer', fontSize: '0.7rem' }}
                               >
-                                CHẶN IP
+                                XÓA WL
                               </button>
                             ) : (
-                              <button
-                                onClick={() => handleUnbanIp(v.ip_address)}
-                                disabled={secLoading}
-                                style={{ padding: '6px 12px', borderRadius: '6px', background: '#334155', color: 'white', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: '0.7rem' }}
-                              >
-                                GỠ CHẶN
-                              </button>
+                              <>
+                                {!v.is_banned ? (
+                                  <button
+                                    onClick={() => handleBanIp(v.ip_address, `Bị chặn từ danh sách hoạt động (đã quét lỗi ${v.scan_count} lần)`)}
+                                    disabled={secLoading}
+                                    style={{ padding: '6px 12px', borderRadius: '6px', background: '#ff4d4d', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.7rem' }}
+                                  >
+                                    CHẶN
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleUnbanIp(v.ip_address)}
+                                    disabled={secLoading}
+                                    style={{ padding: '6px 12px', borderRadius: '6px', background: '#334155', color: 'white', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: '0.7rem' }}
+                                  >
+                                    GỠ CHẶN
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleAddToWhitelist(v.ip_address, 'Thêm từ danh sách IP hoạt động')}
+                                  disabled={secLoading}
+                                  style={{ padding: '6px 10px', borderRadius: '6px', background: '#78350f', color: '#fbbf24', fontWeight: 900, border: '1px solid #f59e0b', cursor: 'pointer', fontSize: '0.7rem' }}
+                                  title="Thêm vào Whitelist"
+                                >
+                                  + WL
+                                </button>
+                              </>
                             )}
                           </td>
                         </tr>
@@ -637,6 +714,80 @@ const AdminView = () => {
                               style={{ padding: '6px 12px', borderRadius: '6px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.7rem' }}
                             >
                               GỠ CẤM
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Whitelist IP Management Panel */}
+            <div style={{ marginTop: '10px', background: 'rgba(245, 158, 11, 0.05)', borderRadius: '16px', border: '1px solid rgba(245,158,11,0.2)', padding: '20px' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#f59e0b', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ✅ DANH SÁCH TRẮNG IP – WHITELIST ({whitelistedIps.length})
+              </h4>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: '14px' }}>
+                IP trong whitelist sẽ <strong style={{ color: '#f59e0b' }}>bỏ qua toàn bộ bộ lọc</strong>: không bị chặn, không bị rate limit.
+              </p>
+              {/* Add to whitelist form */}
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                <input
+                  type="text"
+                  placeholder="Địa chỉ IP cần whitelist (vd: 203.1.2.3)..."
+                  value={wlIp}
+                  onChange={e => setWlIp(e.target.value)}
+                  style={{ flex: 1, minWidth: '180px', padding: '12px', borderRadius: '10px', background: '#0f172a', border: '1px solid #f59e0b44', color: 'white' }}
+                />
+                <input
+                  type="text"
+                  placeholder="Lý do miễn trừ..."
+                  value={wlReason}
+                  onChange={e => setWlReason(e.target.value)}
+                  style={{ flex: 2, minWidth: '200px', padding: '12px', borderRadius: '10px', background: '#0f172a', border: '1px solid #1e293b', color: 'white' }}
+                />
+                <button
+                  onClick={() => handleAddToWhitelist()}
+                  disabled={secLoading || !wlIp}
+                  style={{ padding: '0 22px', borderRadius: '10px', background: '#f59e0b', color: '#000', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}
+                >
+                  + WHITELIST
+                </button>
+              </div>
+              {/* Whitelist table */}
+              {whitelistedIps.length === 0 ? (
+                <p style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic' }}>Chưa có IP nào trong danh sách trắng.</p>
+              ) : (
+                <div style={{ overflowX: 'auto', background: '#000', borderRadius: '12px', border: '1px solid #2a1f00' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #222', color: '#64748b' }}>
+                        <th style={{ padding: '12px 15px' }}>Địa chỉ IP</th>
+                        <th style={{ padding: '12px 15px' }}>Lý do miễn trừ</th>
+                        <th style={{ padding: '12px 15px' }}>Thời gian thêm</th>
+                        <th style={{ padding: '12px 15px', textAlign: 'right' }}>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {whitelistedIps.map((w, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid #111', color: 'white' }}>
+                          <td style={{ padding: '12px 15px', fontFamily: 'monospace', fontWeight: 700, color: '#f59e0b' }}>
+                            {w.ip_address}
+                            {isLanIp(w.ip_address) && (
+                              <span style={{ fontSize: '0.6rem', background: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px', fontWeight: 700 }}>LAN</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '12px 15px', color: '#94a3b8' }}>{w.reason}</td>
+                          <td style={{ padding: '12px 15px', color: '#64748b' }}>{new Date(w.added_at).toLocaleString('vi-VN')}</td>
+                          <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                            <button
+                              onClick={() => handleRemoveFromWhitelist(w.ip_address)}
+                              disabled={secLoading}
+                              style={{ padding: '6px 12px', borderRadius: '6px', background: '#78350f', color: '#fbbf24', fontWeight: 900, border: '1px solid #f59e0b', cursor: 'pointer', fontSize: '0.7rem' }}
+                            >
+                              XÓA KHỎI WL
                             </button>
                           </td>
                         </tr>
