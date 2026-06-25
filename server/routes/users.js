@@ -13,8 +13,8 @@ router.post('/login', async (req, res) => {
     const user = result.rows[0];
     
     if (!user) {
-      const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
-      const { logSuspiciousActivity } = require('../middleware/security');
+      const { logSuspiciousActivity, getClientIp } = require('../middleware/security');
+      const ip = getClientIp(req);
       await logSuspiciousActivity(ip, 'FAILED_LOGIN', `Đăng nhập thất bại: Tài khoản "${username}" không tồn tại`);
       return res.status(401).json({ error: 'Tài khoản không tồn tại' });
     }
@@ -40,8 +40,8 @@ router.post('/login', async (req, res) => {
     }
 
     if (!isMatch) {
-      const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
-      const { logSuspiciousActivity } = require('../middleware/security');
+      const { logSuspiciousActivity, getClientIp } = require('../middleware/security');
+      const ip = getClientIp(req);
       await logSuspiciousActivity(ip, 'FAILED_LOGIN', `Đăng nhập thất bại: Sai mật khẩu tài khoản "${username}"`);
       return res.status(401).json({ error: 'Mật khẩu không chính xác' });
     }

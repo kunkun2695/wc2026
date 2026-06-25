@@ -14,16 +14,16 @@ const authenticateAdmin = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
     if (decoded.role !== 'admin') {
-      const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
-      const { logSuspiciousActivity } = require('../middleware/security');
+      const { logSuspiciousActivity, getClientIp } = require('../middleware/security');
+      const ip = getClientIp(req);
       logSuspiciousActivity(ip, 'UNAUTHORIZED_ACCESS', `Truy cập trái phép admin (user: ${decoded.username})`).catch(()=>{});
       return res.status(403).json({ error: 'Bạn không có quyền Admin' });
     }
     req.user = decoded;
     next();
   } catch (err) {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
-    const { logSuspiciousActivity } = require('../middleware/security');
+    const { logSuspiciousActivity, getClientIp } = require('../middleware/security');
+    const ip = getClientIp(req);
     logSuspiciousActivity(ip, 'UNAUTHORIZED_ACCESS', `Truy cập trái phép admin: Token không hợp lệ`).catch(()=>{});
     res.status(401).json({ error: 'Token không hợp lệ' });
   }

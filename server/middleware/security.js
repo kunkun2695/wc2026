@@ -4,6 +4,38 @@ const db = require('../config/db');
 const bannedIpsSet = new Set();
 const activeVisitorsMap = new Map();
 
+/**
+ * Normalize an IP address:
+ * - Strips the IPv6-mapped IPv4 prefix "::ffff:" so LAN addresses like
+ *   "::ffff:192.168.1.5" are stored/compared as "192.168.1.5".
+ * - Converts the IPv6 loopback "::1" to "127.0.0.1".
+ */
+const normalizeIp = (raw) => {
+  if (!raw) return 'unknown';
+  let ip = raw.trim();
+  // Handle comma-separated list from x-forwarded-for
+  if (ip.includes(',')) ip = ip.split(',')[0].trim();
+  // IPv6-mapped IPv4: ::ffff:192.168.x.x
+  if (ip.startsWith('::ffff:')) ip = ip.slice(7);
+  // IPv6 loopback → standard localhost
+  if (ip === '::1') ip = '127.0.0.1';
+  return ip;
+};
+
+/**
+ * Extract and normalize the real client IP from a request.
+ * Checks (in order): x-forwarded-for, x-real-ip, socket.remoteAddress, req.ip
+ */
+const getClientIp = (req) => {
+  const raw =
+    req.headers['x-forwarded-for'] ||
+    req.headers['x-real-ip'] ||
+    req.socket?.remoteAddress ||
+    req.ip ||
+    'unknown';
+  return normalizeIp(raw);
+};
+
 // Cleanup inactive visitors (inactive > 15 minutes), runs every 5 minutes
 setInterval(() => {
   const cutoff = Date.now() - 15 * 60 * 1000;
@@ -41,7 +73,7 @@ setTimeout(loadBannedIps, 1500); // delay slightly to let DB initialize
 
 // Middleware to block banned IPs
 const ipBanMiddleware = (req, res, next) => {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
+  const ip = getClientIp(req);
   if (bannedIpsSet.has(ip)) {
     console.warn(`🛡️ [Security Block] Request blocked from banned IP: ${ip} for path ${req.path}`);
     return res.status(403).json({ error: 'IP của bạn đã bị cấm khỏi hệ thống do vi phạm bảo mật.' });
@@ -53,7 +85,7 @@ const ipBanMiddleware = (req, res, next) => {
 const activeVisitorMiddleware = (req, res, next) => {
   // Only track actual page loads and API requests, skip static assets with extensions (.js, .css, etc.)
   if (req.path.startsWith('/api') || req.path === '/' || !req.path.includes('.')) {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
+    const ip = getClientIp(req);
     const userAgent = req.headers['user-agent'] || 'Unknown';
     const now = Date.now();
 
@@ -115,7 +147,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: async (req, res, next, options) => {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
+    const ip = getClientIp(req);
     await logSuspiciousActivity(ip, 'RATE_LIMIT_EXCEEDED', `Vượt giới hạn API thông thường: ${req.method} ${req.path}`);
     res.status(options.statusCode).json(options.message);
   }
@@ -129,7 +161,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: async (req, res, next, options) => {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || req.ip;
+    const ip = getClientIp(req);
     await logSuspiciousActivity(ip, 'RATE_LIMIT_EXCEEDED', `Vượt giới hạn API nhạy cảm: ${req.method} ${req.path}`);
     res.status(options.statusCode).json(options.message);
   }
@@ -184,5 +216,7 @@ module.exports = {
   unbanIp,
   loadBannedIps,
   activeVisitorsMap,
-  bannedIpsSet
+  bannedIpsSet,
+  normalizeIp,
+  getClientIp
 };

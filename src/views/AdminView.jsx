@@ -4,6 +4,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// Detect RFC-1918 private / LAN addresses and localhost
+const isLanIp = (ip) => {
+  if (!ip) return false;
+  if (ip === '127.0.0.1' || ip === 'localhost') return true;
+  const parts = ip.split('.');
+  if (parts.length !== 4) return false;
+  const [a, b] = parts.map(Number);
+  return (
+    a === 10 ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168)
+  );
+};
+
 const AdminView = () => {
   const [notifTitle, setNotifTitle] = useState('');
   const [notifBody, setNotifBody] = useState('');
@@ -229,6 +243,18 @@ const AdminView = () => {
 
   const handleBanIp = async (ip, reason) => {
     if (!ip) return;
+
+    // ⚠️ Warn admin before banning a LAN / internal IP
+    if (isLanIp(ip)) {
+      const confirmed = window.confirm(
+        `⚠️ CẢNH BÁO – IP NỘI BỘ (LAN)\n\n` +
+        `Bạn đang chuẩn bị CHẶN địa chỉ IP nội bộ:\n${ip}\n\n` +
+        `Tất cả thiết bị trên mạng LAN có địa chỉ này sẽ bị từ chối truy cập hệ thống (kể cả chính bạn nếu đang dùng IP đó).\n\n` +
+        `Bạn có chắc chắn muốn tiếp tục không?`
+      );
+      if (!confirmed) return;
+    }
+
     setSecLoading(true);
     setSecMsg('');
     const finalApiUrl = API_URL || window.location.origin;
@@ -256,6 +282,7 @@ const AdminView = () => {
       setSecLoading(false);
     }
   };
+
 
   const handleUnbanIp = async (ip) => {
     if (!ip) return;
@@ -507,6 +534,9 @@ const AdminView = () => {
                         <tr key={i} style={{ borderBottom: '1px solid #111', color: 'white' }}>
                           <td style={{ padding: '12px 15px', fontFamily: 'monospace', fontWeight: 700 }}>
                             {v.ip_address}
+                            {isLanIp(v.ip_address) && (
+                              <span style={{ fontSize: '0.6rem', background: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '5px', fontWeight: 700, letterSpacing: '0.05em' }}>LAN</span>
+                            )}
                             {v.is_banned && <span style={{ fontSize: '0.65rem', background: '#ff4d4d', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '5px' }}>BANNED</span>}
                           </td>
                           <td style={{ padding: '12px 15px', color: '#e2e8f0' }}>{v.request_count}</td>
