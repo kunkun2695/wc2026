@@ -286,7 +286,7 @@ const syncMatches = async () => {
           });
         }
 
-        if (status === 'FT' && oldStatus !== 'FT') {
+        if (status === 'FT' && (oldStatus !== 'FT' || scoreChanged)) {
           await calculateMatchPoints(matchId, homeScore, awayScore);
           await updateBracket();
         }

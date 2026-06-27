@@ -4,7 +4,7 @@ const db = require('../config/db');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const { updateBracket } = require('../services/bracketService');
-const { sendBroadcastNotification } = require('./notifications');
+const { sendBroadcastNotification, sendPushNotification } = require('./notifications');
 const { syncMatches } = require('../services/syncService');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
@@ -70,7 +70,12 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
 
   const predictions = await db.query('SELECT * FROM predictions WHERE match_id = $1', [matchId]);
   for (const p of predictions.rows) {
-    if (p.predicted_home_score === -1) continue; // Bỏ qua vì đã phạt 30k mặc định do không dự đoán
+    if (p.predicted_home_score === -1) {
+      // Gửi Push Notification thông báo phạt do bỏ lỡ dự đoán
+      const message = `Trận đấu ${team1Name} vs ${team2Name} đã kết thúc (Tỉ số: ${hScore}-${aScore}). Bạn đã bỏ lỡ không dự đoán và đóng góp 30 bánh lương khô.`;
+      sendPushNotification(p.user_id, '🏆 Bỏ lỡ dự đoán!', message, `/match/${matchId}`);
+      continue;
+    }
 
     let points = 30; // Mặc định đoán sai: phạt 30k
     const pred_h = p.predicted_home_score;
@@ -96,6 +101,13 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
     }
 
     await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, p.id]);
+
+    // Gửi Push Notification thông báo kết quả và điểm phạt ăn nhậu
+    const matchTitle = `${team1Name} ${hScore}-${aScore} ${team2Name}`;
+    const resultText = points === 10 ? 'ĐÚNG (Đóng góp 10 bánh)' : 'SAI (Đóng góp 30 bánh)';
+    const message = `Trận đấu đã kết thúc! Tỉ số: ${matchTitle}. Kết quả dự đoán của bạn: ${resultText}.`;
+    
+    sendPushNotification(p.user_id, '🏆 Kết quả trận đấu!', message, `/match/${matchId}`);
   }
 };
 
