@@ -143,6 +143,7 @@ const MatchManagementView = ({ matches, predictions = [], onSavePrediction, onRe
   const [isSyncingOdds, setIsSyncingOdds] = useState(false);
   const [filter, setFilter] = useState('all'); // all, live, upcoming, ft
   const [hidePlayed, setHidePlayed] = useState(false);
+  const [isQuickEdit, setIsQuickEdit] = useState(false);
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -232,7 +233,26 @@ const MatchManagementView = ({ matches, predictions = [], onSavePrediction, onRe
             </div>
             <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>QUẢN LÝ TRẬN ĐẤU</h1>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button 
+              onClick={() => setIsQuickEdit(!isQuickEdit)} 
+              style={{ 
+                padding: '12px 24px', 
+                borderRadius: '12px', 
+                background: isQuickEdit ? '#f59e0b' : 'rgba(255,255,255,0.05)', 
+                color: isQuickEdit ? 'black' : 'white', 
+                border: isQuickEdit ? 'none' : '1px solid rgba(255,255,255,0.1)', 
+                cursor: 'pointer', 
+                fontWeight: 800, 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                transition: 'all 0.2s',
+                boxShadow: isQuickEdit ? '0 4px 15px rgba(245,158,11,0.3)' : 'none'
+              }}
+            >
+              <span>{isQuickEdit ? '✍️ ĐANG BẬT SỬA NHANH' : '✍️ BẬT SỬA NHANH KÈO'}</span>
+            </button>
             <button 
               onClick={handleSyncOdds} 
               disabled={isSyncingOdds}
@@ -299,6 +319,8 @@ const MatchManagementView = ({ matches, predictions = [], onSavePrediction, onRe
                         onSavePrediction={onSavePrediction}
                         onRefreshMatches={onRefreshMatches}
                         onOpenComments={onOpenComments}
+                        isQuickEdit={isQuickEdit}
+                        onUpdateScore={onUpdateScore}
                       />
                     );
                   })}

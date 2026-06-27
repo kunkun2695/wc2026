@@ -10,9 +10,43 @@ const FlagIcon = ({ flag }) => {
   return <span>{flag}</span>;
 };
 
-const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, onRefreshMatches, onOpenComments, onViewDetails }) => {
+const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, onRefreshMatches, onOpenComments, onViewDetails, isQuickEdit = false, onUpdateScore }) => {
   const [selectedChoice, setSelectedChoice] = useState(null); // '1' (Home), 'X' (Draw), '2' (Away)
   const [isSaving, setIsSaving] = useState(false);
+
+  // Quick Edit Handicap State
+  const [localFav, setLocalFav] = useState(match.handicap_favorite || '');
+  const [localHandicap, setLocalHandicap] = useState(match.handicap_text || match.handicap_value || '');
+  const [localOu, setLocalOu] = useState(match.ou_text || '');
+  const [isSavingQuickOdds, setIsSavingQuickOdds] = useState(false);
+
+  useEffect(() => {
+    setLocalFav(match.handicap_favorite || '');
+    setLocalHandicap(match.handicap_text || match.handicap_value || '');
+    setLocalOu(match.ou_text || '');
+  }, [match.handicap_favorite, match.handicap_text, match.handicap_value, match.ou_text]);
+
+  const handleSaveQuickOdds = async (e) => {
+    e.stopPropagation();
+    if (!onUpdateScore) return;
+    setIsSavingQuickOdds(true);
+    try {
+      await onUpdateScore(match.id, {
+        team1_score: match.team1_score ?? 0,
+        team2_score: match.team2_score ?? 0,
+        status: match.status || 'UPCOMING',
+        match_time: match.match_time,
+        handicap_favorite: localFav || null,
+        handicap_text: localFav ? String(localHandicap).trim() : '',
+        ou_text: String(localOu).trim()
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi cập nhật kèo!');
+    } finally {
+      setIsSavingQuickOdds(false);
+    }
+  };
 
   useEffect(() => {
     if (userPrediction) {
@@ -250,19 +284,98 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         </div>
       </div>
 
-      {/* Handicap Display Row */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '-10px 0 18px 0', fontSize: '0.85rem', fontWeight: 800, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-        {match.handicap_favorite && parseFloat(match.handicap_value) !== 0 ? (
-          <span>Kèo chấp: <strong style={{ color: '#00d2ff' }}>
-            {match.handicap_favorite === t1.name 
-              ? `${t1.name} chấp ${t2.name} ${match.handicap_text || match.handicap_value} trái`
-              : `${t2.name} chấp ${t1.name} ${match.handicap_text || match.handicap_value} trái`
-            }
-          </strong></span>
-        ) : (
-          <span>Kèo chấp: <strong style={{ color: '#00d2ff' }}>Đồng banh (Không chấp)</strong></span>
-        )}
-      </div>
+      {/* Handicap Display Row / Inline Quick Editor */}
+      {isQuickEdit && isAdmin ? (
+        <div style={{ 
+          background: 'rgba(0, 210, 255, 0.03)', 
+          border: '1px dashed rgba(0, 210, 255, 0.25)', 
+          borderRadius: '16px', 
+          padding: '14px', 
+          margin: '-5px 0 18px 0',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          zIndex: 10
+        }} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <div style={{ flex: '1 1 120px', minWidth: '120px' }}>
+              <label style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontWeight: 800, display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>Đội chấp</label>
+              <select 
+                value={localFav} 
+                onChange={e => {
+                  setLocalFav(e.target.value);
+                  if (e.target.value === '') {
+                    setLocalHandicap('');
+                  }
+                }}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: '#000', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.8rem', fontWeight: 700 }}
+              >
+                <option value="">Đồng banh (Không chấp)</option>
+                <option value={t1.name}>{t1.name}</option>
+                <option value={t2.name}>{t2.name}</option>
+              </select>
+            </div>
+
+            {localFav !== '' && (
+              <div style={{ width: '90px' }}>
+                <label style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontWeight: 800, display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>Số trái</label>
+                <input 
+                  type="text" 
+                  value={localHandicap} 
+                  placeholder="0.5"
+                  onChange={e => setLocalHandicap(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: '#000', color: '#00d2ff', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.8rem', fontWeight: 900, textAlign: 'center' }}
+                />
+              </div>
+            )}
+
+            <div style={{ width: '90px' }}>
+              <label style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontWeight: 800, display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>Tài Xỉu (O/U)</label>
+              <input 
+                type="text" 
+                value={localOu} 
+                placeholder="2.5"
+                onChange={e => setLocalOu(e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: '#000', color: '#ffd200', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.8rem', fontWeight: 900, textAlign: 'center' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'flex-end', height: '36px', marginTop: '14px' }}>
+              <button 
+                onClick={handleSaveQuickOdds}
+                disabled={isSavingQuickOdds}
+                style={{ 
+                  background: '#00d2ff', 
+                  color: 'black', 
+                  border: 'none', 
+                  padding: '8px 16px', 
+                  borderRadius: '8px', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 900, 
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 4px 10px rgba(0,210,255,0.2)'
+                }}
+              >
+                {isSavingQuickOdds ? 'ĐANG LƯU...' : 'LƯU KÈO'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '-10px 0 18px 0', fontSize: '0.85rem', fontWeight: 800, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          {match.handicap_favorite && parseFloat(match.handicap_value) !== 0 ? (
+            <span>Kèo chấp: <strong style={{ color: '#00d2ff' }}>
+              {match.handicap_favorite === t1.name 
+                ? `${t1.name} chấp ${t2.name} ${match.handicap_text || match.handicap_value} trái`
+                : `${t2.name} chấp ${t1.name} ${match.handicap_text || match.handicap_value} trái`
+              }
+            </strong></span>
+          ) : (
+            <span>Kèo chấp: <strong style={{ color: '#00d2ff' }}>Đồng banh (Không chấp)</strong></span>
+          )}
+        </div>
+      )}
 
       {/* Betting / Prediction Section */}
       <div className="match-betting-section">
