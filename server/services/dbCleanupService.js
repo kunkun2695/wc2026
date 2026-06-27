@@ -109,7 +109,7 @@ const cleanDuplicateTeamsAndMatches = async () => {
           const duplicatePredsRes = await db.query('SELECT * FROM predictions WHERE match_id = $1', [duplicate.id]);
           for (const pred of duplicatePredsRes.rows) {
             const existsRes = await db.query(
-              'SELECT id FROM predictions WHERE user_id = $1 AND match_id = $2',
+              'SELECT id, predicted_home_score FROM predictions WHERE user_id = $1 AND match_id = $2',
               [pred.user_id, master.id]
             );
             if (existsRes.rows.length === 0) {
@@ -118,8 +118,21 @@ const cleanDuplicateTeamsAndMatches = async () => {
                 [master.id, pred.id]
               );
             } else {
-              // Xóa dự đoán trùng nếu user đã dự đoán trên cả 2 trận
-              await db.query('DELETE FROM predictions WHERE id = $1', [pred.id]);
+              const masterPred = existsRes.rows[0];
+              // Nếu dự đoán ở trận trùng lặp là dự đoán thực tế (khác -1) và ở trận chính là mặc định (-1)
+              if (pred.predicted_home_score !== -1 && masterPred.predicted_home_score === -1) {
+                // Xóa dự đoán mặc định (-1) ở trận chính
+                await db.query('DELETE FROM predictions WHERE id = $1', [masterPred.id]);
+                // Di chuyển dự đoán thực tế sang trận chính
+                await db.query(
+                  'UPDATE predictions SET match_id = $1 WHERE id = $2',
+                  [master.id, pred.id]
+                );
+                console.log(`[DB CLEANUP] Đã thay thế dự đoán mặc định bằng dự đoán thực tế của User ID ${pred.user_id} cho trận chính ID ${master.id}`);
+              } else {
+                // Ngược lại, giữ dự đoán của trận chính và xóa dự đoán của trận trùng lặp
+                await db.query('DELETE FROM predictions WHERE id = $1', [pred.id]);
+              }
             }
           }
 
