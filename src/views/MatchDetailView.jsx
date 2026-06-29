@@ -71,6 +71,7 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   const isClosed = match ? (match.status !== 'UPCOMING' || new Date() >= matchTime) : true;
   const isMissed = (userPrediction && userPrediction.predicted_home_score === -1) ||
                    (!userPrediction && isClosed);
+  const isKnockout = match ? (match.is_knockout || match.group_name === 'KO' || ['Vòng 1/8', 'Tứ kết', 'Bán kết', 'Chung kết'].includes(match.competition_name)) : false;
 
   const matchTimeStr = match ? match.match_time : '';
   let timePart = '---';
@@ -145,6 +146,7 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   };
 
   const getHandicapLabel = (team) => {
+    if (isKnockout) return '';
     if (!match.handicap_favorite || parseFloat(match.handicap_value) === 0) {
       return '';
     }
@@ -159,6 +161,12 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
   const getHandicapHint = () => {
     if (!selectedChoice) return null;
     
+    if (isKnockout) {
+      if (selectedChoice === '1') return `Bạn đang chọn ${t1.name} đi tiếp vào vòng trong (Không có kèo chấp / hòa).`;
+      if (selectedChoice === '2') return `Bạn đang chọn ${t2.name} đi tiếp vào vòng trong (Không có kèo chấp / hòa).`;
+      return null;
+    }
+
     const fav = match.handicap_favorite;
     const valText = match.handicap_text || match.handicap_value;
     
@@ -335,7 +343,9 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
                     <div className="info-badge handicap" style={{ width: '100%', justifyContent: 'center' }}>
                       <span className="badge-label">Tỷ lệ kèo</span>
                       <span className="badge-value">
-                        {match.handicap_favorite && parseFloat(match.handicap_value) !== 0 ? (
+                        {isKnockout ? (
+                          <strong style={{ color: '#ffd200' }}>🏆 VÒNG LOẠI TRỰC TIẾP (KHÔNG KÈO CHẤP)</strong>
+                        ) : match.handicap_favorite && parseFloat(match.handicap_value) !== 0 ? (
                           match.handicap_favorite === t1.name 
                             ? `${t1.name} chấp ${t2.name} ${match.handicap_text || match.handicap_value} trái`
                             : `${t2.name} chấp ${t1.name} ${match.handicap_text || match.handicap_value} trái`
@@ -346,7 +356,7 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
                     </div>
                   </div>
                   
-                  <div className="voting-options">
+                  <div className={`voting-options ${isKnockout ? 'knockout' : ''}`}>
                     <button 
                       onClick={() => {
                         if (!isClosed) {
@@ -362,17 +372,19 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
                       )}
                     </button>
                     
-                    <button 
-                      onClick={() => {
-                        if (!isClosed) {
-                          setSelectedChoice('X');
-                        }
-                      }}
-                      className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
-                    >
-                      <div className="opt-flag draw">HÒA</div>
-                      <span className="opt-name">Bất phân thắng bại</span>
-                    </button>
+                    {!isKnockout && (
+                      <button 
+                        onClick={() => {
+                          if (!isClosed) {
+                            setSelectedChoice('X');
+                          }
+                        }}
+                        className={`vote-opt ${selectedChoice === 'X' ? 'active' : ''} ${isClosed ? 'readonly' : ''}`}
+                      >
+                        <div className="opt-flag draw">HÒA</div>
+                        <span className="opt-name">Bất phân thắng bại</span>
+                      </button>
+                    )}
                     
                     <button 
                       onClick={() => {
@@ -447,13 +459,15 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
                       </div>
                       <div className="bar-bg"><div className="bar-fill home" style={{ width: `${(match.home_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
                     </div>
-                    <div className="stat-bar-item">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-bold text-slate-300">Hòa</span>
-                        <span className="text-sm font-black text-yellow-400">{Math.round((match.draw_votes / (match.total_votes || 1)) * 100)}%</span>
+                    {!isKnockout && (
+                      <div className="stat-bar-item">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-bold text-slate-300">Hòa</span>
+                          <span className="text-sm font-black text-yellow-400">{Math.round((match.draw_votes / (match.total_votes || 1)) * 100)}%</span>
+                        </div>
+                        <div className="bar-bg"><div className="bar-fill draw" style={{ width: `${(match.draw_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
                       </div>
-                      <div className="bar-bg"><div className="bar-fill draw" style={{ width: `${(match.draw_votes / (match.total_votes || 1)) * 100}%` }}></div></div>
-                    </div>
+                    )}
                     <div className="stat-bar-item">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-sm font-bold text-slate-300">{t2.name}</span>
@@ -790,6 +804,7 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
           border-radius: 10px;
         }
         .voting-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .voting-options.knockout { grid-template-columns: repeat(2, 1fr); }
         .vote-opt { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 15px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s; }
         .vote-opt:hover { background: rgba(255,255,255,0.06); }
         .vote-opt.active { background: rgba(58, 134, 255, 0.1); border-color: #3a86ff; box-shadow: 0 0 20px rgba(58, 134, 255, 0.2); }

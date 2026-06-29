@@ -26,6 +26,7 @@ async function patchDatabase() {
     
     // Vá bảng matches để hỗ trợ phân loại giải đấu
     await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS competition_name TEXT DEFAULT 'Cúp C1 Châu Âu'`);
+    await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS api_match_id INTEGER UNIQUE`);
     
     // Tạo bảng posts cho mạng xã hội thu nhỏ
     await db.query(`
@@ -87,6 +88,9 @@ async function patchDatabase() {
     await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS handicap_text VARCHAR(50)`);
     await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS ou_value NUMERIC(4,2) DEFAULT 0.0`);
     await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS ou_text VARCHAR(50)`);
+    await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS penalties_team1 INTEGER`);
+    await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS penalties_team2 INTEGER`);
+    await db.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS is_knockout BOOLEAN DEFAULT FALSE`);
 
     // Tạo bảng prediction_history lưu vết lịch sử đổi kèo
     await db.query(`

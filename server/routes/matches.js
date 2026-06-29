@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const { updateBracket } = require('../services/bracketService');
 const { sendBroadcastNotification, sendPushNotification } = require('./notifications');
 const { syncMatches } = require('../services/syncService');
+const { calculateMatchPoints } = require('../services/pointsService');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'worldcup2026-secret-key';
 
@@ -46,70 +47,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Hàm tính điểm cho tất cả người chơi khi trận đấu kết thúc theo tỷ lệ chấp
-const calculateMatchPoints = async (matchId, hScore, aScore) => {
-  const matchResult = await db.query('SELECT team1_name, team2_name, handicap_favorite, handicap_value FROM matches WHERE id = $1', [matchId]);
-  if (matchResult.rows.length === 0) return;
-  const match = matchResult.rows[0];
-  const handicapFavorite = match.handicap_favorite;
-  const handicapValue = parseFloat(match.handicap_value) || 0;
-  const team1Name = match.team1_name;
-  const team2Name = match.team2_name;
-
-  // 1. Tự động phạt 30k cho người dùng chưa dự đoán khi trận đấu kết thúc
-  const usersRes = await db.query('SELECT id FROM users');
-  for (const u of usersRes.rows) {
-    const predCheck = await db.query('SELECT id FROM predictions WHERE user_id = $1 AND match_id = $2', [u.id, matchId]);
-    if (predCheck.rows.length === 0) {
-      await db.query(
-        'INSERT INTO predictions (user_id, match_id, predicted_home_score, predicted_away_score, points) VALUES ($1, $2, $3, $4, $5)',
-        [u.id, matchId, -1, -1, 30]
-      );
-    }
-  }
-
-  const predictions = await db.query('SELECT * FROM predictions WHERE match_id = $1', [matchId]);
-  for (const p of predictions.rows) {
-    if (p.predicted_home_score === -1) {
-      // Gửi Push Notification thông báo phạt do bỏ lỡ dự đoán
-      const message = `Trận đấu ${team1Name} vs ${team2Name} đã kết thúc (Tỉ số: ${hScore}-${aScore}). Bạn đã bỏ lỡ không dự đoán và đóng góp 30 bánh lương khô.`;
-      sendPushNotification(p.user_id, '🏆 Bỏ lỡ dự đoán!', message, `/match/${matchId}`);
-      continue;
-    }
-
-    let points = 30; // Mặc định đoán sai: phạt 30k
-    const pred_h = p.predicted_home_score;
-    const pred_a = p.predicted_away_score;
-
-    // Tính kết quả thực tế sau kèo chấp
-    let adjustedDiff;
-    if (!handicapFavorite || handicapValue === 0) {
-      adjustedDiff = hScore - aScore;
-    } else if (handicapFavorite === team1Name) {
-      adjustedDiff = hScore - handicapValue - aScore;
-    } else {
-      adjustedDiff = hScore - (aScore - handicapValue);
-    }
-
-    const actualSign = adjustedDiff > 0 ? 1 : (adjustedDiff < 0 ? -1 : 0);
-    const userChoice = pred_h > pred_a ? 1 : (pred_h < pred_a ? -1 : 0);
-
-    const isCorrect = (userChoice === actualSign);
-
-    if (isCorrect) {
-      points = 10; // Đoán đúng (bao gồm chọn Hòa và hòa kèo): phạt 10k
-    }
-
-    await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, p.id]);
-
-    // Gửi Push Notification thông báo kết quả và điểm phạt ăn nhậu
-    const matchTitle = `${team1Name} ${hScore}-${aScore} ${team2Name}`;
-    const resultText = points === 10 ? 'ĐÚNG (Đóng góp 10 bánh)' : 'SAI (Đóng góp 30 bánh)';
-    const message = `Trận đấu đã kết thúc! Tỉ số: ${matchTitle}. Kết quả dự đoán của bạn: ${resultText}.`;
-    
-    sendPushNotification(p.user_id, '🏆 Kết quả trận đấu!', message, `/match/${matchId}`);
-  }
-};
+// calculateMatchPoints function is imported from pointsService
 
 const parseHandicapVal = (text) => {
   if (!text) return 0;
@@ -145,7 +83,10 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
     match_time,
     handicap_favorite,
     handicap_text,
-    ou_text
+    ou_text,
+    penalties_team1,
+    penalties_team2,
+    is_knockout
   } = req.body;
 
   const handicap_value = parseHandicapVal(handicap_text);
@@ -169,8 +110,11 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
            handicap_value = $6,
            handicap_text = $7,
            ou_value = $8,
-           ou_text = $9
-       WHERE id = $10 
+           ou_text = $9,
+           penalties_team1 = $10,
+           penalties_team2 = $11,
+           is_knockout = $12
+       WHERE id = $13 
        RETURNING *`,
       [
         team1_score, 
@@ -182,6 +126,9 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
         handicap_text || '', 
         ou_value, 
         ou_text || '',
+        penalties_team1 === undefined ? null : penalties_team1,
+        penalties_team2 === undefined ? null : penalties_team2,
+        is_knockout === undefined ? false : is_knockout,
         id
       ]
     );

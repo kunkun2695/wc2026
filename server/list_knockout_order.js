@@ -10,11 +10,17 @@ async function test() {
       },
       timeout: 15000
     });
-    console.log("Competition:", response.data.competition);
-    console.log("Total Matches:", response.data.matches.length);
-    console.log("Sample Matches:", JSON.stringify(response.data.matches.slice(0, 3), null, 2));
+    const matches = response.data.matches;
+    const r16 = matches.filter(m => m.stage === 'LAST_16');
+    console.log("R16 Match Count:", r16.length);
+    console.log("R16 Matches:", JSON.stringify(r16.map((m, idx) => ({
+      index: idx,
+      id: m.id,
+      home: m.homeTeam?.name,
+      away: m.awayTeam?.name
+    })), null, 2));
   } catch (err) {
-    console.error("API error:", err.response ? err.response.data : err.message);
+    console.error(err);
   }
   process.exit(0);
 }

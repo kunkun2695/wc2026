@@ -13,6 +13,7 @@ const FlagIcon = ({ flag }) => {
 const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, onRefreshMatches, onOpenComments, onViewDetails, isQuickEdit = false, onUpdateScore }) => {
   const [selectedChoice, setSelectedChoice] = useState(null); // '1' (Home), 'X' (Draw), '2' (Away)
   const [isSaving, setIsSaving] = useState(false);
+  const isKnockout = match.is_knockout || match.group_name === 'KO' || ['Vòng 1/8', 'Tứ kết', 'Bán kết', 'Chung kết'].includes(match.competition_name);
 
   // Quick Edit Handicap State
   const [localFav, setLocalFav] = useState(match.handicap_favorite || '');
@@ -167,6 +168,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
 
 
   const getHandicapLabel = (team) => {
+    if (isKnockout) return '';
     if (!match.handicap_favorite || parseFloat(match.handicap_value) === 0) {
       return '';
     }
@@ -362,6 +364,10 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             </div>
           </div>
         </div>
+      ) : isKnockout ? (
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '-10px 0 18px 0', fontSize: '0.85rem', fontWeight: 900, color: '#ffd200', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <span>🏆 VÒNG LOẠI TRỰC TIẾP (KHÔNG KÈO CHẤP)</span>
+        </div>
       ) : (
         <div style={{ display: 'flex', justifyContent: 'center', margin: '-10px 0 18px 0', fontSize: '0.85rem', fontWeight: 800, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           {match.handicap_favorite && parseFloat(match.handicap_value) !== 0 ? (
@@ -405,23 +411,25 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
             <span className="vote-percent">{Math.round((Number(match.home_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
           </div>
 
-          <div className="choice-col">
-            <button 
-              className={`choice-btn-v2 draw ${selectedChoice === 'X' ? 'active-X' : ''}`}
-              onClick={(e) => { e.stopPropagation(); handleSave('X'); }}
-              disabled={isClosed}
-            >
-              <span className="choice-btn-v2-draw-label">HÒA</span>
-            </button>
-            <div className="vote-bar-bg">
-              <motion.div 
-                className="vote-bar-fill draw" 
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.round((Number(match.draw_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%` }}
-              />
+          {!isKnockout && (
+            <div className="choice-col">
+              <button 
+                className={`choice-btn-v2 draw ${selectedChoice === 'X' ? 'active-X' : ''}`}
+                onClick={(e) => { e.stopPropagation(); handleSave('X'); }}
+                disabled={isClosed}
+              >
+                <span className="choice-btn-v2-draw-label">HÒA</span>
+              </button>
+              <div className="vote-bar-bg">
+                <motion.div 
+                  className="vote-bar-fill draw" 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.round((Number(match.draw_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%` }}
+                />
+              </div>
+              <span className="vote-percent">{Math.round((Number(match.draw_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
             </div>
-            <span className="vote-percent">{Math.round((Number(match.draw_votes || 0) / (Number(match.total_votes) || 1)) * 100)}%</span>
-          </div>
+          )}
 
           <div className="choice-col">
             <button 

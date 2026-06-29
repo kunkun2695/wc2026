@@ -17,6 +17,9 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
   const [status, setStatus] = useState(match.status || 'UPCOMING');
   const [time, setTime] = useState(match.match_time || '');
   const [ouTxt, setOuTxt] = useState(match.ou_text || '');
+  const [isKnockout, setIsKnockout] = useState(match.is_knockout || false);
+  const [penalties1, setPenalties1] = useState(match.penalties_team1 || 0);
+  const [penalties2, setPenalties2] = useState(match.penalties_team2 || 0);
 
   const isFavT1 = match.handicap_favorite === match.team1_name;
   const isFavT2 = match.handicap_favorite === match.team2_name;
@@ -26,7 +29,7 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }} onClick={onClose}></div>
-      <div style={{ position: 'relative', width: '100%', maxWidth: '500px', background: '#1a1f2e', borderRadius: '24px', padding: '30px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: '500px', background: '#1a1f2e', borderRadius: '24px', padding: '30px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>CẬP NHẬT TRẬN ĐẤU & KÈO</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}><X size={24} /></button>
@@ -67,43 +70,88 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
           </div>
         </div>
 
-        <div style={{ marginBottom: '25px' }}>
-          <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>KÈO CHẤP</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-            <div>
-              <label style={{ fontSize: '0.65rem', color: '#888', display: 'block', marginBottom: '6px', fontWeight: 700 }}>{match.team1_name} chấp:</label>
-              <input 
-                type="text" 
-                value={hVal1} 
-                placeholder="0"
-                onChange={e => {
-                  const val = e.target.value;
-                  setHVal1(val);
-                  if (val.trim() !== '') setHVal2('');
-                }} 
-                style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: '#00d2ff', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 900, fontSize: '0.95rem' }} 
-              />
-            </div>
-            
-            <div>
-              <label style={{ fontSize: '0.65rem', color: '#888', display: 'block', marginBottom: '6px', fontWeight: 700 }}>{match.team2_name} chấp:</label>
-              <input 
-                type="text" 
-                value={hVal2} 
-                placeholder="0"
-                onChange={e => {
-                  const val = e.target.value;
-                  setHVal2(val);
-                  if (val.trim() !== '') setHVal1('');
-                }} 
-                style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: '#00d2ff', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 900, fontSize: '0.95rem' }} 
-              />
+        <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <input 
+            type="checkbox" 
+            id="isKnockout" 
+            checked={isKnockout} 
+            onChange={e => setIsKnockout(e.target.checked)} 
+            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+          />
+          <label htmlFor="isKnockout" style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+            Vòng loại trực tiếp (Knockout)
+          </label>
+        </div>
+
+        {isKnockout && status === 'FT' && s1 === s2 && (
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>TỶ SỐ LUÂN LƯU (PENALTIES)</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ fontSize: '0.65rem', color: '#888', display: 'block', marginBottom: '6px', fontWeight: 700 }}>Pen {match.team1_name}:</label>
+                <input 
+                  type="number" 
+                  value={penalties1} 
+                  onChange={e => setPenalties1(parseInt(e.target.value) || 0)} 
+                  style={{ width: '100%', padding: '12px', textAlign: 'center', borderRadius: '12px', border: 'none', background: '#000', color: '#ffd200', fontWeight: 900, fontSize: '1rem' }} 
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.65rem', color: '#888', display: 'block', marginBottom: '6px', fontWeight: 700 }}>Pen {match.team2_name}:</label>
+                <input 
+                  type="number" 
+                  value={penalties2} 
+                  onChange={e => setPenalties2(parseInt(e.target.value) || 0)} 
+                  style={{ width: '100%', padding: '12px', textAlign: 'center', borderRadius: '12px', border: 'none', background: '#000', color: '#ffd200', fontWeight: 900, fontSize: '1rem' }} 
+                />
+              </div>
             </div>
           </div>
-          <span style={{ display: 'block', fontSize: '0.6rem', color: 'rgba(255,255,255,0.25)', marginTop: '8px', textAlign: 'center' }}>
-            * Nhập số quả chấp vào ô của đội chấp (để trống cả 2 nghĩa là đồng banh).
-          </span>
-        </div>
+        )}
+
+        {isKnockout ? (
+          <div style={{ marginBottom: '25px', padding: '12px', background: 'rgba(255, 210, 0, 0.05)', border: '1px solid rgba(255, 210, 0, 0.15)', borderRadius: '12px', color: '#ffd200', fontSize: '0.8rem', fontWeight: 700, textAlign: 'center' }}>
+            🏆 TRẬN ĐẤU LOẠI TRỰC TIẾP: KHÔNG SỬ DỤNG KÈO CHẤP
+          </div>
+        ) : (
+          <div style={{ marginBottom: '25px' }}>
+            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>KÈO CHẤP</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ fontSize: '0.65rem', color: '#888', display: 'block', marginBottom: '6px', fontWeight: 700 }}>{match.team1_name} chấp:</label>
+                <input 
+                  type="text" 
+                  value={hVal1} 
+                  placeholder="0"
+                  onChange={e => {
+                    const val = e.target.value;
+                    setHVal1(val);
+                    if (val.trim() !== '') setHVal2('');
+                  }} 
+                  style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: '#00d2ff', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 900, fontSize: '0.95rem' }} 
+                />
+              </div>
+              
+              <div>
+                <label style={{ fontSize: '0.65rem', color: '#888', display: 'block', marginBottom: '6px', fontWeight: 700 }}>{match.team2_name} chấp:</label>
+                <input 
+                  type="text" 
+                  value={hVal2} 
+                  placeholder="0"
+                  onChange={e => {
+                    const val = e.target.value;
+                    setHVal2(val);
+                    if (val.trim() !== '') setHVal1('');
+                  }} 
+                  style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#000', color: '#00d2ff', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 900, fontSize: '0.95rem' }} 
+                />
+              </div>
+            </div>
+            <span style={{ display: 'block', fontSize: '0.6rem', color: 'rgba(255,255,255,0.25)', marginTop: '8px', textAlign: 'center' }}>
+              * Nhập số quả chấp vào ô của đội chấp (để trống cả 2 nghĩa là đồng banh).
+            </span>
+          </div>
+        )}
 
         <button 
           onClick={() => {
@@ -123,9 +171,12 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
               team2_score: s2, 
               status, 
               match_time: time,
-              handicap_favorite: finalFav,
-              handicap_text: finalTxt,
-              ou_text: ouTxt
+              handicap_favorite: isKnockout ? '' : finalFav,
+              handicap_text: isKnockout ? '' : finalTxt,
+              ou_text: isKnockout ? '' : ouTxt,
+              penalties_team1: isKnockout && s1 === s2 ? (parseInt(penalties1) || 0) : null,
+              penalties_team2: isKnockout && s1 === s2 ? (parseInt(penalties2) || 0) : null,
+              is_knockout: isKnockout
             });
           }}
           style={{ width: '100%', padding: '18px', borderRadius: '16px', background: '#00d2ff', color: 'black', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: '0.9rem', letterSpacing: '1px', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(0,210,255,0.3)' }}
