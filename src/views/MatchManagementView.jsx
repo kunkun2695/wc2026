@@ -188,7 +188,7 @@ const MatchEditorModal = ({ match, onClose, onSave }) => {
   );
 };
 
-const MatchManagementView = ({ matches, predictions = [], onSavePrediction, onRefreshMatches, onOpenComments, onUpdateScore, onSync }) => {
+const MatchManagementView = ({ matches, predictions = [], onSavePrediction, onRefreshMatches, onOpenComments, onUpdateScore, onSync, onDeleteMatch }) => {
   const [editingMatch, setEditingMatch] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSyncingOdds, setIsSyncingOdds] = useState(false);
@@ -366,6 +366,7 @@ const MatchManagementView = ({ matches, predictions = [], onSavePrediction, onRe
                         match={m} 
                         isAdmin={true} 
                         onEdit={setEditingMatch} 
+                        onDelete={onDeleteMatch}
                         userPrediction={userPrediction}
                         onSavePrediction={onSavePrediction}
                         onRefreshMatches={onRefreshMatches}

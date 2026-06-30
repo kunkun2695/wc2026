@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Edit3, Check, MessageSquare, Clock, Users, Bell } from 'lucide-react';
+import { Edit3, Check, MessageSquare, Clock, Users, Bell, Trash2 } from 'lucide-react';
 
 const FlagIcon = ({ flag }) => {
   const isUrl = flag?.startsWith('http') || flag?.includes('.');
@@ -10,7 +10,7 @@ const FlagIcon = ({ flag }) => {
   return <span>{flag}</span>;
 };
 
-const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, onRefreshMatches, onOpenComments, onViewDetails, isQuickEdit = false, onUpdateScore }) => {
+const MatchCard = ({ match, isAdmin, onEdit, onDelete, userPrediction, onSavePrediction, onRefreshMatches, onOpenComments, onViewDetails, isQuickEdit = false, onUpdateScore }) => {
   const [selectedChoice, setSelectedChoice] = useState(null); // '1' (Home), 'X' (Draw), '2' (Away)
   const [isSaving, setIsSaving] = useState(false);
   const isKnockout = match.is_knockout || match.group_name === 'KO' || ['Vòng 1/8', 'Tứ kết', 'Bán kết', 'Chung kết'].includes(match.competition_name);
@@ -505,6 +505,9 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           <button onClick={(e) => { e.stopPropagation(); onEdit(match); }} className="admin-edit-btn" style={{ position: 'static' }} title="Sửa kết quả/kèo">
             <Edit3 size={14} />
           </button>
+          <button onClick={(e) => { e.stopPropagation(); onDelete && onDelete(match.id); }} className="admin-delete-btn" style={{ position: 'static' }} title="Xoá trận đấu">
+            <Trash2 size={14} />
+          </button>
         </div>
       )}
 
@@ -859,7 +862,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
           transform: scale(1.02);
         }
         
-        .admin-edit-btn, .admin-remind-btn {
+        .admin-edit-btn, .admin-remind-btn, .admin-delete-btn {
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(255, 255, 255, 0.08);
           color: rgba(255, 255, 255, 0.4);
@@ -874,6 +877,7 @@ const MatchCard = ({ match, isAdmin, onEdit, userPrediction, onSavePrediction, o
         }
         .admin-edit-btn:hover { color: white; background: rgba(0, 210, 255, 0.15); border-color: #00d2ff; }
         .admin-remind-btn:hover { color: white; background: rgba(255, 210, 0, 0.15); border-color: #ffd200; }
+        .admin-delete-btn:hover { color: white; background: rgba(239, 68, 68, 0.15); border-color: #ef4444; }
         
         @media (max-width: 600px) {
           .match-scoreboard {

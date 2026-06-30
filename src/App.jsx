@@ -294,6 +294,26 @@ const App = () => {
     if (res.ok) fetchData();
   };
 
+  const deleteMatch = async (id) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xoá trận đấu này? Thao tác này sẽ xoá toàn bộ dự đoán và bình luận liên quan và không thể khôi phục.')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/matches/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${mockAuth.getToken()}`
+        }
+      });
+      if (res.ok) {
+        fetchData();
+      } else {
+        const errData = await res.json();
+        alert('Lỗi: ' + (errData.error || 'Không thể xoá trận đấu'));
+      }
+    } catch (err) {
+      alert('Lỗi mạng: Không thể kết nối tới máy chủ');
+    }
+  };
+
   const syncMatches = async () => {
     try {
       const host = window.location.hostname;
@@ -349,7 +369,7 @@ const App = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
                 <span className="font-outfit" style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>KizzBugs</span>
-                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.70</span>
+                <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace' }}>v1.1.71</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -437,7 +457,7 @@ const App = () => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
               <h1 className="brand-name">KizzBugs</h1>
-              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.70</span>
+              <span style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'monospace', marginTop: '2px' }}>v1.1.71</span>
             </div>
           </div>
         </div>
@@ -651,6 +671,7 @@ const App = () => {
                 onOpenComments={handleOpenComments}
                 onUpdateScore={updateMatchScore}
                 onSync={syncMatches}
+                onDeleteMatch={deleteMatch}
               />
             </motion.div>
           )}
