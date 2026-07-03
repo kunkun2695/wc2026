@@ -166,6 +166,14 @@ async function patchDatabase() {
     await db.query(`UPDATE system_config SET value = 'NGUYEN THI HAI' WHERE key = 'BANK_ACCOUNT_NAME' AND value = 'NGUYEN VAN A'`);
     await db.query(`UPDATE system_config SET value = 'Vietcombank' WHERE key = 'BANK_NAME' AND value = 'MB Bank'`);
 
+    // Tự động tạo chỉ mục (indexes) để tối ưu hiệu năng các truy vấn thống kê & quỹ
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_predictions_match_id ON predictions(match_id)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_predictions_user_id ON predictions(user_id)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_prediction_history_match_id ON prediction_history(match_id)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_comments_match_id ON comments(match_id)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id)`);
+
     console.log('✅ [DB Fix] Đã cập nhật bảng notifications, matches, mạng xã hội, Chat Image, bảo mật tài khoản, kèo cược, lịch sử đổi kèo và bảng thanh toán thành công.');
   } catch (err) {
     console.error('⚠️ [DB Fix Error]', err.message);

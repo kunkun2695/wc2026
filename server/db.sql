@@ -90,3 +90,10 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 INSERT INTO users (username, password, name, avatar, role) 
 VALUES ('admin', 'Long26@8865', 'Quản trị viên', '🛡️', 'admin')
 ON CONFLICT (username) DO NOTHING;
+
+-- Chỉ mục để tối ưu hiệu năng truy vấn
+CREATE INDEX IF NOT EXISTS idx_predictions_match_id ON predictions(match_id);
+CREATE INDEX IF NOT EXISTS idx_predictions_user_id ON predictions(user_id);
+CREATE INDEX IF NOT EXISTS idx_comments_match_id ON comments(match_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
