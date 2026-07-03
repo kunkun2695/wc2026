@@ -279,4 +279,44 @@ router.get('/history/:matchId', authenticateUser, async (req, res) => {
   }
 });
 
+const authenticateAdmin = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token provided' });
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    if (decoded.role !== 'admin') throw new Error();
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(403).json({ error: 'Unauthorized' });
+  }
+};
+
+// Admin sửa dự đoán của người khác âm thầm
+router.put('/admin-edit', authenticateAdmin, async (req, res) => {
+  const { user_id, match_id, home_score, away_score } = req.body;
+  try {
+    const result = await db.query(
+      `INSERT INTO predictions (user_id, match_id, predicted_home_score, predicted_away_score)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, match_id)
+       DO UPDATE SET predicted_home_score = $3, predicted_away_score = $4, created_at = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [user_id, match_id, home_score, away_score]
+    );
+
+    // Tính toán lại điểm nếu trận đấu đã kết thúc (status === 'FT')
+    const matchRes = await db.query('SELECT status, team1_score, team2_score FROM matches WHERE id = $1', [match_id]);
+    if (matchRes.rows.length > 0 && matchRes.rows[0].status === 'FT') {
+      const { team1_score, team2_score } = matchRes.rows[0];
+      const { calculateMatchPoints } = require('../services/pointsService');
+      await calculateMatchPoints(match_id, team1_score, team2_score, true);
+    }
+
+    res.json({ message: 'Cập nhật dự đoán thành công', prediction: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

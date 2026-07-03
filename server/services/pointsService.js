@@ -1,7 +1,7 @@
 const db = require('../config/db');
 const { sendPushNotification } = require('../routes/notifications');
 
-const calculateMatchPoints = async (matchId, hScore, aScore) => {
+const calculateMatchPoints = async (matchId, hScore, aScore, skipNotifications = false) => {
   const matchResult = await db.query(
     'SELECT team1_name, team2_name, handicap_favorite, handicap_value, penalties_team1, penalties_team2, is_knockout, group_name, competition_name FROM matches WHERE id = $1',
     [matchId]
@@ -27,8 +27,10 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
   const predictions = await db.query('SELECT * FROM predictions WHERE match_id = $1', [matchId]);
   for (const p of predictions.rows) {
     if (p.predicted_home_score === -1) {
-      const message = `Trận đấu ${team1Name} vs ${team2Name} đã kết thúc (Tỉ số: ${hScore}-${aScore}). Bạn đã bỏ lỡ không dự đoán và đóng góp 30 bánh lương khô.`;
-      sendPushNotification(p.user_id, '🏆 Bỏ lỡ dự đoán!', message, `/match/${matchId}`);
+      if (!skipNotifications) {
+        const message = `Trận đấu ${team1Name} vs ${team2Name} đã kết thúc (Tỉ số: ${hScore}-${aScore}). Bạn đã bỏ lỡ không dự đoán và đóng góp 30 bánh lương khô.`;
+        sendPushNotification(p.user_id, '🏆 Bỏ lỡ dự đoán!', message, `/match/${matchId}`);
+      }
       continue;
     }
 
@@ -86,10 +88,12 @@ const calculateMatchPoints = async (matchId, hScore, aScore) => {
 
     await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, p.id]);
 
-    const matchTitle = `${team1Name} ${hScore}-${aScore} ${team2Name}`;
-    const resultText = points === 10 ? 'ĐÚNG (Đóng góp 10 bánh)' : 'SAI (Đóng góp 30 bánh)';
-    const message = `Trận đấu đã kết thúc! Tỉ số: ${matchTitle}. Kết quả dự đoán của bạn: ${resultText}.`;
-    sendPushNotification(p.user_id, '🏆 Kết quả trận đấu!', message, `/match/${matchId}`);
+    if (!skipNotifications) {
+      const matchTitle = `${team1Name} ${hScore}-${aScore} ${team2Name}`;
+      const resultText = points === 10 ? 'ĐÚNG (Đóng góp 10 bánh)' : 'SAI (Đóng góp 30 bánh)';
+      const message = `Trận đấu đã kết thúc! Tỉ số: ${matchTitle}. Kết quả dự đoán của bạn: ${resultText}.`;
+      sendPushNotification(p.user_id, '🏆 Kết quả trận đấu!', message, `/match/${matchId}`);
+    }
   }
 };
 

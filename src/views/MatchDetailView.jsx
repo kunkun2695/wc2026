@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, Calendar, MapPin, Users, Zap, Check, Send, Clock } from 'lucide-react';
+import { ArrowLeft, Trophy, Calendar, MapPin, Users, Zap, Check, Send, Clock, Edit3 } from 'lucide-react';
 import CommentSection from '../components/CommentSection';
 import UserAvatar from '../components/UserAvatar';
 import API_URL from '../config';
@@ -113,22 +113,79 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
     }
   };
 
-  useEffect(() => {
-    const fetchAllPreds = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/predictions/all`, {
-          headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setAllPredictions(data.filter(p => p.match_id === matchId));
-        }
-      } catch (err) {
-        console.error('Lỗi lấy dự đoán:', err);
-      } finally {
-        setLoadingPreds(false);
+  const fetchAllPreds = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/predictions/all`, {
+        headers: { 'Authorization': `Bearer ${mockAuth.getToken()}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAllPredictions(data.filter(p => p.match_id === matchId));
       }
-    };
+    } catch (err) {
+      console.error('Lỗi lấy dự đoán:', err);
+    } finally {
+      setLoadingPreds(false);
+    }
+  };
+
+  const handleAdminEditPrediction = async (userId, userName) => {
+    const choice = window.prompt(
+      `SỬA DỰ ĐOÁN CỦA: ${userName}\nNhập một trong các lựa chọn sau:\n1: Chọn ${t1.name}\n2: Chọn ${t2.name}\nX: Chọn Hòa\nM: Chọn Bỏ lỡ`
+    );
+    if (choice === null) return; // Cancelled
+    
+    let home_score = 0;
+    let away_score = 0;
+    
+    const cleanChoice = choice.trim().toUpperCase();
+    if (cleanChoice === '1') {
+      home_score = 1;
+      away_score = 0;
+    } else if (cleanChoice === '2') {
+      home_score = 0;
+      away_score = 1;
+    } else if (cleanChoice === 'X' || cleanChoice === 'H') {
+      home_score = 0;
+      away_score = 0;
+    } else if (cleanChoice === 'M') {
+      home_score = -1;
+      away_score = -1;
+    } else {
+      alert('Lựa chọn không hợp lệ! Vui lòng nhập 1, 2, X hoặc M.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/predictions/admin-edit`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${mockAuth.getToken()}`
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          match_id: matchId,
+          home_score,
+          away_score
+        })
+      });
+      if (res.ok) {
+        alert('Cập nhật dự đoán thành công!');
+        fetchAllPreds();
+        if (onRefreshMatches) {
+          onRefreshMatches();
+        }
+      } else {
+        const data = await res.json();
+        alert('Lỗi: ' + (data.error || 'Không thể cập nhật'));
+      }
+    } catch (err) {
+      alert('Lỗi kết nối tới máy chủ');
+    }
+  };
+
+  useEffect(() => {
     fetchAllPreds();
     fetchEditHistory();
   }, [matchId, userPrediction]);
@@ -519,28 +576,61 @@ const MatchDetailView = ({ matchId, onBack, matches, predictions, onSavePredicti
                                   : (choice === '1' ? t1.name : (choice === '2' ? t2.name : 'Hòa'));
 
                                 return (
-                                  <div key={p.prediction_id} className="everyone-pred-item">
+                                  <div key={p.prediction_id} className="everyone-pred-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div className="user-info-mini">
                                       <UserAvatar src={p.user_avatar} size={28} style={{ borderRadius: '50%' }} />
                                       <span className="user-name-choice">{p.user_name}</span>
                                     </div>
                                     
-                                    {p.is_hidden ? (
-                                      <div className="choice-pill-locked">
-                                        🔒 ĐÃ KHÓA (ẨN)
-                                      </div>
-                                    ) : (
-                                      <div className="choice-pill-revealed">
-                                        <span>Chọn: </span>
-                                        <strong style={{ color: choice === 'MISSED' ? '#ef4444' : 'white' }}>{teamSelected}</strong>
-                                      </div>
-                                    )}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      {p.is_hidden ? (
+                                        <div className="choice-pill-locked">
+                                          🔒 ĐÃ KHÓA (ẨN)
+                                        </div>
+                                      ) : (
+                                        <div className="choice-pill-revealed">
+                                          <span>Chọn: </span>
+                                          <strong style={{ color: choice === 'MISSED' ? '#ef4444' : 'white' }}>{teamSelected}</strong>
+                                        </div>
+                                      )}
 
-                                    {isClosed && !p.is_hidden && (
-                                      <span className={`outcome-lbl ${isCorrect ? 'correct' : 'wrong'}`}>
-                                        {choice === 'MISSED' ? 'BỎ LỠ' : (isCorrect ? 'ĐÚNG' : 'SAI')}
-                                      </span>
-                                    )}
+                                      {isClosed && !p.is_hidden && (
+                                        <span className={`outcome-lbl ${isCorrect ? 'correct' : 'wrong'}`}>
+                                          {choice === 'MISSED' ? 'BỎ LỠ' : (isCorrect ? 'ĐÚNG' : 'SAI')}
+                                        </span>
+                                      )}
+
+                                      {mockAuth.getCurrentUser()?.role === 'admin' && (
+                                        <button 
+                                          onClick={() => handleAdminEditPrediction(p.user_id, p.user_name)}
+                                          style={{ 
+                                            background: 'rgba(255,255,255,0.05)', 
+                                            border: '1px solid rgba(255,255,255,0.1)', 
+                                            borderRadius: '6px', 
+                                            color: '#94a3b8', 
+                                            cursor: 'pointer', 
+                                            padding: '4px 8px', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            transition: '0.2s'
+                                          }}
+                                          title="Sửa dự đoán (âm thầm)"
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = '#ffd200';
+                                            e.currentTarget.style.background = 'rgba(255, 210, 0, 0.1)';
+                                            e.currentTarget.style.borderColor = 'rgba(255, 210, 0, 0.3)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = '#94a3b8';
+                                            e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                                          }}
+                                        >
+                                          <Edit3 size={12} />
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 );
                               })}
