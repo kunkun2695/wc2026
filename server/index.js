@@ -222,16 +222,17 @@ app.use('/api/payments', authLimiter);
 // Middleware cấu hình CORS và các Header bảo mật (CSP, HSTS, Clickjacking, nosniff, Permissions-Policy, COOP, CORP)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:5005',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:5005',
-    'http://192.168.1.101:5005',
-    'http://192.168.1.101:5173'
-  ];
   
-  if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://192.168.'))) {
+  // Cho phép tất cả các nguồn từ localhost (mọi port) và dải IP mạng nội bộ (LAN)
+  const isLocalOrLan = origin && (
+    origin.startsWith('http://localhost:') ||
+    origin.startsWith('http://127.0.0.1:') ||
+    origin.startsWith('http://192.168.') ||
+    origin.startsWith('http://172.') ||
+    origin.startsWith('http://10.')
+  );
+  
+  if (origin && isLocalOrLan) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   } else {
